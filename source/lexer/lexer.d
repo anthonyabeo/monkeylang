@@ -33,6 +33,13 @@ struct Lexer {
         this.readPosition += 1;
     }
 
+    char peekPosition() {
+        if(this.readPosition >= this.input.length)
+            return 0;
+        else
+            return this.input[this.readPosition];
+    }
+
     /++
     
     +/
@@ -42,7 +49,13 @@ struct Lexer {
 
         switch(this.ch) {
             case '=':
-                tok = Token(TokenType.ASSIGN, to!string(this.ch));
+                if(this.peekPosition() == '=') {
+                    auto ch = this.ch;
+                    this.readChar();
+                    auto literal = to!string(ch) ~ to!string(this.ch);
+                    tok = Token(TokenType.EQ, literal);
+                } else 
+                    tok = Token(TokenType.ASSIGN, to!string(this.ch));
                 break;
             case ';':
                 tok = Token(TokenType.SEMICOLON, to!string(this.ch));
@@ -64,6 +77,31 @@ struct Lexer {
                 break;
             case '+':
                 tok = Token(TokenType.PLUS, to!string(this.ch));
+                break;
+            case '-':
+                tok = Token(TokenType.MINUS, to!string(this.ch));
+                break;
+            case '<':
+                tok = Token(TokenType.LT, to!string(this.ch));
+                break;
+            case '>':
+                tok = Token(TokenType.GT, to!string(this.ch));
+                break;
+            case '/':
+                tok = Token(TokenType.SLASH, to!string(this.ch));
+                break;
+            case '!':
+                if(this.peekPosition() == '=') {
+                    auto ch = this.ch;
+                    this.readChar();
+                    auto literal = to!string(ch) ~ to!string(this.ch);
+                    tok = Token(TokenType.NOT_EQ, literal);
+                } else 
+                    tok = Token(TokenType.BANG, to!string(this.ch));
+
+                break;
+            case '*':
+                tok = Token(TokenType.ASTERISK, to!string(this.ch));
                 break;
             case 0:
                 tok.literal = "";
