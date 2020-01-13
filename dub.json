@@ -1,0 +1,9 @@
+{
+	"authors": [
+		"Abeo Anthony Anabila"
+	],
+	"copyright": "Copyright © 2020, Abeo Anthony Anabila",
+	"description": "The Monkey Programming Language",
+	"license": "MIT",
+	"name": "monkey"
+}

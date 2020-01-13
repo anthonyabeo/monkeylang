@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/monkey
+monkey.so
+monkey.dylib
+monkey.dll
+monkey.a
+monkey.lib
+monkey-test-*
+*.exe
+*.o
+*.obj
+*.lst
