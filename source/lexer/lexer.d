@@ -33,6 +33,7 @@ struct Lexer {
         this.readPosition += 1;
     }
 
+    /+++/
     char peekPosition() {
         if(this.readPosition >= this.input.length)
             return 0;

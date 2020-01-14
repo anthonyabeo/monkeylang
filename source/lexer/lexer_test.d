@@ -21,7 +21,7 @@ unittest {
 
     auto lexer = new Lexer(input);
     foreach(index, token; tests) {
-        auto tok = lexer.nextToken();
+        const tok = lexer.nextToken();
         
         assert(tok.type == token.type);
         assert(tok.literal == token.literal);
@@ -92,7 +92,7 @@ unittest {
 
     lexer = new Lexer(input);
     foreach(index, token; tests) {
-        auto tok = lexer.nextToken();
+        const tok = lexer.nextToken();
         
         assert(tok.type == token.type);
         assert(tok.literal == token.literal);
@@ -137,7 +137,7 @@ unittest {
 
     lexer = new Lexer(input);
     foreach(index, token; tests) {
-        auto tok = lexer.nextToken();
+        const tok = lexer.nextToken();
         
         assert(tok.type == token.type);
         assert(tok.literal == token.literal);
