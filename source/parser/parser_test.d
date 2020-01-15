@@ -12,9 +12,22 @@ unittest {
                   let y = 10;
                   let foobar = 838383;";
     
+    void checkParserErrors(ref Parser p) {
+        auto errors = p.errors();
+        if(errors.length == 0)
+            return;
+
+        stderr.writefln("parser produced %d errors", errors.length);
+        foreach(err; errors) 
+            stderr.writefln("parser error: %s", err);
+
+        assert(false);
+    }
+
     auto lex = Lexer(input);
     auto parser = Parser(lex);
     auto program = parser.parseProgram();
+    checkParserErrors(parser);
 
     assert(program !is null);
     assert(program.statements.length == 3);
@@ -25,7 +38,7 @@ unittest {
         tuple("foobar")
     ];
 
-        bool testLetStatement(Statement stmt, string name) {
+    bool testLetStatement(Statement stmt, string name) {
         if(stmt.tokenLiteral() != "let") {
             stderr.writefln("stmt.tokenLiteral not 'let'. got=%s", stmt.tokenLiteral());
             return false;

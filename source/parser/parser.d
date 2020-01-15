@@ -1,6 +1,7 @@
 module parser.parser;
 
 import std.stdio;
+import std.string;
 
 import token.token;
 import lexer.lexer;
@@ -12,6 +13,7 @@ struct Parser {
     Lexer lex;          /// the lexer to retrieve tokens from.
     Token curToken;     /// provides access to the current token
     Token peekToken;    /// allows us to look ahead for tokens after curToken
+    string[] errs;     /// collection of error ecountered.
 
     /***********************************
     * Constructor for the Parser.
@@ -21,10 +23,21 @@ struct Parser {
     */
     this(ref Lexer lex) {
         this.lex = lex;
+        this.errs = new string[0];
 
         // Read two tokens, so curToken and peekToken are both set
         this.nextToken();
         this.nextToken();
+    }
+
+    /// postblit constructor
+    this(this) {
+        this.errs = errs.dup;
+    }
+
+    /***/
+    string[] errors() {
+        return this.errs;
     }
 
     /+++/
@@ -99,6 +112,13 @@ struct Parser {
                 return true;
             }
 
+            this.peekError(tt);
             return false;
+        }
+
+        void peekError(TokenType tt) {
+            auto msg = format("expected next token to be %s, got %s instead", 
+                              tt, this.peekToken.type);
+            this.errs ~= msg;
         }
 }
