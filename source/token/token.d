@@ -1,8 +1,6 @@
 module token.token;
 
-/++
-
-+/
+/+++/
 enum TokenType {
     ILLEGAL,
     EOF,
@@ -39,6 +37,7 @@ enum TokenType {
     RETURN
 }
 
+///
 enum keywords = [
     "let": TokenType.LET,
     "fn": TokenType.FUNCTION,
@@ -49,6 +48,7 @@ enum keywords = [
     "else": TokenType.ELSE
 ];
 
+/+++/
 TokenType lookUpIndentifier(string ident) {
     if (ident in keywords) {
         return keywords[ident];
