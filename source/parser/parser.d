@@ -100,7 +100,7 @@ struct Parser {
         if(!this.expectPeek(TokenType.IDENTIFIER))
             return null;
 
-        stmt.name = Identifier(this.curToken, this.curToken.literal);
+        stmt.name = new Identifier(this.curToken, this.curToken.literal);
 
         if(!this.expectPeek(TokenType.ASSIGN))
             return null;
