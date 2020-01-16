@@ -23,7 +23,7 @@ struct Parser {
     */
     this(ref Lexer lex) {
         this.lex = lex;
-        this.errs = new string[0];
+        this.errs = [];
 
         // Read two tokens, so curToken and peekToken are both set
         this.nextToken();
@@ -70,9 +70,26 @@ struct Parser {
             case TokenType.LET:
                 stmt = this.parseLetStatement();
                 break;
+            case TokenType.RETURN:
+                stmt = this.parseReturnStatement();
+                break;
             default:
                 stmt = null;
         }
+
+        return stmt;
+    }
+
+    /+++/
+    ReturnStatement parseReturnStatement() {
+        auto stmt = new ReturnStatement(this.curToken);
+        this.nextToken();
+
+        // TODO: We're skipping the expressions until we
+        // encounter a semicolon
+
+        while(!this.curTokenIs(TokenType.SEMICOLON))
+            this.nextToken();
 
         return stmt;
     }
