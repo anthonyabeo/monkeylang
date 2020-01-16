@@ -82,4 +82,22 @@ unittest {
         assert(returnStmt.tokenLiteral() == "return");
     }
 
+    input = "foobar;";
+
+    lex = Lexer(input);
+    parser = Parser(lex);
+    program = parser.parseProgram();
+    checkParserErrors(parser);
+
+    assert(program !is null);
+    assert(program.statements.length == 1);
+
+    auto expStmt = cast(ExpressionStatement) program.statements[0]; 
+    assert(expStmt !is null);
+
+    auto ident = cast(Identifier) expStmt.expression;
+    assert(ident !is null);
+    assert(ident.value == "foobar");
+    assert(ident.tokenLiteral() == "foobar");
+
 }
