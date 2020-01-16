@@ -2,6 +2,7 @@ module parser.parser;
 
 import std.stdio;
 import std.string;
+import std.conv;
 
 import token.token;
 import lexer.lexer;
@@ -46,6 +47,7 @@ struct Parser {
 
         this.prefixParseFxns = (prefixParseFn[TokenType]).init;
         this.registerPrefixFxn(TokenType.IDENTIFIER, &Parser.parseIdentifier);
+        this.registerPrefixFxn(TokenType.INT, &Parser.parseIntegerLiteral);
     }
 
     /// postblit constructor
@@ -62,6 +64,23 @@ struct Parser {
     void nextToken() {
         this.curToken = this.peekToken;
         this.peekToken = this.lex.nextToken();
+    }
+    
+    /+++/
+    Expression parseIntegerLiteral() {
+        auto iLit = new IntegerLiteral(this.curToken);
+        long value;
+
+        try {
+            value = to!long(this.curToken.literal);
+        } catch (ConvException ce) {
+            this.errs ~= format("could not parse %s as integer", this.curToken.literal);
+            return null;
+        }
+        
+        iLit.value = value;
+
+        return iLit;
     }
 
     /+++/
