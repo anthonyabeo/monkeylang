@@ -91,3 +91,24 @@ class LetStatement : Statement {
     }
 }
 
+/+++/
+class ReturnStatement : Statement {
+    Token token;                /// the 'return' token
+    Expression returnValue;     /// the value of the expression to be returned
+
+    /***********************************
+     * Constructor
+     */
+    this(Token token) {
+        this.token = token;
+    }
+
+    /+++/
+    void statementNode() {}
+
+    /+++/
+    string tokenLiteral() {
+        return this.token.literal;
+    }
+}
+
