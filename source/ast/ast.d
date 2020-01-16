@@ -57,9 +57,37 @@ class Program {
 }
 
 /+++/
+class IntegerLiteral : Expression {
+    Token token;    /// the INT token type
+    ulong value;    /// value
+
+    /***********************************
+     * Constructor
+     */
+    this(Token token) {
+        this.token = token;
+    }
+
+    /***********************************
+     * expressionNode does nothing in particular.
+     */
+    void expressionNode()  {}
+
+    /+++/
+    string tokenLiteral() {
+        return this.token.literal;
+    }
+
+    /+++/
+    string asString() {
+        return this.token.literal;
+    }
+}
+
+/+++/
 class Identifier : Expression {
     Token token;    /// the IDENTIFIER token type
-    string value;   /// the value (name) if this identifier.
+    string value;   /// the value (name) of this identifier.
 
     /***********************************
      * Constructor
