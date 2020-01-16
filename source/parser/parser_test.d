@@ -64,4 +64,22 @@ unittest {
         assert(testLetStatement(stmt, tt[0]));
     }
 
+    input = "return 5;
+             return 10;
+             return 993322;";
+
+    lex = Lexer(input);
+    parser = Parser(lex);
+    program = parser.parseProgram();
+    checkParserErrors(parser);
+
+    assert(program !is null);
+    assert(program.statements.length == 3);
+
+    foreach(stmt; program.statements) {
+        auto returnStmt = cast(ReturnStatement) stmt;
+        assert(returnStmt !is null);
+        assert(returnStmt.tokenLiteral() == "return");
+    }
+
 }
