@@ -61,7 +61,9 @@ class Identifier : Expression {
     Token token;    /// the IDENTIFIER token type
     string value;   /// the value (name) if this identifier.
 
-    /+++/
+    /***********************************
+     * Constructor
+     */
     this(Token token, string value) {
         this.token = token;
         this.value = value;
@@ -83,10 +85,19 @@ class Identifier : Expression {
     }
 }
 
-/+++/
+/***********************************
+ * Expression Statement
+ */
 class ExpressionStatement : Statement {
     Token token;             /// the first token of the expression
     Expression expression;  ///  expression
+
+    /***********************************
+     * Constructor
+     */
+    this(Token token) {
+        this.token = token;
+    }
 
     /***********************************
      * statementNode does nothing in particular. 

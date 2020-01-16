@@ -7,6 +7,19 @@ import token.token;
 import lexer.lexer;
 import ast.ast;
 
+alias prefixParseFn = Expression delegate();
+alias infixParseFn = Expression delegate(Expression);
+
+/// Operator Precedence Rules
+enum OpPreced : ubyte {
+    LOWEST = 0,
+    EQUALS,         // ==
+    LESSGREATER,    // > or <
+    SUM,            // +
+    PRODUCT,        // *
+    PREFIX,         // -X or !X
+    CALL            // myFunction(X)
+}
 
 /+++/
 struct Parser {
@@ -14,6 +27,8 @@ struct Parser {
     Token curToken;     /// provides access to the current token
     Token peekToken;    /// allows us to look ahead for tokens after curToken
     string[] errs;     /// collection of error ecountered.
+    prefixParseFn[TokenType] prefixParseFxns;  /// mapping of prefix tokens to their parse fnxs
+    infixParseFn[TokenType] infixParseFxns;    /// mapping of infix tokens to their parse fnxs
 
     /***********************************
     * Constructor for the Parser.
@@ -28,6 +43,9 @@ struct Parser {
         // Read two tokens, so curToken and peekToken are both set
         this.nextToken();
         this.nextToken();
+
+        this.prefixParseFxns = (prefixParseFn[TokenType]).init;
+        this.registerPrefixFxn(TokenType.IDENTIFIER, &Parser.parseIdentifier);
     }
 
     /// postblit constructor
@@ -44,6 +62,11 @@ struct Parser {
     void nextToken() {
         this.curToken = this.peekToken;
         this.peekToken = this.lex.nextToken();
+    }
+
+    /+++/
+    Expression parseIdentifier() {
+        return new Identifier(this.curToken, this.curToken.literal);
     }
 
     /+++/
@@ -74,10 +97,31 @@ struct Parser {
                 stmt = this.parseReturnStatement();
                 break;
             default:
-                stmt = null;
+                stmt = this.parseExpressionStatement();
         }
 
         return stmt;
+    }
+
+    /+++/
+    ExpressionStatement parseExpressionStatement() {
+        auto expStmt = new ExpressionStatement(this.curToken);
+        expStmt.expression = this.parseExpression(OpPreced.LOWEST);
+        if(this.peekTokenIs(TokenType.SEMICOLON))
+            this.nextToken();
+
+        return expStmt;
+    }
+
+    /+++/
+    Expression parseExpression(OpPreced prec) {
+        auto prefix = this.prefixParseFxns[this.curToken.type];
+        if(prefix is null) 
+            return null;
+
+        auto leftExp = prefix();
+
+        return leftExp;
     }
 
     /+++/
@@ -112,6 +156,16 @@ struct Parser {
             this.nextToken();
 
         return stmt;
+    }
+
+    /+++/
+    void registerPrefixFxn(TokenType tt, prefixParseFn fxn) {
+        this.prefixParseFxns[tt] = fxn;
+    }
+
+    /+++/
+    void registerInfixFxn(TokenType tt, infixParseFn fnx) {
+        this.infixParseFxns[tt] = fnx;
     }
 
     private:
