@@ -100,4 +100,22 @@ unittest {
     assert(ident.value == "foobar");
     assert(ident.tokenLiteral() == "foobar");
 
+    // testing integer literals
+    input = "5;";
+
+    lex = Lexer(input);
+    parser = Parser(lex);
+    program = parser.parseProgram();
+    checkParserErrors(parser);
+
+    assert(program !is null);
+    assert(program.statements.length == 1);
+
+    expStmt = cast(ExpressionStatement) program.statements[0]; 
+    assert(expStmt !is null);
+
+    auto iliteral = cast(IntegerLiteral) expStmt.expression;
+    assert(iliteral !is null);
+    assert(iliteral.value == 5);
+    assert(iliteral.tokenLiteral() == "5");
 }
