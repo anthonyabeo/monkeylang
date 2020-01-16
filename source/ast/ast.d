@@ -7,6 +7,9 @@ interface Node {
 
     /+++/
     string tokenLiteral();
+
+    /+++/
+    string asString();
 }
 
 /+++/
@@ -29,17 +32,11 @@ class Program {
     Statement[] statements; /// a program is a bunch of statements
 
     /***********************************
-     * foo does this.
-     * Params:
-     *      stmts =     an array of Statements
+     * Constructor
      */
     this() {
         this.statements = [];
     }
-
-    // this(this) {
-    //     statements = statements.dup;
-    // }
 
     /+++/
     string tokenLiteral() {
@@ -47,12 +44,28 @@ class Program {
             return this.statements[0].tokenLiteral();
         return "";
     }
+
+    /+++/
+    string asString() {
+        string outBuffer;
+        foreach (stmt; this.statements) {
+            outBuffer ~= stmt.asString();
+        }
+
+        return outBuffer;
+    }
 }
 
 /+++/
-struct Identifier {
+class Identifier : Expression {
     Token token;    /// the IDENTIFIER token type
     string value;   /// the value (name) if this identifier.
+
+    /+++/
+    this(Token token, string value) {
+        this.token = token;
+        this.value = value;
+    }
 
     /***********************************
      * expressionNode does nothing in particular.
@@ -63,8 +76,36 @@ struct Identifier {
     string tokenLiteral() {
         return this.token.literal;
     }
+
+    /+++/
+    string asString() {
+        return this.value;
+    }
 }
 
+/+++/
+class ExpressionStatement : Statement {
+    Token token;             /// the first token of the expression
+    Expression expression;  ///  expression
+
+    /***********************************
+     * statementNode does nothing in particular. 
+     * mostly used for debugging purposes.
+     */
+    void statementNode() {}
+
+    /+++/
+    string tokenLiteral() {
+        return this.token.literal;
+    }
+
+    /+++/
+    string asString() {
+        if(this.expression !is null)
+            return this.expression.asString();
+        return "";
+    }
+}
 
 /+++/
 class LetStatement : Statement {
@@ -89,6 +130,17 @@ class LetStatement : Statement {
     string tokenLiteral() {
         return this.token.literal;
     }
+
+    /+++/
+    string asString() {
+        string outBuffer = this.tokenLiteral() ~ " " ~ this.name.asString() ~ " = ";
+        if(this.value !is null)
+            outBuffer ~= this.value.asString();
+
+        outBuffer ~= ";";
+
+        return outBuffer;
+    }
 }
 
 /+++/
@@ -109,6 +161,17 @@ class ReturnStatement : Statement {
     /+++/
     string tokenLiteral() {
         return this.token.literal;
+    }
+
+    /+++/
+    string asString() {
+        string outBuffer = this.tokenLiteral() ~ " ";
+        if(this.returnValue !is null)
+            outBuffer ~= this.returnValue.asString();
+        
+        outBuffer ~= ";";
+
+        return outBuffer;
     }
 }
 
