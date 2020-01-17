@@ -84,6 +84,35 @@ class IntegerLiteral : Expression {
     }
 }
 
+/+++/   
+class PrefixExpression : Expression {
+    Token token;        /// token
+    string operator;    /// operator
+    Expression right;   /// the right expression node
+
+    /+++/
+    this(ref Token token, string operator) {
+        this.token = token;
+        this.operator = operator;
+    }
+    
+    /***********************************
+     * expressionNode does nothing in particular.
+     */
+    void expressionNode()  {}
+
+    /+++/
+    string tokenLiteral() {
+        return this.token.literal;
+    }
+
+    /+++/
+    string asString() {
+        string buffer = "(" ~ this.operator ~ this.right.asString() ~ ")";
+        return buffer;
+    }
+}
+
 /+++/
 class Identifier : Expression {
     Token token;    /// the IDENTIFIER token type
