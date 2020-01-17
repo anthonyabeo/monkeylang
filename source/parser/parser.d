@@ -46,8 +46,10 @@ struct Parser {
         this.nextToken();
 
         this.prefixParseFxns = (prefixParseFn[TokenType]).init;
-        this.registerPrefixFxn(TokenType.IDENTIFIER, &Parser.parseIdentifier);
-        this.registerPrefixFxn(TokenType.INT, &Parser.parseIntegerLiteral);
+        this.registerPrefixFxn(TokenType.IDENTIFIER, &this.parseIdentifier);
+        this.registerPrefixFxn(TokenType.INT, &this.parseIntegerLiteral);
+        this.registerPrefixFxn(TokenType.BANG, &this.parsePrefixExpression);
+        this.registerPrefixFxn(TokenType.MINUS, &this.parsePrefixExpression);
     }
 
     /// postblit constructor
@@ -66,6 +68,16 @@ struct Parser {
         this.peekToken = this.lex.nextToken();
     }
     
+    /+++/
+    Expression parsePrefixExpression() {
+        auto expr = new PrefixExpression(this.curToken, this.curToken.literal);
+
+        this.nextToken();
+        expr.right = this.parseExpression(OpPreced.PREFIX);
+
+        return expr;
+    }
+
     /+++/
     Expression parseIntegerLiteral() {
         auto iLit = new IntegerLiteral(this.curToken);
@@ -135,8 +147,10 @@ struct Parser {
     /+++/
     Expression parseExpression(OpPreced prec) {
         auto prefix = this.prefixParseFxns[this.curToken.type];
-        if(prefix is null) 
+        if(prefix is null) {
+            this.noPrefixParseFnError(this.curToken.type);
             return null;
+        }
 
         auto leftExp = prefix();
 
@@ -210,5 +224,9 @@ struct Parser {
             auto msg = format("expected next token to be %s, got %s instead", 
                               tt, this.peekToken.type);
             this.errs ~= msg;
+        }
+
+        void noPrefixParseFnError(TokenType tt) {
+            this.errs ~= format("no prefix parse function for %s found", tt);
         }
 }
