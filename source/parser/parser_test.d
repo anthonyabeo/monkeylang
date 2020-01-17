@@ -1,7 +1,8 @@
 module parser.parser_test;
 
-import std.stdio : stderr, writeln;
-import std.typecons : tuple;
+import std.stdio : stderr, writeln, writefln;
+import std.typecons : tuple, Tuple;
+import std.string : format;
 
 import parser.parser;
 import lexer.lexer;
@@ -118,4 +119,42 @@ unittest {
     assert(iliteral !is null);
     assert(iliteral.value == 5);
     assert(iliteral.tokenLiteral() == "5");
+
+    // testing prefix literals
+    alias Entry = Tuple!(string, "input", 
+                         string, "operator", 
+                         long, "integerValue");
+
+    auto prefixTests = [
+        Entry("!5;", "!", 5),
+        Entry("-15;", "-", 15)
+    ];
+
+    bool testIntegerLiteral(Expression il, long value) {
+        auto integ = cast(IntegerLiteral) il;
+
+        if(integ is null) return false;
+        if(integ.value != value) return false;
+        if(integ.tokenLiteral() != format("%d", value)) return false;
+
+        return true;
+    }
+
+    foreach(t; prefixTests) {
+        auto lex1 = Lexer(t.input);
+        auto parser1 = Parser(lex1);
+        auto program1 = parser1.parseProgram();
+        checkParserErrors(parser1);
+
+        assert(program1 !is null);
+        assert(program1.statements.length == 1);
+
+        auto expStmt1 = cast(ExpressionStatement) program1.statements[0]; 
+        assert(expStmt1 !is null);
+
+        auto prefixExpr = cast(PrefixExpression) expStmt1.expression;
+        assert(prefixExpr.operator == t.operator);
+
+        if(!testIntegerLiteral(prefixExpr.right, t.integerValue)) return;
+    }
 }
