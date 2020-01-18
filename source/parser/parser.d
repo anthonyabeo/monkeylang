@@ -22,6 +22,18 @@ enum OpPreced : ubyte {
     CALL            // myFunction(X)
 }
 
+///
+enum precedence = [
+    TokenType.EQ : OpPreced.EQUALS,
+    TokenType.NOT_EQ : OpPreced.EQUALS,
+    TokenType.LT : OpPreced.LESSGREATER,
+    TokenType.GT : OpPreced.LESSGREATER,
+    TokenType.PLUS : OpPreced.SUM,
+    TokenType.MINUS : OpPreced.SUM,
+    TokenType.SLASH : OpPreced.PRODUCT,
+    TokenType.ASTERISK : OpPreced.PRODUCT
+];
+
 /+++/
 struct Parser {
     Lexer lex;          /// the lexer to retrieve tokens from.
@@ -50,6 +62,16 @@ struct Parser {
         this.registerPrefixFxn(TokenType.INT, &this.parseIntegerLiteral);
         this.registerPrefixFxn(TokenType.BANG, &this.parsePrefixExpression);
         this.registerPrefixFxn(TokenType.MINUS, &this.parsePrefixExpression);
+
+        this.infixParseFxns = (infixParseFn[TokenType]).init;
+        this.registerInfixFxn(TokenType.PLUS, &this.parseInfixExpression);
+        this.registerInfixFxn(TokenType.MINUS, &this.parseInfixExpression);
+        this.registerInfixFxn(TokenType.SLASH, &this.parseInfixExpression);
+        this.registerInfixFxn(TokenType.ASTERISK, &this.parseInfixExpression);
+        this.registerInfixFxn(TokenType.EQ, &this.parseInfixExpression);
+        this.registerInfixFxn(TokenType.NOT_EQ, &this.parseInfixExpression);
+        this.registerInfixFxn(TokenType.LT, &this.parseInfixExpression);
+        this.registerInfixFxn(TokenType.GT, &this.parseInfixExpression);
     }
 
     /// postblit constructor
@@ -66,16 +88,6 @@ struct Parser {
     void nextToken() {
         this.curToken = this.peekToken;
         this.peekToken = this.lex.nextToken();
-    }
-    
-    /+++/
-    Expression parsePrefixExpression() {
-        auto expr = new PrefixExpression(this.curToken, this.curToken.literal);
-
-        this.nextToken();
-        expr.right = this.parseExpression(OpPreced.PREFIX);
-
-        return expr;
     }
 
     /+++/
@@ -135,6 +147,27 @@ struct Parser {
     }
 
     /+++/
+    Expression parseInfixExpression(Expression left) {
+        auto expr = new InfixExpression(this.curToken, left, this.curToken.literal);
+        
+        auto prec = this.curPrecedence();
+        this.nextToken();
+        expr.right = this.parseExpression(prec);
+
+        return expr;
+    }
+
+    /+++/
+    Expression parsePrefixExpression() {
+        auto expr = new PrefixExpression(this.curToken, this.curToken.literal);
+
+        this.nextToken();
+        expr.right = this.parseExpression(OpPreced.PREFIX);
+
+        return expr;
+    }
+
+    /+++/
     ExpressionStatement parseExpressionStatement() {
         auto expStmt = new ExpressionStatement(this.curToken);
         expStmt.expression = this.parseExpression(OpPreced.LOWEST);
@@ -146,13 +179,22 @@ struct Parser {
 
     /+++/
     Expression parseExpression(OpPreced prec) {
-        auto prefix = this.prefixParseFxns[this.curToken.type];
+        auto prefix = this.prefixParseFxns.get(this.curToken.type, null);
         if(prefix is null) {
             this.noPrefixParseFnError(this.curToken.type);
             return null;
         }
 
         auto leftExp = prefix();
+        
+        while(!this.peekTokenIs(TokenType.SEMICOLON) && prec < this.peekPrecedence()) {
+            auto infix = this.infixParseFxns.get(this.peekToken.type, null);
+            if(infix is null)
+                return leftExp;
+
+            this.nextToken();
+            leftExp = infix(leftExp);
+        }
 
         return leftExp;
     }
@@ -199,6 +241,22 @@ struct Parser {
     /+++/
     void registerInfixFxn(TokenType tt, infixParseFn fnx) {
         this.infixParseFxns[tt] = fnx;
+    }
+
+    /+++/
+    OpPreced peekPrecedence() {
+        if(this.peekToken.type in precedence) 
+            return precedence[this.peekToken.type];
+
+        return OpPreced.LOWEST;
+    }
+
+    /+++/
+    OpPreced curPrecedence() {
+        if(this.curToken.type in precedence)
+            return precedence[this.curToken.type];
+
+        return OpPreced.LOWEST;
     }
 
     private:
