@@ -1,5 +1,7 @@
 module ast.ast;
 
+import std.string;
+
 import token.token;
 
 /+++/
@@ -84,6 +86,39 @@ class IntegerLiteral : Expression {
     }
 }
 
+/+++/
+class InfixExpression : Expression {
+    Token token;        /// token
+    Expression left;    /// left
+    string operator;    /// operator
+    Expression right;   /// right
+
+    /+++/
+    this(Token token, Expression left, string operator) {
+        this.token = token;
+        this.left = left;
+        this.operator = operator;
+    }
+
+    /***********************************
+     * expressionNode does nothing in particular.
+     */
+    void expressionNode()  {}
+
+    /+++/
+    string tokenLiteral() {
+        return this.token.literal;
+    }
+
+    /+++/
+    string asString() {
+        string s = format("(%s %s %s)", this.left.asString(), 
+                                        this.operator, 
+                                        this.right.asString());
+        return s;
+    }
+}
+
 /+++/   
 class PrefixExpression : Expression {
     Token token;        /// token
@@ -91,7 +126,7 @@ class PrefixExpression : Expression {
     Expression right;   /// the right expression node
 
     /+++/
-    this(ref Token token, string operator) {
+    this(Token token, string operator) {
         this.token = token;
         this.operator = operator;
     }
