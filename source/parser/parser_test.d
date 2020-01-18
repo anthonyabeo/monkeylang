@@ -157,4 +157,64 @@ unittest {
 
         if(!testIntegerLiteral(prefixExpr.right, t.integerValue)) return;
     }
+
+    // TESTING INFIX OPERATORS
+    alias InfixEntry = Tuple!(string, "input", long, "leftValue", 
+                              string, "operator", long, "rightValue");
+
+    auto infixTests = [
+        InfixEntry("5 + 5;", 5, "+", 5),
+        InfixEntry("5 - 5;", 5, "-", 5),
+        InfixEntry("5 * 5;", 5, "*", 5),
+        InfixEntry("5 / 5;", 5, "/", 5),
+        InfixEntry("5 > 5;", 5, ">", 5),
+        InfixEntry("5 < 5;", 5, "<", 5),
+        InfixEntry("5 == 5;", 5, "==", 5),
+        InfixEntry("5 != 5;", 5, "!=", 5),
+    ];
+
+    foreach(t; infixTests) {
+        auto lex2 = Lexer(t.input);
+        auto parser2 = Parser(lex2);
+        auto program2 = parser2.parseProgram();
+        checkParserErrors(parser2);
+
+        assert(program2 !is null);
+        assert(program2.statements.length == 1);
+
+        auto expStmt2 = cast(ExpressionStatement) program2.statements[0]; 
+        assert(expStmt2 !is null);
+
+        auto infixExpr = cast(InfixExpression) expStmt2.expression;
+
+        if(!testIntegerLiteral(infixExpr.left, t.leftValue)) return;
+        assert(infixExpr.operator == t.operator);
+        if(!testIntegerLiteral(infixExpr.right, t.rightValue)) return;
+    }
+    
+
+    alias MoreInfixEntry = Tuple!(string, "input", string, "expected");
+    auto moreTests = [
+        MoreInfixEntry("-a * b", "((-a) * b)"),
+        MoreInfixEntry("!-a", "(!(-a))"),
+        MoreInfixEntry("a + b + c", "((a + b) + c)"),
+        MoreInfixEntry("a + b - c", "((a + b) - c)"),
+        MoreInfixEntry("a * b * c", "((a * b) * c)"),
+        MoreInfixEntry("a * b / c", "((a * b) / c)"),
+        MoreInfixEntry("a + b / c", "(a + (b / c))"),
+        MoreInfixEntry("a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"),
+        MoreInfixEntry("3 + 4; -5 * 5", "(3 + 4)((-5) * 5)"),
+        MoreInfixEntry("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"),
+        MoreInfixEntry("5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))"),
+        MoreInfixEntry("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))")
+    ];
+
+    foreach(t; moreTests) {
+        auto lex3 = Lexer(t.input);
+        auto parser3 = Parser(lex3);
+        auto program3 = parser3.parseProgram();
+        checkParserErrors(parser3);
+
+        assert(program3.asString() == t.expected);
+    }
 }
