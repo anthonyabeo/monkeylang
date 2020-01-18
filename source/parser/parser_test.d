@@ -206,7 +206,11 @@ unittest {
         MoreInfixEntry("3 + 4; -5 * 5", "(3 + 4)((-5) * 5)"),
         MoreInfixEntry("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"),
         MoreInfixEntry("5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))"),
-        MoreInfixEntry("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))")
+        MoreInfixEntry("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"),
+        MoreInfixEntry("true", "true"),
+        MoreInfixEntry("false", "false"),
+        MoreInfixEntry("3 > 5 == false", "((3 > 5) == false)"),
+        MoreInfixEntry("3 < 5 == true", "((3 < 5) == true)")
     ];
 
     foreach(t; moreTests) {

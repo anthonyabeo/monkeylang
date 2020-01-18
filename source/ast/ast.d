@@ -58,6 +58,31 @@ class Program {
     }
 }
 
+class Boolean : Expression {
+    Token token;
+    bool value;
+
+    this(Token token, bool value) {
+        this.token = token;
+        this.value = value;
+    }
+
+    /***********************************
+     * expressionNode does nothing in particular.
+     */
+    void expressionNode()  {}
+
+    /+++/
+    string tokenLiteral() {
+        return this.token.literal;
+    }
+
+    /+++/
+    string asString() {
+        return this.token.literal;
+    }
+}
+
 /+++/
 class IntegerLiteral : Expression {
     Token token;    /// the INT token type

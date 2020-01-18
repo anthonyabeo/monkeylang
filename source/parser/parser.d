@@ -22,7 +22,7 @@ enum OpPreced : ubyte {
     CALL            // myFunction(X)
 }
 
-///
+/// Operator Precedence
 enum precedence = [
     TokenType.EQ : OpPreced.EQUALS,
     TokenType.NOT_EQ : OpPreced.EQUALS,
@@ -62,6 +62,8 @@ struct Parser {
         this.registerPrefixFxn(TokenType.INT, &this.parseIntegerLiteral);
         this.registerPrefixFxn(TokenType.BANG, &this.parsePrefixExpression);
         this.registerPrefixFxn(TokenType.MINUS, &this.parsePrefixExpression);
+        this.registerPrefixFxn(TokenType.TRUE, &this.parseBoolean);
+        this.registerPrefixFxn(TokenType.FALSE, &this.parseBoolean);
 
         this.infixParseFxns = (infixParseFn[TokenType]).init;
         this.registerInfixFxn(TokenType.PLUS, &this.parseInfixExpression);
@@ -88,6 +90,10 @@ struct Parser {
     void nextToken() {
         this.curToken = this.peekToken;
         this.peekToken = this.lex.nextToken();
+    }
+
+    Expression parseBoolean() {
+        return new Boolean(this.curToken, this.curTokenIs(TokenType.TRUE));
     }
 
     /+++/
