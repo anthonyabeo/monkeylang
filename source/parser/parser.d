@@ -65,7 +65,8 @@ struct Parser {
         this.registerPrefixFxn(TokenType.TRUE, &this.parseBoolean);
         this.registerPrefixFxn(TokenType.FALSE, &this.parseBoolean);
         this.registerPrefixFxn(TokenType.LPAREN, &this.parseGroupedExpression);
-        
+        this.registerPrefixFxn(TokenType.IF, &this.parseIfExpression);
+
         this.infixParseFxns = (infixParseFn[TokenType]).init;
         this.registerInfixFxn(TokenType.PLUS, &this.parseInfixExpression);
         this.registerInfixFxn(TokenType.MINUS, &this.parseInfixExpression);
@@ -163,6 +164,52 @@ struct Parser {
         }
 
         return stmt;
+    }
+
+    /+++/
+    Expression parseIfExpression() {
+        auto expr = new IfExpression(this.curToken);
+        if(!this.expectPeek(TokenType.LPAREN))
+            return null;
+
+        this.nextToken();
+
+        expr.condition = this.parseExpression(OpPreced.LOWEST);
+
+        if(!this.expectPeek(TokenType.RPAREN))
+            return null;
+
+        if(!this.expectPeek(TokenType.LBRACE))
+            return null;
+
+        expr.consequence = this.parseBlockStatement();
+
+        if(this.peekTokenIs(TokenType.ELSE)) {
+            this.nextToken();
+            if(!this.expectPeek(TokenType.LBRACE)) 
+                return null;
+
+            expr.alternative = this.parseBlockStatement();
+        }
+
+        return expr;
+    }
+
+    /+++/
+    BlockStatement parseBlockStatement() {
+        auto blckStmt = new BlockStatement(this.curToken);
+        
+        this.nextToken();
+
+        while(!this.curTokenIs(TokenType.RBRACE) && !this.curTokenIs(TokenType.EOF)) {
+            auto stmt = this.parseStatement();
+            if(stmt !is null) 
+                blckStmt.statements ~= stmt;
+
+            this.nextToken();
+        }
+
+        return blckStmt;
     }
 
     /+++/
