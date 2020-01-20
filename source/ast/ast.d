@@ -112,6 +112,39 @@ class IntegerLiteral : Expression {
 }
 
 /+++/
+class IfExpression : Expression {
+    Token token;                /// token
+    Expression condition;       /// condition of the if expression
+    BlockStatement consequence; /// block state fot the if-clause
+    BlockStatement alternative; /// block statement for the else-clause
+
+    /+++/
+    this(Token token) {
+        this.token = token;
+    }
+
+    /***********************************
+     * expressionNode does nothing in particular.
+     */
+    void expressionNode()  {}
+
+    /+++/
+    string tokenLiteral() {
+        return this.token.literal;
+    }
+
+    /+++/
+    string asString() {
+        string s = format("if%s %s", this.condition.asString(), 
+                                     this.consequence.asString());
+        if(this.alternative !is null)
+            s ~= "else " ~ this.alternative.asString();
+
+        return s;
+    }
+}
+
+/+++/
 class InfixExpression : Expression {
     Token token;        /// token
     Expression left;    /// left
@@ -199,6 +232,39 @@ class Identifier : Expression {
     /+++/
     string asString() {
         return this.value;
+    }
+}
+
+/+++/
+class BlockStatement : Statement {
+    Token token;            /// token
+    Statement[] statements; /// array of statements in this block
+
+    /+++/
+    this(Token token) {
+        this.token = token;
+        this.statements = [];
+    }
+
+    /***********************************
+     * statementNode does nothing in particular. 
+     * mostly used for debugging purposes.
+     */
+    void statementNode() {}
+
+    /+++/
+    string tokenLiteral() {
+        return this.token.literal;
+    }
+
+    /+++/
+    string asString() {
+        string s;
+        foreach(stmt; this.statements) {
+            s ~= stmt.asString();
+        }
+
+        return s;
     }
 }
 
