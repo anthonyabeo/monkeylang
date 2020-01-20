@@ -64,7 +64,8 @@ struct Parser {
         this.registerPrefixFxn(TokenType.MINUS, &this.parsePrefixExpression);
         this.registerPrefixFxn(TokenType.TRUE, &this.parseBoolean);
         this.registerPrefixFxn(TokenType.FALSE, &this.parseBoolean);
-
+        this.registerPrefixFxn(TokenType.LPAREN, &this.parseGroupedExpression);
+        
         this.infixParseFxns = (infixParseFn[TokenType]).init;
         this.registerInfixFxn(TokenType.PLUS, &this.parseInfixExpression);
         this.registerInfixFxn(TokenType.MINUS, &this.parseInfixExpression);
@@ -92,6 +93,18 @@ struct Parser {
         this.peekToken = this.lex.nextToken();
     }
 
+    /+++/
+    Expression parseGroupedExpression() {
+        this.nextToken();
+
+        auto expr = parseExpression(OpPreced.LOWEST);
+        if(!this.expectPeek(TokenType.RPAREN))
+            return null;
+
+        return expr;
+    }
+
+    /+++/
     Expression parseBoolean() {
         return new Boolean(this.curToken, this.curTokenIs(TokenType.TRUE));
     }
@@ -187,7 +200,7 @@ struct Parser {
     Expression parseExpression(OpPreced prec) {
         auto prefix = this.prefixParseFxns.get(this.curToken.type, null);
         if(prefix is null) {
-            this.noPrefixParseFnError(this.curToken.type);
+            this.noPrefixParseFnError(this.curToken.literal);
             return null;
         }
 
@@ -290,7 +303,7 @@ struct Parser {
             this.errs ~= msg;
         }
 
-        void noPrefixParseFnError(TokenType tt) {
+        void noPrefixParseFnError(string tt) {
             this.errs ~= format("no prefix parse function for %s found", tt);
         }
 }
