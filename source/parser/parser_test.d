@@ -210,7 +210,11 @@ unittest {
         MoreInfixEntry("true", "true"),
         MoreInfixEntry("false", "false"),
         MoreInfixEntry("3 > 5 == false", "((3 > 5) == false)"),
-        MoreInfixEntry("3 < 5 == true", "((3 < 5) == true)")
+        MoreInfixEntry("3 < 5 == true", "((3 < 5) == true)"),
+        MoreInfixEntry("(5 + 5) * 2", "((5 + 5) * 2)"),
+        MoreInfixEntry("2 / (5 + 5)", "(2 / (5 + 5))"),
+        MoreInfixEntry("-(5 + 5)", "(-(5 + 5))"),
+        MoreInfixEntry("!(true == true)", "(!(true == true))")
     ];
 
     foreach(t; moreTests) {
