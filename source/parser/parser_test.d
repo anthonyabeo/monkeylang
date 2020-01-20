@@ -3,6 +3,7 @@ module parser.parser_test;
 import std.stdio : stderr, writeln, writefln;
 import std.typecons : tuple, Tuple;
 import std.string : format;
+import std.conv : parse, to;
 
 import parser.parser;
 import lexer.lexer;
@@ -130,16 +131,6 @@ unittest {
         Entry("-15;", "-", 15)
     ];
 
-    bool testIntegerLiteral(Expression il, long value) {
-        auto integ = cast(IntegerLiteral) il;
-
-        if(integ is null) return false;
-        if(integ.value != value) return false;
-        if(integ.tokenLiteral() != format("%d", value)) return false;
-
-        return true;
-    }
-
     foreach(t; prefixTests) {
         auto lex1 = Lexer(t.input);
         auto parser1 = Parser(lex1);
@@ -225,4 +216,96 @@ unittest {
 
         assert(program3.asString() == t.expected);
     }
+
+    // TEST IF STATEMENT
+    input = "if (x < y) { x }" ;
+
+    auto lex4 = Lexer(input);
+    auto parser4 = Parser(lex4);
+    auto program4 = parser4.parseProgram();
+    checkParserErrors(parser4);
+
+    assert(program4 !is null);
+    assert(program4.statements.length == 1);
+
+    auto expStmt4 = cast(ExpressionStatement) program4.statements[0]; 
+    assert(expStmt4 !is null);
+
+    auto ifExpr = cast(IfExpression) expStmt4.expression;
+    assert(ifExpr !is null);
+
+    assert(testInfixExpression(ifExpr.condition, "x", "<", "y"));
+
+    assert(ifExpr.consequence.statements.length == 1);
+
+    auto conseq = cast(ExpressionStatement) ifExpr.consequence.statements[0];
+    assert(conseq !is null);
+
+    assert(testIdentifier(conseq.expression, "x"));
+    assert(ifExpr.alternative is null);
+}
+
+bool testInfixExpression(T, E)(Expression expr, T left, string operator, E right) {
+    auto opExp = cast(InfixExpression) expr;
+    if(opExp is null) {
+        stderr.writefln("exp is not ast.InfixExpression. got=%s(%s)", expr, expr);
+        return false;
+    }
+
+    if(!testLiteralExpression(opExp.left, left))
+        return false;
+
+    if(opExp.operator != operator) {
+        stderr.writefln("exp.Operator is not '%s'. got=%s", opExp.operator, operator);
+        return false;
+    }
+
+    if(!testLiteralExpression(opExp.right, right))
+        return false;
+
+    return true;
+}
+
+bool testLiteralExpression(T) (Expression expr, T expected) {
+    switch(to!string(typeid(expected))) {
+        case "int":
+            return testIntegerLiteral(expr, parse!long(expected));
+        case "long":
+            return testIntegerLiteral(expr, parse!long(expected));
+        case "immutable(char)[]":
+            return testIdentifier(expr, expected);
+        default:
+            stderr.writefln("type of exp not handled. got=%s", expr.asString());
+            return false;
+    }
+}
+
+bool testIdentifier(Expression expr, string value) {
+    auto ident = cast(Identifier) expr;
+    if(ident is null) {
+        stderr.writefln("exp not *ast.Identifier. got=%s", expr);
+        return false;
+    }
+
+    if(ident.value != value) {
+        stderr.writefln("ident.Value not %s. got=%s", value, ident.value);
+        return false;
+    }
+
+    if(ident.tokenLiteral() != value) {
+        stderr.writefln("ident.TokenLiteral not %s. got=%s", value, ident.tokenLiteral());
+        return false;
+    }
+
+    return true;
+}
+
+bool testIntegerLiteral(Expression il, long value) {
+    auto integ = cast(IntegerLiteral) il;
+
+    if(integ is null) return false;
+    if(integ.value != value) return false;
+    if(integ.tokenLiteral() != format("%d", value)) return false;
+
+    return true;
 }
