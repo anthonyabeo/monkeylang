@@ -13,18 +13,6 @@ unittest {
     auto input = "let x = 5;
                   let y = 10;
                   let foobar = 838383;";
-    
-    void checkParserErrors(ref Parser p) {
-        auto errors = p.errors();
-        if(errors.length == 0)
-            return;
-
-        stderr.writefln("parser produced %d errors", errors.length);
-        foreach(err; errors) 
-            stderr.writefln("parser error: %s", err);
-
-        assert(false);
-    }
 
     auto lex = Lexer(input);
     auto parser = Parser(lex);
@@ -243,6 +231,20 @@ unittest {
 
     assert(testIdentifier(conseq.expression, "x"));
     assert(ifExpr.alternative is null);
+
+    testFunctionLiteralParsing();
+}
+
+void checkParserErrors(ref Parser p) {
+    auto errors = p.errors();
+    if(errors.length == 0)
+        return;
+
+    stderr.writefln("parser produced %d errors", errors.length);
+    foreach(err; errors) 
+        stderr.writefln("parser error: %s", err);
+
+    assert(false);
 }
 
 bool testInfixExpression(T, E)(Expression expr, T left, string operator, E right) {
@@ -308,4 +310,61 @@ bool testIntegerLiteral(Expression il, long value) {
     if(integ.tokenLiteral() != format("%d", value)) return false;
 
     return true;
+}
+
+void testFunctionLiteralParsing() {
+    string input = "fn(x, y) { x + y; }";
+
+    auto lexer = Lexer(input);
+    auto parser = Parser(lexer);
+    auto program = parser.parseProgram();
+    checkParserErrors(parser);
+
+    assert(program !is null);
+    assert(program.statements.length == 1);
+
+    auto stmt = cast(ExpressionStatement) program.statements[0];
+    assert(stmt !is null);
+
+    auto fxn = cast(FunctionLiteral) stmt.expression;
+    assert(fxn !is null);
+    assert(fxn.parameters.length == 2);
+
+    testLiteralExpression(fxn.parameters[0], "x");
+    testLiteralExpression(fxn.parameters[1], "y");
+
+    assert(fxn.fnBody.statements.length == 1);
+
+    auto bodyStmt = cast(ExpressionStatement) fxn.fnBody.statements[0];
+    assert(bodyStmt !is null);
+
+    testInfixExpression(bodyStmt.expression, "x", "+", "y");
+}
+
+void testFunctionParameterParsing() {
+    alias FnStruct = Tuple!(string, "input", string[], "expectedParams");
+
+    auto tests = [
+        FnStruct("fn() {};", []),
+        FnStruct("fn(x) {};", ["x"]),
+        FnStruct("fn(x, y, z) {};", ["x", "y", "z"])
+    ];
+
+    foreach(tt; tests) {
+        auto lexer = Lexer(tt.input);
+        auto parser = Parser(lexer);
+        auto program = parser.parseProgram();
+        checkParserErrors(parser);
+
+        auto stmt = cast(ExpressionStatement) program.statements[0];
+        assert(stmt !is null);
+
+        auto fxn = cast(FunctionLiteral) stmt.expression;
+
+        assert(fxn.parameters.length == tt.expectedParams.length);
+
+        foreach(i, ident; tt.expectedParams) {
+            testLiteralExpression(fxn.parameters[i], ident);
+        }
+    }
 }
