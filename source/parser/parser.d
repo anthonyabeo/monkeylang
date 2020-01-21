@@ -66,6 +66,7 @@ struct Parser {
         this.registerPrefixFxn(TokenType.FALSE, &this.parseBoolean);
         this.registerPrefixFxn(TokenType.LPAREN, &this.parseGroupedExpression);
         this.registerPrefixFxn(TokenType.IF, &this.parseIfExpression);
+        this.registerPrefixFxn(TokenType.FUNCTION, &this.parseFunctionLiteral);
 
         this.infixParseFxns = (infixParseFn[TokenType]).init;
         this.registerInfixFxn(TokenType.PLUS, &this.parseInfixExpression);
@@ -92,6 +93,48 @@ struct Parser {
     void nextToken() {
         this.curToken = this.peekToken;
         this.peekToken = this.lex.nextToken();
+    }
+
+    /+++/
+    Expression parseFunctionLiteral() {
+        auto fnLit = new FunctionLiteral(this.curToken);
+        if(!this.expectPeek(TokenType.LPAREN)) 
+            return null;
+
+        fnLit.parameters = this.parseFunctionParamters();
+
+        if(!this.expectPeek(TokenType.LBRACE)) 
+            return null;
+
+        fnLit.fnBody = this.parseBlockStatement();
+
+        return fnLit;
+    }
+
+    /+++/
+    Identifier[] parseFunctionParamters() {
+        Identifier[] identifiers;
+        if(this.peekTokenIs(TokenType.RPAREN)) {
+            this.nextToken();
+            return identifiers;
+        }
+
+        this.nextToken();
+
+        auto ident = new Identifier(this.curToken, this.curToken.literal);
+        identifiers ~= ident;
+
+        while(this.peekTokenIs(TokenType.COMMA)) {
+            this.nextToken();
+            this.nextToken();
+            ident = new Identifier(this.curToken, this.curToken.literal);
+            identifiers ~= ident;
+        }
+
+        if(!this.expectPeek(TokenType.RPAREN))
+            return null;
+
+        return identifiers;
     }
 
     /+++/
