@@ -31,7 +31,8 @@ enum precedence = [
     TokenType.PLUS : OpPreced.SUM,
     TokenType.MINUS : OpPreced.SUM,
     TokenType.SLASH : OpPreced.PRODUCT,
-    TokenType.ASTERISK : OpPreced.PRODUCT
+    TokenType.ASTERISK : OpPreced.PRODUCT,
+    TokenType.LPAREN: OpPreced.CALL
 ];
 
 /+++/
@@ -77,6 +78,7 @@ struct Parser {
         this.registerInfixFxn(TokenType.NOT_EQ, &this.parseInfixExpression);
         this.registerInfixFxn(TokenType.LT, &this.parseInfixExpression);
         this.registerInfixFxn(TokenType.GT, &this.parseInfixExpression);
+        this.registerInfixFxn(TokenType.LPAREN, &this.parseCallExpression);
     }
 
     /// postblit constructor
@@ -93,6 +95,37 @@ struct Parser {
     void nextToken() {
         this.curToken = this.peekToken;
         this.peekToken = this.lex.nextToken();
+    }
+
+    /+++/
+    Expression parseCallExpression(Expression fxn) {
+        auto exp = new CallExpression(this.curToken, fxn);
+        exp.args = this.parseCallArguments();
+        return exp;
+    }
+
+    /+++/
+    Expression[] parseCallArguments() {
+        Expression[] args;
+
+        if(this.peekTokenIs(TokenType.RPAREN)) {
+            this.nextToken();
+            return args;
+        }
+
+        this.nextToken();
+        args ~= this.parseExpression(OpPreced.LOWEST);
+
+        while(this.peekTokenIs(TokenType.COMMA)) {
+            this.nextToken();
+            this.nextToken();
+            args ~= this.parseExpression(OpPreced.LOWEST);
+        }
+
+        if(!this.expectPeek(TokenType.RPAREN))
+            return null;
+
+        return args;
     }
 
     /+++/
