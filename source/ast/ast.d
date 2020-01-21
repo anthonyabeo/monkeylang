@@ -115,11 +115,51 @@ class IntegerLiteral : Expression {
 }
 
 /+++/
-class FunctionLiteral : Expression {
-    Token token;                ///
-    Identifier[] parameters;    ///
-    BlockStatement fnBody;      ///
+class CallExpression : Expression {
+    Token token;         /// token
+    Expression fxn;      /// function
+    Expression[] args;   /// arguments
 
+    /***********************************
+     * Constructor
+     */
+    this(Token token, Expression fxn) {
+        this.token = token;
+        this.fxn = fxn;
+    }
+    /***********************************
+     * expressionNode does nothing in particular.
+     */
+    void expressionNode()  {}
+
+    /+++/
+    string tokenLiteral() {
+        return this.token.literal;
+    }
+
+    /+++/
+    string asString() {
+        string[] ags;
+        foreach(a; this.args) {
+            ags ~= a.asString();
+        }
+
+        string s = this.fxn.asString() ~ 
+                                   "(" ~ 
+                      join(ags, ", ") ~ 
+                      ")";
+
+        return s;
+    }
+}
+
+/+++/
+class FunctionLiteral : Expression {
+    Token token;                /// token   
+    Identifier[] parameters;    /// parameters
+    BlockStatement fnBody;      /// body
+
+    /+++/
     this(Token token) {
         this.token = token;
     }
