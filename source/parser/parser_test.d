@@ -193,7 +193,10 @@ unittest {
         MoreInfixEntry("(5 + 5) * 2", "((5 + 5) * 2)"),
         MoreInfixEntry("2 / (5 + 5)", "(2 / (5 + 5))"),
         MoreInfixEntry("-(5 + 5)", "(-(5 + 5))"),
-        MoreInfixEntry("!(true == true)", "(!(true == true))")
+        MoreInfixEntry("!(true == true)", "(!(true == true))"),
+        MoreInfixEntry("a + add(b * c) + d", "((a + add((b * c))) + d)"),
+        MoreInfixEntry("add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"),
+        MoreInfixEntry("add(a + b + c * d / f + g)", "add((((a + b) + ((c * d) / f)) + g))")
     ];
 
     foreach(t; moreTests) {
@@ -233,8 +236,10 @@ unittest {
     assert(ifExpr.alternative is null);
 
     testFunctionLiteralParsing();
+    testCallExpressionParsing();
 }
 
+/+++/
 void checkParserErrors(ref Parser p) {
     auto errors = p.errors();
     if(errors.length == 0)
@@ -247,6 +252,7 @@ void checkParserErrors(ref Parser p) {
     assert(false);
 }
 
+/+++/
 bool testInfixExpression(T, E)(Expression expr, T left, string operator, E right) {
     auto opExp = cast(InfixExpression) expr;
     if(opExp is null) {
@@ -268,24 +274,26 @@ bool testInfixExpression(T, E)(Expression expr, T left, string operator, E right
     return true;
 }
 
+/+++/
 bool testLiteralExpression(T) (Expression expr, T expected) {
     switch(to!string(typeid(expected))) {
         case "int":
-            return testIntegerLiteral(expr, parse!long(expected));
+            return testIntegerLiteral(expr, to!long(expected));
         case "long":
-            return testIntegerLiteral(expr, parse!long(expected));
+            return testIntegerLiteral(expr, to!long(expected));
         case "immutable(char)[]":
-            return testIdentifier(expr, expected);
+            return testIdentifier(expr, to!string(expected));
         default:
             stderr.writefln("type of exp not handled. got=%s", expr.asString());
             return false;
     }
 }
 
+/+++/
 bool testIdentifier(Expression expr, string value) {
     auto ident = cast(Identifier) expr;
     if(ident is null) {
-        stderr.writefln("exp not *ast.Identifier. got=%s", expr);
+        stderr.writefln("exp not *ast.Identifier. got=%s", expr.asString());
         return false;
     }
 
@@ -302,6 +310,7 @@ bool testIdentifier(Expression expr, string value) {
     return true;
 }
 
+/+++/
 bool testIntegerLiteral(Expression il, long value) {
     auto integ = cast(IntegerLiteral) il;
 
@@ -312,6 +321,7 @@ bool testIntegerLiteral(Expression il, long value) {
     return true;
 }
 
+/+++/
 void testFunctionLiteralParsing() {
     string input = "fn(x, y) { x + y; }";
 
@@ -341,6 +351,7 @@ void testFunctionLiteralParsing() {
     testInfixExpression(bodyStmt.expression, "x", "+", "y");
 }
 
+/+++/
 void testFunctionParameterParsing() {
     alias FnStruct = Tuple!(string, "input", string[], "expectedParams");
 
@@ -367,4 +378,32 @@ void testFunctionParameterParsing() {
             testLiteralExpression(fxn.parameters[i], ident);
         }
     }
+}
+
+/+++/
+void testCallExpressionParsing() {
+    string input = "add(1, 2 * 3, 4 + 5);";
+    
+    auto lexer = Lexer(input);
+    auto parser = Parser(lexer);
+    auto program = parser.parseProgram();
+    checkParserErrors(parser);
+
+    assert(program !is null);
+    assert(program.statements.length == 1);
+
+    auto stmt = cast(ExpressionStatement) program.statements[0];
+    assert(stmt !is null);
+
+    auto callExpr = cast(CallExpression) stmt.expression;
+    assert(callExpr !is null);
+
+    if(!testIdentifier(callExpr.fxn, "add"))
+        return;
+
+    assert(callExpr.args.length == 3);
+
+    testLiteralExpression(callExpr.args[0], 1);
+    testInfixExpression(callExpr.args[1], 2L, "*", 3L);
+    testInfixExpression(callExpr.args[2], 4L, "+", 5L);
 }
