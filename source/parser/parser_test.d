@@ -28,27 +28,6 @@ unittest {
         tuple("foobar")
     ];
 
-    bool testLetStatement(Statement stmt, string name) {
-        if(stmt.tokenLiteral() != "let") {
-            stderr.writefln("stmt.tokenLiteral not 'let'. got=%s", stmt.tokenLiteral());
-            return false;
-        }
-
-        auto letStmt = cast(LetStatement) stmt;
-        if(letStmt is null) {
-            stderr.writefln("stmt is not a LetStatement. It is a %s", stmt);
-            return false;
-        }
-
-        if(letStmt.name.tokenLiteral() != name) {
-            stderr.writefln("letStmt.name.tokenLiteral is not '%s'. But rather %s", 
-                            name, letStmt.name.tokenLiteral());
-            return false;
-        }
-
-        return true;
-    }
-
     foreach(offset, tt; tests) {
         auto stmt = program.statements[offset];
         assert(testLetStatement(stmt, tt[0]));
@@ -253,6 +232,28 @@ void checkParserErrors(ref Parser p) {
 }
 
 /+++/
+bool testLetStatement(Statement stmt, string name) {
+    if(stmt.tokenLiteral() != "let") {
+        stderr.writefln("stmt.tokenLiteral not 'let'. got=%s", stmt.tokenLiteral());
+        return false;
+    }
+
+    auto letStmt = cast(LetStatement) stmt;
+    if(letStmt is null) {
+        stderr.writefln("stmt is not a LetStatement. It is a %s", stmt);
+        return false;
+    }
+
+    if(letStmt.name.tokenLiteral() != name) {
+        stderr.writefln("letStmt.name.tokenLiteral is not '%s'. But rather %s", 
+                        name, letStmt.name.tokenLiteral());
+        return false;
+    }
+
+    return true;
+}
+
+/+++/
 bool testInfixExpression(T, E)(Expression expr, T left, string operator, E right) {
     auto opExp = cast(InfixExpression) expr;
     if(opExp is null) {
@@ -406,4 +407,39 @@ void testCallExpressionParsing() {
     testLiteralExpression(callExpr.args[0], 1);
     testInfixExpression(callExpr.args[1], 2L, "*", 3L);
     testInfixExpression(callExpr.args[2], 4L, "+", 5L);
+}
+
+///
+struct LetS (T) {
+    string input;                   /// input
+    string expectedIdentifier;      ///input
+    T expectedValue;                /// input
+}
+
+///
+void testLetStatements() {
+    auto tests = tuple(
+        LetS!int("let x = 5;", "x", 5),
+        LetS!bool("let y = true;", "y", true),
+        LetS!string("let foobar = y;", "foobar", "y")
+    );
+
+    foreach (tt; tests) {
+        auto lexer = Lexer(tt.input);
+        auto parser = Parser(lexer);
+        auto program = parser.parseProgram();
+        checkParserErrors(parser);
+
+        assert(program !is null);
+        assert(program.statements.length == 1);
+
+        auto stmt = program.statements[0];
+        if(!testLetStatement(stmt, tt.expectedIdentifier))
+            return;
+
+        auto val = (cast(LetStatement) stmt).value;
+
+        if(!testLiteralExpression(val, tt.expectedValue))
+            return;
+    }
 }

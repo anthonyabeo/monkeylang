@@ -346,10 +346,9 @@ struct Parser {
         auto stmt = new ReturnStatement(this.curToken);
         this.nextToken();
 
-        // TODO: We're skipping the expressions until we
-        // encounter a semicolon
+        stmt.returnValue = this.parseExpression(OpPreced.LOWEST);
 
-        while(!this.curTokenIs(TokenType.SEMICOLON))
+        if(this.peekTokenIs(TokenType.SEMICOLON))
             this.nextToken();
 
         return stmt;
@@ -366,10 +365,11 @@ struct Parser {
         if(!this.expectPeek(TokenType.ASSIGN))
             return null;
 
-        // TODO: We're skipping the expressions until we
-        // encounter a semicolon
+        this.nextToken();
 
-        while(!this.curTokenIs(TokenType.SEMICOLON))
+        stmt.value = this.parseExpression(OpPreced.LOWEST);
+
+        if(this.peekTokenIs(TokenType.SEMICOLON))
             this.nextToken();
 
         return stmt;
