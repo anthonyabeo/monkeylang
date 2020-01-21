@@ -1,6 +1,7 @@
 module ast.ast;
 
 import std.string;
+import std.array : join;
 
 import token.token;
 
@@ -58,10 +59,12 @@ class Program {
     }
 }
 
+/+++/
 class Boolean : Expression {
-    Token token;
-    bool value;
+    Token token;    /// token
+    bool value;     /// value
 
+    /+++/
     this(Token token, bool value) {
         this.token = token;
         this.value = value;
@@ -108,6 +111,44 @@ class IntegerLiteral : Expression {
     /+++/
     string asString() {
         return this.token.literal;
+    }
+}
+
+/+++/
+class FunctionLiteral : Expression {
+    Token token;                ///
+    Identifier[] parameters;    ///
+    BlockStatement fnBody;      ///
+
+    this(Token token) {
+        this.token = token;
+    }
+
+    /***********************************
+     * expressionNode does nothing in particular.
+     */
+    void expressionNode()  {}
+
+    /+++/
+    string tokenLiteral() {
+        return this.token.literal;
+    }
+
+    /+++/
+    string asString() {
+        string[] params;
+
+        foreach(p; this.parameters) {
+            params ~= p.asString();
+        }
+
+        string s = this.tokenLiteral() ~ 
+                                   "(" ~ 
+                    join(params, ", ") ~ 
+                                  ") " ~ 
+                   this.fnBody.asString();
+        
+        return s;
     }
 }
 
