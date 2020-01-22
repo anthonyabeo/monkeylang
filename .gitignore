@@ -13,3 +13,4 @@ monkey-test-*
 *.o
 *.obj
 *.lst
+.vscode
