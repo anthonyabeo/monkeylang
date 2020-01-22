@@ -10,6 +10,19 @@ import parser.parser : Parser;
 import ast.ast : Program;
 
 
+const MONKEY_FACE = `    __,__
+                   .--. .-" "-. .--.
+                 / .. \/ .-. .-. \/ .. \
+                 | | '| / Y \ |' | |
+                | \ \ \ 0 | 0 / / / |
+                \ '- ,\.-"""""""-./, -' /
+                  ''-' /_ ^ ^ _\ '-''
+                     | \._ _./ |
+                     \ \ '~' / /
+                    '._ '-=-' _.'
+                       '-----' 
+            `;
+
 /// prompt for the interpreter console
 enum PROMPT = ">>> ";
 
@@ -27,7 +40,7 @@ void start() {
             program = parser.parseProgram();
 
             if(parser.errs.length != 0) {
-                printParserErrors(parser.errors());
+                printParserErrors(parser.errs);
                 continue;
             }
 
@@ -40,6 +53,8 @@ void start() {
 
 ///
 void printParserErrors(string[] errors) {
+    writeln(MONKEY_FACE);
+    writeln("Woops! We ran into some monkey business here!\nparser errors:");
     foreach(msg; errors) {
         stderr.writefln("\t", msg);
     }
