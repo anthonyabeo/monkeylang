@@ -8,8 +8,8 @@ import token.token;
 import lexer.lexer;
 import ast.ast;
 
-alias prefixParseFn = Expression delegate();
-alias infixParseFn = Expression delegate(Expression);
+alias prefixParseFn = Expression function(ref Parser);
+alias infixParseFn = Expression function(ref Parser, ref Expression);
 
 /// Operator Precedence Rules
 enum OpPreced : ubyte {
@@ -59,26 +59,26 @@ struct Parser {
         this.nextToken();
 
         this.prefixParseFxns = (prefixParseFn[TokenType]).init;
-        this.registerPrefixFxn(TokenType.IDENTIFIER, &this.parseIdentifier);
-        this.registerPrefixFxn(TokenType.INT, &this.parseIntegerLiteral);
-        this.registerPrefixFxn(TokenType.BANG, &this.parsePrefixExpression);
-        this.registerPrefixFxn(TokenType.MINUS, &this.parsePrefixExpression);
-        this.registerPrefixFxn(TokenType.TRUE, &this.parseBoolean);
-        this.registerPrefixFxn(TokenType.FALSE, &this.parseBoolean);
-        this.registerPrefixFxn(TokenType.LPAREN, &this.parseGroupedExpression);
-        this.registerPrefixFxn(TokenType.IF, &this.parseIfExpression);
-        this.registerPrefixFxn(TokenType.FUNCTION, &this.parseFunctionLiteral);
+        this.registerPrefixFxn(TokenType.IDENTIFIER, &Parser.parseIdentifier);
+        this.registerPrefixFxn(TokenType.INT, &Parser.parseIntegerLiteral);
+        this.registerPrefixFxn(TokenType.BANG, &Parser.parsePrefixExpression);
+        this.registerPrefixFxn(TokenType.MINUS, &Parser.parsePrefixExpression);
+        this.registerPrefixFxn(TokenType.TRUE, &Parser.parseBoolean);
+        this.registerPrefixFxn(TokenType.FALSE, &Parser.parseBoolean);
+        this.registerPrefixFxn(TokenType.LPAREN, &Parser.parseGroupedExpression);
+        this.registerPrefixFxn(TokenType.IF, &Parser.parseIfExpression);
+        this.registerPrefixFxn(TokenType.FUNCTION, &Parser.parseFunctionLiteral);
 
         this.infixParseFxns = (infixParseFn[TokenType]).init;
-        this.registerInfixFxn(TokenType.PLUS, &this.parseInfixExpression);
-        this.registerInfixFxn(TokenType.MINUS, &this.parseInfixExpression);
-        this.registerInfixFxn(TokenType.SLASH, &this.parseInfixExpression);
-        this.registerInfixFxn(TokenType.ASTERISK, &this.parseInfixExpression);
-        this.registerInfixFxn(TokenType.EQ, &this.parseInfixExpression);
-        this.registerInfixFxn(TokenType.NOT_EQ, &this.parseInfixExpression);
-        this.registerInfixFxn(TokenType.LT, &this.parseInfixExpression);
-        this.registerInfixFxn(TokenType.GT, &this.parseInfixExpression);
-        this.registerInfixFxn(TokenType.LPAREN, &this.parseCallExpression);
+        this.registerInfixFxn(TokenType.PLUS, &Parser.parseInfixExpression);
+        this.registerInfixFxn(TokenType.MINUS, &Parser.parseInfixExpression);
+        this.registerInfixFxn(TokenType.SLASH, &Parser.parseInfixExpression);
+        this.registerInfixFxn(TokenType.ASTERISK, &Parser.parseInfixExpression);
+        this.registerInfixFxn(TokenType.EQ, &Parser.parseInfixExpression);
+        this.registerInfixFxn(TokenType.NOT_EQ, &Parser.parseInfixExpression);
+        this.registerInfixFxn(TokenType.LT, &Parser.parseInfixExpression);
+        this.registerInfixFxn(TokenType.GT, &Parser.parseInfixExpression);
+        this.registerInfixFxn(TokenType.LPAREN, &Parser.parseCallExpression);
     }
 
     /// postblit constructor
@@ -98,9 +98,9 @@ struct Parser {
     }
 
     /+++/
-    Expression parseCallExpression(Expression fxn) {
-        auto exp = new CallExpression(this.curToken, fxn);
-        exp.args = this.parseCallArguments();
+    static Expression parseCallExpression(ref Parser parser, ref Expression fxn) {
+        auto exp = new CallExpression(parser.curToken, fxn);
+        exp.args = parser.parseCallArguments();
         return exp;
     }
 
@@ -129,17 +129,17 @@ struct Parser {
     }
 
     /+++/
-    Expression parseFunctionLiteral() {
-        auto fnLit = new FunctionLiteral(this.curToken);
-        if(!this.expectPeek(TokenType.LPAREN)) 
+    static Expression parseFunctionLiteral(ref Parser parser) {
+        auto fnLit = new FunctionLiteral(parser.curToken);
+        if(!parser.expectPeek(TokenType.LPAREN)) 
             return null;
 
-        fnLit.parameters = this.parseFunctionParamters();
+        fnLit.parameters = parser.parseFunctionParamters();
 
-        if(!this.expectPeek(TokenType.LBRACE)) 
+        if(!parser.expectPeek(TokenType.LBRACE)) 
             return null;
 
-        fnLit.fnBody = this.parseBlockStatement();
+        fnLit.fnBody = parser.parseBlockStatement();
 
         return fnLit;
     }
@@ -171,41 +171,41 @@ struct Parser {
     }
 
     /+++/
-    Expression parseGroupedExpression() {
-        this.nextToken();
+    static Expression parseGroupedExpression(ref Parser parser) {
+        parser.nextToken();
 
-        auto expr = parseExpression(OpPreced.LOWEST);
-        if(!this.expectPeek(TokenType.RPAREN))
+        auto expr = parser.parseExpression(OpPreced.LOWEST);
+        if(!parser.expectPeek(TokenType.RPAREN))
             return null;
 
         return expr;
     }
 
     /+++/
-    Expression parseBoolean() {
-        return new Boolean(this.curToken, this.curTokenIs(TokenType.TRUE));
+    static Expression parseBoolean(ref Parser parser) {
+        return new Boolean(parser.curToken, parser.curTokenIs(TokenType.TRUE));
     }
 
     /+++/
-    Expression parseIntegerLiteral() {
-        auto iLit = new IntegerLiteral(this.curToken);
+    static Expression parseIntegerLiteral(ref Parser parser) {
+        auto iLit = new IntegerLiteral(parser.curToken);
         long value;
 
         try {
-            value = to!long(this.curToken.literal);
+            value = parse!long(parser.curToken.literal);
         } catch (ConvException ce) {
-            this.errs ~= format("could not parse %s as integer", this.curToken.literal);
+            parser.errs ~= format("could not parse %s as integer", parser.curToken.literal);
             return null;
         }
-        
+
         iLit.value = value;
 
         return iLit;
     }
 
     /+++/
-    Expression parseIdentifier() {
-        return new Identifier(this.curToken, this.curToken.literal);
+    static Expression parseIdentifier(ref Parser parser) {
+        return new Identifier(parser.curToken, parser.curToken.literal);
     }
 
     /+++/
@@ -243,29 +243,29 @@ struct Parser {
     }
 
     /+++/
-    Expression parseIfExpression() {
-        auto expr = new IfExpression(this.curToken);
-        if(!this.expectPeek(TokenType.LPAREN))
+    static Expression parseIfExpression(ref Parser parser) {
+        auto expr = new IfExpression(parser.curToken);
+        if(!parser.expectPeek(TokenType.LPAREN))
             return null;
 
-        this.nextToken();
+        parser.nextToken();
 
-        expr.condition = this.parseExpression(OpPreced.LOWEST);
+        expr.condition = parser.parseExpression(OpPreced.LOWEST);
 
-        if(!this.expectPeek(TokenType.RPAREN))
+        if(!parser.expectPeek(TokenType.RPAREN))
             return null;
 
-        if(!this.expectPeek(TokenType.LBRACE))
+        if(!parser.expectPeek(TokenType.LBRACE))
             return null;
 
-        expr.consequence = this.parseBlockStatement();
+        expr.consequence = parser.parseBlockStatement();
 
-        if(this.peekTokenIs(TokenType.ELSE)) {
-            this.nextToken();
-            if(!this.expectPeek(TokenType.LBRACE)) 
+        if(parser.peekTokenIs(TokenType.ELSE)) {
+            parser.nextToken();
+            if(!parser.expectPeek(TokenType.LBRACE)) 
                 return null;
 
-            expr.alternative = this.parseBlockStatement();
+            expr.alternative = parser.parseBlockStatement();
         }
 
         return expr;
@@ -289,22 +289,22 @@ struct Parser {
     }
 
     /+++/
-    Expression parseInfixExpression(Expression left) {
-        auto expr = new InfixExpression(this.curToken, left, this.curToken.literal);
+    static Expression parseInfixExpression(ref Parser parser, ref Expression left) {
+        auto expr = new InfixExpression(parser.curToken, left, parser.curToken.literal);
         
-        auto prec = this.curPrecedence();
-        this.nextToken();
-        expr.right = this.parseExpression(prec);
+        auto prec = parser.curPrecedence();
+        parser.nextToken();
+        expr.right = parser.parseExpression(prec);
 
         return expr;
     }
 
     /+++/
-    Expression parsePrefixExpression() {
-        auto expr = new PrefixExpression(this.curToken, this.curToken.literal);
+    static Expression parsePrefixExpression(ref Parser parser) {
+        auto expr = new PrefixExpression(parser.curToken, parser.curToken.literal);
 
-        this.nextToken();
-        expr.right = this.parseExpression(OpPreced.PREFIX);
+        parser.nextToken();
+        expr.right = parser.parseExpression(OpPreced.PREFIX);
 
         return expr;
     }
@@ -327,7 +327,7 @@ struct Parser {
             return null;
         }
 
-        auto leftExp = prefix();
+        auto leftExp = prefix(this);
         
         while(!this.peekTokenIs(TokenType.SEMICOLON) && prec < this.peekPrecedence()) {
             auto infix = this.infixParseFxns.get(this.peekToken.type, null);
@@ -335,7 +335,7 @@ struct Parser {
                 return leftExp;
 
             this.nextToken();
-            leftExp = infix(leftExp);
+            leftExp = infix(this, leftExp);
         }
 
         return leftExp;
@@ -366,7 +366,7 @@ struct Parser {
             return null;
 
         this.nextToken();
-
+        
         stmt.value = this.parseExpression(OpPreced.LOWEST);
 
         if(this.peekTokenIs(TokenType.SEMICOLON))
