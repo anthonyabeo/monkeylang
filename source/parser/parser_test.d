@@ -216,6 +216,7 @@ unittest {
 
     testFunctionLiteralParsing();
     testCallExpressionParsing();
+    testLetStatements();
 }
 
 /+++/
@@ -285,7 +286,7 @@ bool testLiteralExpression(T) (Expression expr, T expected) {
         case "immutable(char)[]":
             return testIdentifier(expr, to!string(expected));
         default:
-            stderr.writefln("type of exp not handled. got=%s", expr.asString());
+            stderr.writefln("type of expression not handled. got=%s", expr.asString());
             return false;
     }
 }
