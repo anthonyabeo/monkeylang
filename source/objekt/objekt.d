@@ -20,6 +20,11 @@ class Integer : Objekt {
     long value;     /// the value of the integer
 
     /+++/
+    this(long value) {
+        this.value = value;
+    }
+
+    /+++/
     ObjectType type() {
         return ObjectType.INTEGER;
     }

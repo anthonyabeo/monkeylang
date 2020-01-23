@@ -31,7 +31,7 @@ interface Expression : Node {
 }
 
 /+++/
-class Program {
+class Program : Node {
     Statement[] statements; /// a program is a bunch of statements
 
     /***********************************
