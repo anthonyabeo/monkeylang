@@ -183,7 +183,7 @@ struct Parser {
 
     /+++/
     static Expression parseBoolean(ref Parser parser) {
-        return new Boolean(parser.curToken, parser.curTokenIs(TokenType.TRUE));
+        return new BooleanLiteral(parser.curToken, parser.curTokenIs(TokenType.TRUE));
     }
 
     /+++/

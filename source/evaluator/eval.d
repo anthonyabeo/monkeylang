@@ -23,6 +23,9 @@ Objekt eval(Node node) {
         case "ast.ast.IntegerLiteral":
             obj = new Integer((cast(IntegerLiteral)node).value);
             break;
+        case "ast.ast.BooleanLiteral":
+            obj = new Boolean((cast(BooleanLiteral)node).value);
+            break;
         default:
             obj = null;
     }
