@@ -41,6 +41,11 @@ class Boolean : Objekt {
     bool value; /// bool value
 
     /+++/
+    this(bool value) {
+        this.value = value;
+    }
+
+    /+++/
     ObjectType type() {
         return ObjectType.BOOLEAN;
     }

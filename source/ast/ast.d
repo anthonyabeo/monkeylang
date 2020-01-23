@@ -60,7 +60,7 @@ class Program : Node {
 }
 
 /+++/
-class Boolean : Expression {
+class BooleanLiteral : Expression {
     Token token;    /// token
     bool value;     /// value
 
