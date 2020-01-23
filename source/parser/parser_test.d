@@ -285,6 +285,8 @@ bool testLiteralExpression(T) (Expression expr, T expected) {
             return testIntegerLiteral(expr, to!long(expected));
         case "immutable(char)[]":
             return testIdentifier(expr, to!string(expected));
+        case "bool":
+            return testBooleanLiteral(expr, to!bool(expected));
         default:
             stderr.writefln("type of expression not handled. got=%s", expr.asString());
             return false;
@@ -319,6 +321,17 @@ bool testIntegerLiteral(Expression il, long value) {
     if(integ is null) return false;
     if(integ.value != value) return false;
     if(integ.tokenLiteral() != format("%d", value)) return false;
+
+    return true;
+}
+
+/+++/
+bool testBooleanLiteral(Expression boolit, bool value) {
+    auto b = cast(BooleanLiteral) boolit;
+
+    if(b is null) return false;
+    if(b.value != value) return false;
+    if(b.tokenLiteral() != format("%s", value)) return false;
 
     return true;
 }
