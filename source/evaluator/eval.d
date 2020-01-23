@@ -6,6 +6,15 @@ import std.conv;
 import ast.ast;
 import objekt.objekt;
 
+Boolean TRUE, FALSE;
+Null NULL;
+
+static this() {
+    NULL = new Null(); 
+    TRUE = new Boolean(true),
+    FALSE = new Boolean(false);
+}
+
 ///
 Objekt eval(Node node) {
     Objekt obj;
@@ -24,7 +33,7 @@ Objekt eval(Node node) {
             obj = new Integer((cast(IntegerLiteral)node).value);
             break;
         case "ast.ast.BooleanLiteral":
-            obj = new Boolean((cast(BooleanLiteral)node).value);
+            obj = nativeBoolToBooleanObject((cast(BooleanLiteral)node).value);
             break;
         default:
             obj = null;
@@ -41,4 +50,9 @@ Objekt evalStatements(Statement[] statements) {
     }
 
     return obj;
+}
+
+Boolean nativeBoolToBooleanObject(bool input) {
+    if(input) return TRUE;
+    return FALSE;
 }
