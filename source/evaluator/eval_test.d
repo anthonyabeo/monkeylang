@@ -11,6 +11,7 @@ import evaluator.eval;
 
 unittest {
     testEvalIntegerExpression();
+    testEvalBooleanExpression();
 }
 
 ///
@@ -24,6 +25,20 @@ void testEvalIntegerExpression() {
     foreach(tt; tests) {
         auto evaluated = testEval(tt.input);
         assert(testIntegerObject(evaluated, tt.expected));
+    }
+}
+
+///
+void testEvalBooleanExpression() {
+    alias BoolExp = Tuple!(string, "input", bool, "expected");
+    auto tests = [
+        BoolExp("true", true),
+        BoolExp("false", false)
+    ];
+
+    foreach(tt; tests) {
+        auto evaluated = testEval(tt.input);
+        assert(testBooleanObject(evaluated, tt.expected));
     }
 }
 
@@ -47,6 +62,23 @@ bool testIntegerObject(Objekt obj, long expected) {
     if(intObj.value != expected) {
         stderr.writefln("object has wrong value. got=%d, want=%d", 
                          intObj.value, expected);
+        return false;
+    }
+
+    return true;
+}
+
+///
+bool testBooleanObject(Objekt obj, bool expected) {
+    auto boolObj = cast(Boolean) obj;
+    if(boolObj is null) {
+        stderr.writefln("object is not Boolean. got=%s (%s)", obj, obj);
+        return false;
+    }
+
+    if(boolObj.value != expected) {
+        stderr.writefln("object has wrong value. got=%d, want=%d", 
+                         boolObj.value, expected);
         return false;
     }
 
