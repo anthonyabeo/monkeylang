@@ -8,8 +8,10 @@ import token.token;
 import lexer.lexer : Lexer;
 import parser.parser : Parser;
 import ast.ast : Program;
+import evaluator.eval;
 
 
+/// monkey face
 const MONKEY_FACE = `    __,__
                    .--. .-" "-. .--.
                  / .. \/ .-. .-. \/ .. \
@@ -44,7 +46,9 @@ void start() {
                 continue;
             }
 
-            writefln("%s", program.asString());
+            auto evaluated = eval(program);
+            if(evaluated !is null)
+                writefln("%s", evaluated.inspect());
 
             break;
         }
