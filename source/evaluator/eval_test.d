@@ -20,7 +20,9 @@ void testEvalIntegerExpression() {
     alias IntExp = Tuple!(string, "input", long, "expected");
     auto tests = [
         IntExp("5", 5),
-        IntExp("10", 10)
+        IntExp("10", 10),
+        IntExp("-5", -5),
+        IntExp("-10", -10)
     ];
 
     foreach(tt; tests) {

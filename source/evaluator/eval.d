@@ -70,6 +70,8 @@ Objekt evalPrefixExpression(string operator, Objekt right) {
     switch(operator) {
         case "!":
             return evalBangOperatorExpression(right);
+        case "-":
+            return evalMinusOperatorExpression(right);
         default:
             return null;
     }
@@ -81,4 +83,14 @@ Objekt evalBangOperatorExpression(Objekt right) {
     else if(right.inspect() == FALSE.inspect()) return TRUE;
     else if(right.inspect() == NULL.inspect()) return TRUE;
     else return FALSE;
+}
+
+///
+Objekt evalMinusOperatorExpression(Objekt right) {
+    if(right.type() != ObjectType.INTEGER)
+        return null;
+
+    auto value = (cast(Integer)right).value;
+
+    return new Integer(-value);
 }
