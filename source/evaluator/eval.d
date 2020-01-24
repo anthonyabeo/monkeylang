@@ -6,8 +6,9 @@ import std.conv;
 import ast.ast;
 import objekt.objekt;
 
-Boolean TRUE, FALSE;
-Null NULL;
+Boolean TRUE;   /// true
+Boolean FALSE;  /// false
+Null NULL;      /// null
 
 static this() {
     NULL = new Null(); 
@@ -35,6 +36,12 @@ Objekt eval(Node node) {
         case "ast.ast.BooleanLiteral":
             obj = nativeBoolToBooleanObject((cast(BooleanLiteral)node).value);
             break;
+        case "ast.ast.PrefixExpression":
+            auto prefixExprNode = cast(PrefixExpression) node;
+
+            auto right = eval(prefixExprNode.right);
+            obj = evalPrefixExpression(prefixExprNode.operator, right);
+            break;
         default:
             obj = null;
     }
@@ -52,7 +59,26 @@ Objekt evalStatements(Statement[] statements) {
     return obj;
 }
 
+///
 Boolean nativeBoolToBooleanObject(bool input) {
     if(input) return TRUE;
     return FALSE;
+}
+
+///
+Objekt evalPrefixExpression(string operator, Objekt right) {
+    switch(operator) {
+        case "!":
+            return evalBangOperatorExpression(right);
+        default:
+            return null;
+    }
+}
+
+///
+Objekt evalBangOperatorExpression(Objekt right) {
+    if(right.inspect() == TRUE.inspect()) return FALSE;
+    else if(right.inspect() == FALSE.inspect()) return TRUE;
+    else if(right.inspect() == NULL.inspect()) return TRUE;
+    else return FALSE;
 }

@@ -11,7 +11,8 @@ import evaluator.eval;
 
 unittest {
     testEvalIntegerExpression();
-    testEvalBooleanExpression();
+    // testEvalBooleanExpression();
+    testBangOperator();
 }
 
 ///
@@ -83,4 +84,23 @@ bool testBooleanObject(Objekt obj, bool expected) {
     }
 
     return true;
+}
+
+///
+void testBangOperator() {
+    alias BangExp = Tuple!(string, "input", bool, "expected");
+
+    auto tests = [
+        BangExp("!true", false),
+        BangExp("!false", true),
+        BangExp("!5", false),
+        BangExp("!!true", true),
+        BangExp("!!false", false),
+        BangExp("!!5", true)
+    ];
+
+    foreach (tt; tests) {
+        auto evaluated = testEval(tt.input);
+        assert(testBooleanObject(evaluated, tt.expected));
+    }
 }
