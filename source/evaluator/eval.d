@@ -23,10 +23,20 @@ Objekt eval(Node node) {
 
     switch(nde) {
         case "ast.ast.Program":
-            obj = evalStatements((cast(Program)node).statements);
+            obj = evalStatements((cast(Program) node).statements);
             break;
         case "ast.ast.ExpressionStatement":
-            obj = eval((cast(ExpressionStatement)node).expression);
+            obj = eval((cast(ExpressionStatement) node).expression);
+            break;
+        case "ast.ast.BlockStatement":
+            auto blockStmt = cast(BlockStatement) node;
+
+            obj = evalStatements(blockStmt.statements);
+            break;
+        case "ast.ast.IfExpression":
+            auto ifExpr = cast(IfExpression) node;
+
+            obj = evalIfExpression(ifExpr);
             break;
 
         // Expressions
@@ -138,4 +148,21 @@ Objekt evalIntegerInfixExpression(string operator, Objekt left, Objekt right) {
         default:
             return NULL;
     }
+}
+
+Objekt evalIfExpression(IfExpression ie) {
+    auto condition = eval(ie.condition);
+    if(isTruthy(condition)) 
+        return eval(ie.consequence);        
+    else if(ie.alternative !is null) 
+        return eval(ie.alternative);
+    else
+        return NULL;
+}
+
+bool isTruthy(Objekt obj) {
+    if(obj.inspect() == NULL.inspect()) return false;
+    else if(obj.inspect() == TRUE.inspect())  return true;
+    else if(obj.inspect() == FALSE.inspect()) return false;
+    else return true;
 }
