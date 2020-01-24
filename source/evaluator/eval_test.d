@@ -11,7 +11,7 @@ import evaluator.eval;
 
 unittest {
     testEvalIntegerExpression();
-    // testEvalBooleanExpression();
+    testEvalBooleanExpression();
     testBangOperator();
 }
 
@@ -22,7 +22,18 @@ void testEvalIntegerExpression() {
         IntExp("5", 5),
         IntExp("10", 10),
         IntExp("-5", -5),
-        IntExp("-10", -10)
+        IntExp("-10", -10),
+        IntExp("5 + 5 + 5 + 5 - 10", 10),
+        IntExp("2 * 2 * 2 * 2 * 2", 32),
+        IntExp("-50 + 100 + -50", 0),
+        IntExp("5 * 2 + 10", 20),
+        IntExp("5 + 2 * 10", 25),
+        IntExp("20 + 2 * -10", 0),
+        IntExp("50 / 2 * 2 + 10", 60),
+        IntExp("2 * (5 + 10)", 30),
+        IntExp("3 * 3 * 3 + 10", 37),
+        IntExp("3 * (3 * 3) + 10", 37),
+        IntExp("(5 + 10 * 2 + 15 / 3) * 2 + -10", 50)
     ];
 
     foreach(tt; tests) {

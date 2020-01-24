@@ -42,6 +42,14 @@ Objekt eval(Node node) {
             auto right = eval(prefixExprNode.right);
             obj = evalPrefixExpression(prefixExprNode.operator, right);
             break;
+        case "ast.ast.InfixExpression":
+            auto infixExprNode = cast(InfixExpression) node;
+
+            auto left = eval(infixExprNode.left);
+            auto right = eval(infixExprNode.right);
+            
+            obj = evalInfixExpression(infixExprNode.operator, left, right);
+            break;
         default:
             obj = null;
     }
@@ -93,4 +101,29 @@ Objekt evalMinusOperatorExpression(Objekt right) {
     auto value = (cast(Integer)right).value;
 
     return new Integer(-value);
+}
+
+Objekt evalInfixExpression(string operator, Objekt left, Objekt right) {
+    if(left.type() == ObjectType.INTEGER && right.type() == ObjectType.INTEGER)
+        return evalIntegerInfixExpression(operator, left, right);
+    else
+        return NULL;
+}
+
+Objekt evalIntegerInfixExpression(string operator, Objekt left, Objekt right) {
+    auto leftVal = (cast(Integer) left).value;
+    auto rightVal = (cast(Integer) right).value;
+
+    switch(operator) {
+        case "+":
+            return new Integer(leftVal + rightVal);
+        case "-":
+            return new Integer(leftVal - rightVal);
+        case "*":
+            return new Integer(leftVal * rightVal);
+        case "/":
+            return new Integer(leftVal / rightVal);
+        default:
+            return NULL;
+    }
 }
