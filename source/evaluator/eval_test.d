@@ -138,27 +138,22 @@ void testBangOperator() {
 }
 
 void testIfElseExpressions() {
-    ///
-    struct IfElseExp (T) {
-        string input;        /// input
-        T expected;          /// expected
-    }
+    alias IfElseExp = Tuple!(string, "input", string, "expected");
 
     auto tests = tuple(
-        IfElseExp!string("if (true) { 10 }", "10"),
-        // IfElseExp!string("if (false) { 10 }", "null"),
-        // IfElseExp!string("if (1) { 10 }", "10"),
-        // IfElseExp!string("if (1 < 2) { 10 }", "10"),
-        // IfElseExp!string("if (1 > 2) { 10 }", "null"),
-        // IfElseExp!string("if (1 > 2) { 10 } else { 20 }", "20"),
-        // IfElseExp!string("if (1 < 2) { 10 } else { 20 }", "10")
+        IfElseExp("if (true) { 10 }", "10"),
+        IfElseExp("if (false) { 10 }", "null"),
+        IfElseExp("if (1) { 10 }", "10"),
+        IfElseExp("if (1 < 2) { 10 }", "10"),
+        IfElseExp("if (1 > 2) { 10 }", "null"),
+        IfElseExp("if (1 > 2) { 10 } else { 20 }", "20"),
+        IfElseExp("if (1 < 2) { 10 } else { 20 }", "10")
     );
 
     foreach(tt; tests) {
         auto evaluated = testEval(tt.input);
 
         try {
-            // writeln(evaluated.inspect());
             auto integer = parse!int(tt.expected);
             assert(testIntegerObject(evaluated, integer)); 
         }
@@ -170,7 +165,7 @@ void testIfElseExpressions() {
 }
 
 bool testNullObject(Objekt obj) {
-    if(obj.inspect() == NULL.inspect()) {
+    if(obj.inspect() != NULL.inspect()) {
         stderr.writeln("object is not NULL. got=%s (%s)", obj, obj);
         return false;
     }
