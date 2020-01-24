@@ -47,7 +47,24 @@ void testEvalBooleanExpression() {
     alias BoolExp = Tuple!(string, "input", bool, "expected");
     auto tests = [
         BoolExp("true", true),
-        BoolExp("false", false)
+        BoolExp("false", false),
+        BoolExp("1 < 2", true),
+        BoolExp("1 > 2", false),
+        BoolExp("1 < 1", false),
+        BoolExp("1 > 1", false),
+        BoolExp("1 == 1", true),
+        BoolExp("1 != 1", false),
+        BoolExp("1 == 2", false),
+        BoolExp("1 != 2", true),
+        BoolExp("true == true", true),
+        BoolExp("false == false", true),
+        BoolExp("true == false", false),
+        BoolExp("true != false", true),
+        BoolExp("false != true", true),
+        BoolExp("(1 < 2) == true", true),
+        BoolExp("(1 < 2) == false", false),
+        BoolExp("(1 > 2) == true", false),
+        BoolExp("(1 > 2) == false", true)
     ];
 
     foreach(tt; tests) {

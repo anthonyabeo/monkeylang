@@ -106,6 +106,10 @@ Objekt evalMinusOperatorExpression(Objekt right) {
 Objekt evalInfixExpression(string operator, Objekt left, Objekt right) {
     if(left.type() == ObjectType.INTEGER && right.type() == ObjectType.INTEGER)
         return evalIntegerInfixExpression(operator, left, right);
+    else if(operator == "==")
+        return nativeBoolToBooleanObject(left == right);
+    else if(operator == "!=")
+        return nativeBoolToBooleanObject(left != right);
     else
         return NULL;
 }
@@ -123,6 +127,14 @@ Objekt evalIntegerInfixExpression(string operator, Objekt left, Objekt right) {
             return new Integer(leftVal * rightVal);
         case "/":
             return new Integer(leftVal / rightVal);
+        case "<":
+            return nativeBoolToBooleanObject(leftVal < rightVal);
+        case ">":
+            return nativeBoolToBooleanObject(leftVal > rightVal);
+        case "==":
+            return nativeBoolToBooleanObject(leftVal == rightVal);
+        case "!=":
+            return nativeBoolToBooleanObject(leftVal != rightVal);
         default:
             return NULL;
     }
