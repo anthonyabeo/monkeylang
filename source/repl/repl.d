@@ -35,7 +35,7 @@ void start() {
     Parser parser;
     Program program;
 
-    auto env = Environment((Objekt[string]).init);
+    auto env = new Environment((Objekt[string]).init);
 
     while(true) {
         write(PROMPT);

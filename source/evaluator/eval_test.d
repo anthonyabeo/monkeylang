@@ -19,6 +19,8 @@ unittest {
     testReturnStatements();
     testErrorHandling(); 
     testLetStatements();
+    testFunctionObject();
+    testClosures();
 }
 
 ///
@@ -84,7 +86,7 @@ Objekt testEval(string input) {
     auto lex = Lexer(input);
     auto parser = Parser(lex);
     auto program = parser.parseProgram();
-    auto env = Environment((Objekt[string]).init);
+    auto env = new Environment((Objekt[string]).init);
 
     return eval(program, env);
 }
@@ -165,8 +167,7 @@ void testIfElseExpressions() {
         }
         catch(ConvException ce) {
             assert(testNullObject(evaluated));
-        }
-            
+        }       
     }
 }
 
@@ -247,4 +248,63 @@ void testLetStatements() {
     foreach(tt; tests) {
         assert(testIntegerObject(testEval(tt.input), tt.expected));
     }
+}
+
+void testFunctionObject() {
+    auto input = "fn(x) { x + 2; };";
+
+    auto evaluated = testEval(input);
+
+    auto fn = cast(Function) evaluated;
+    if(fn is null) {
+        stderr.writeln("object is not Function. got=%s (%s)", evaluated, evaluated);
+        assert(fn !is null);
+    }
+
+    if(fn.parameters.length != 1) {
+        stderr.writefln("function has wrong parameters. Parameters=%s", fn.parameters);
+        assert(fn.parameters.length == 1);
+    }
+
+    if(fn.parameters[0].asString() != "x") {
+        stderr.writeln("parameter is not 'x'. got=%s", fn.parameters[0]);
+        assert(fn.parameters[0].asString() == "x");
+    }
+
+    auto expectedBody = "(x + 2)";
+
+    if(fn.fnBody.asString() != expectedBody) {
+        stderr.writeln("body is not %s. got=%s", expectedBody, fn.fnBody.asString());
+        assert(fn.fnBody.asString() == expectedBody);
+    }
+}
+
+void testFunctionApplication() {
+    alias FnApp = Tuple!(string, "input", long, "expected");
+
+    auto tests = [
+        FnApp("let identity = fn(x) { x; }; identity(5);", 5),
+        FnApp("let identity = fn(x) { return x; }; identity(5);", 5),
+        FnApp("let double = fn(x) { x * 2; }; double(5);", 10),
+        FnApp("let add = fn(x, y) { x + y; }; add(5, 5);", 10),
+        FnApp("let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20),
+        FnApp("fn(x) { x; }(5)", 5)
+    ];
+
+    foreach(tt; tests) {
+        assert(testIntegerObject(testEval(tt.input), tt.expected));
+    }
+}
+
+void testClosures() {
+    auto input = "
+        let newAdder = fn(x) {
+            fn(y) { x + y };
+        };
+
+        let addTwo = newAdder(2);
+        addTwo(2);
+    ";
+
+    testIntegerObject(testEval(input), 4);
 }
