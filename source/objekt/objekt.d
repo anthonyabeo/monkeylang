@@ -8,6 +8,7 @@ enum ObjectType {
     BOOLEAN,
     NULL,
     RETURN_VALUE,
+    ERROR,
 }
 
 /+++/
@@ -88,5 +89,25 @@ class ReturnValue : Objekt {
     /+++/
     string inspect() {
         return this.value.inspect();
+    }
+}
+
+/+++/
+class Err : Objekt {
+    string message; /// error message
+
+    /+++/
+    this(string msg) {
+        this.message = msg;
+    }
+
+    ///
+    ObjectType type() {
+        return ObjectType.ERROR;
+    }
+
+    ///
+    string inspect() {
+        return "ERROR: " ~ this.message;
     }
 }
