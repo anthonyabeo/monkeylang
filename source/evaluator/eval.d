@@ -19,7 +19,7 @@ static this() {
 }
 
 ///
-Objekt eval(Node node, ref Environment env) {
+Objekt eval(Node node, Environment env) {
     Objekt obj;
     auto nde = to!string(typeid((cast(Object)node)));
 
@@ -63,6 +63,26 @@ Objekt eval(Node node, ref Environment env) {
 
             obj = evalIdentifier(ident, env);
             break;
+        case "ast.ast.FunctionLiteral":
+            auto fn = cast(FunctionLiteral) node;
+
+            auto params = fn.parameters;
+            auto fnBody = fn.fnBody;
+
+            obj = new Function(params, env, fnBody);
+            break;
+        case "ast.ast.CallExpression":
+            auto callExpr = cast(CallExpression) node;
+
+            auto fn = eval(callExpr.fxn, env);
+            if(isError(fn))
+                return fn;
+
+            auto args = evalExpressions(callExpr.args, env);
+            if(args.length == 1 && isError(args[0]))
+                return args[0];
+
+            return applyFunction(fn, args);
             
         // Expressions
         case "ast.ast.IntegerLiteral":
@@ -101,7 +121,7 @@ Objekt eval(Node node, ref Environment env) {
 }
 
 ///
-Objekt evalProgram(Program program, ref Environment env) {
+Objekt evalProgram(Program program, Environment env) {
     Objekt obj;
 
     foreach(stmt; program.statements) {
@@ -199,7 +219,7 @@ Objekt evalIntegerInfixExpression(string operator, Objekt left, Objekt right) {
 }
 
 ///
-Objekt evalIfExpression(IfExpression ie, ref Environment env) {
+Objekt evalIfExpression(IfExpression ie, Environment env) {
     auto condition = eval(ie.condition, env);
     if(isError(condition))
         return condition;
@@ -221,7 +241,7 @@ bool isTruthy(Objekt obj) {
 }
 
 /+++/
-Objekt evalBlockStatement(BlockStatement block, ref Environment env) {
+Objekt evalBlockStatement(BlockStatement block, Environment env) {
     Objekt obj;
     foreach (stmt; block.statements) {
         obj = eval(stmt, env);
@@ -250,10 +270,52 @@ bool isError(Objekt obj) {
 }
 
 /+++/
-Objekt evalIdentifier(Identifier node, ref Environment env) {
+Objekt evalIdentifier(Identifier node, Environment env) {
     auto val = env.get(node.value);
     if(val is null)
         return newError("identifier not found: " ~ node.value);
     
     return val;
+}
+
+Objekt[] evalExpressions(Expression[] exps, Environment env) {
+    Objekt[] result;
+
+    foreach(e; exps) {
+        auto evaluated = eval(e, env);
+        if(isError(evaluated))
+            return [evaluated];
+        result ~= evaluated;
+    }
+
+    return result;
+}
+
+Objekt applyFunction(Objekt fxn, Objekt[] args) {
+    auto fn = cast(Function) fxn;
+    if(fn is null) {
+        return newError("not a function: %s", fn.type());
+    }
+
+    auto extendedEnv = extendFunctionEnv(fn, args);
+    auto evaluated = eval(fn.fnBody, extendedEnv);
+
+    return unwrapReturnValue(evaluated);
+}
+
+Environment extendFunctionEnv(Function fn, Objekt[] args) {
+    auto env = Environment.newEnclosingEnvironment(fn.env);
+    foreach(paramIdx, param; fn.parameters) {
+        env.set(param.value, args[paramIdx]);
+    }
+
+    return env;
+}
+
+Objekt unwrapReturnValue(Objekt obj) {
+    auto retValue = cast(ReturnValue) obj;
+    if(retValue !is null)
+        return retValue.value;
+
+    return obj;
 }
