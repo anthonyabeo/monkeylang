@@ -8,6 +8,7 @@ import lexer.lexer;
 import parser.parser;
 import objekt.objekt;
 import evaluator.eval;
+import objekt.environment;
 
 
 unittest {
@@ -15,8 +16,9 @@ unittest {
     testEvalBooleanExpression();
     testBangOperator();
     testIfElseExpressions();
-    TestReturnStatements();
-    TestErrorHandling(); 
+    testReturnStatements();
+    testErrorHandling(); 
+    testLetStatements();
 }
 
 ///
@@ -82,8 +84,9 @@ Objekt testEval(string input) {
     auto lex = Lexer(input);
     auto parser = Parser(lex);
     auto program = parser.parseProgram();
+    auto env = Environment((Objekt[string]).init);
 
-    return eval(program);
+    return eval(program, env);
 }
 
 ///
@@ -178,7 +181,7 @@ bool testNullObject(Objekt obj) {
 }
 
 /+++/
-void TestReturnStatements() {
+void testReturnStatements() {
     alias RetS = Tuple!(string, "input", long, "expected");
 
     auto tests = [
@@ -195,7 +198,7 @@ void TestReturnStatements() {
 }
 
 ///
-void TestErrorHandling() {
+void testErrorHandling() {
     alias ErrS = Tuple!(string, "input", string, "expectedMessage");
 
     auto tests = [
@@ -214,7 +217,8 @@ void TestErrorHandling() {
                 }
             ", 
             "unknown operator: BOOLEAN + BOOLEAN"
-        )
+        ),
+        ErrS("foobar", "identifier not found: foobar"),
     ];
 
     foreach(tt; tests) {
@@ -227,5 +231,20 @@ void TestErrorHandling() {
         }
 
         assert(errObj.message == tt.expectedMessage);
+    }
+}
+
+/+++/
+void testLetStatements() {
+    alias LetS = Tuple!(string, "input", long, "expected");
+    auto tests = [
+        LetS("let a = 5; a;", 5),
+        LetS("let a = 5 * 5; a;", 25),
+        LetS("let a = 5; let b = a; b;", 5),
+        LetS("let a = 5; let b = a; let c = a + b + 5; c;", 15)
+    ];
+
+    foreach(tt; tests) {
+        assert(testIntegerObject(testEval(tt.input), tt.expected));
     }
 }
