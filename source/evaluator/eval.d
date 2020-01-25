@@ -6,6 +6,7 @@ import std.string;
 
 import ast.ast;
 import objekt.objekt;
+import objekt.environment;
 
 Boolean TRUE;   /// true
 Boolean FALSE;  /// false
@@ -18,39 +19,54 @@ static this() {
 }
 
 ///
-Objekt eval(Node node) {
+Objekt eval(Node node, ref Environment env) {
     Objekt obj;
     auto nde = to!string(typeid((cast(Object)node)));
 
     switch(nde) {
         case "ast.ast.Program":
-            obj = evalProgram(cast(Program) node);
+            obj = evalProgram(cast(Program) node, env);
             break;
         case "ast.ast.ExpressionStatement":
-            obj = eval((cast(ExpressionStatement) node).expression);
+            obj = eval((cast(ExpressionStatement) node).expression, env);
             break;
         case "ast.ast.BlockStatement":
             auto blockStmt = cast(BlockStatement) node;
 
-            obj = evalBlockStatement(blockStmt);
+            obj = evalBlockStatement(blockStmt, env);
             break;
         case "ast.ast.IfExpression":
             auto ifExpr = cast(IfExpression) node;
 
-            obj = evalIfExpression(ifExpr);
+            obj = evalIfExpression(ifExpr, env);
             break;
         case "ast.ast.ReturnStatement":
             auto retStmt = cast(ReturnStatement) node;
-            auto val = eval(retStmt.returnValue);
+            auto val = eval(retStmt.returnValue, env);
             if(isError(val))
                 return val;
 
             obj = new ReturnValue(val);
             break;
+        case "ast.ast.LetStatement":
+            auto letStmt = cast(LetStatement) node;
+            auto val = eval(letStmt.value, env);
+            if(isError(val))
+                return val;
 
+            env.set(letStmt.name.value, val);
+
+            obj = new Null();
+            break;
+        case "ast.ast.Identifier":
+            auto ident = cast(Identifier) node;
+
+            obj = evalIdentifier(ident, env);
+            break;
+            
         // Expressions
         case "ast.ast.IntegerLiteral":
-            obj = new Integer((cast(IntegerLiteral)node).value);
+            obj = new Integer((cast(IntegerLiteral) node).value);
             break;
         case "ast.ast.BooleanLiteral":
             obj = nativeBoolToBooleanObject((cast(BooleanLiteral)node).value);
@@ -58,7 +74,7 @@ Objekt eval(Node node) {
         case "ast.ast.PrefixExpression":
             auto prefixExprNode = cast(PrefixExpression) node;
 
-            auto right = eval(prefixExprNode.right);
+            auto right = eval(prefixExprNode.right, env);
             if(isError(right))
                 return right;
 
@@ -67,11 +83,11 @@ Objekt eval(Node node) {
         case "ast.ast.InfixExpression":
             auto infixExprNode = cast(InfixExpression) node;
 
-            auto left = eval(infixExprNode.left);
+            auto left = eval(infixExprNode.left, env);
             if(isError(left))
                 return left;
 
-            auto right = eval(infixExprNode.right);
+            auto right = eval(infixExprNode.right, env);
             if(isError(right))
                 return right;
 
@@ -85,12 +101,12 @@ Objekt eval(Node node) {
 }
 
 ///
-Objekt evalProgram(Program program) {
+Objekt evalProgram(Program program, ref Environment env) {
     Objekt obj;
 
     foreach(stmt; program.statements) {
-        obj = eval(stmt);
-        
+        obj = eval(stmt, env);
+
         switch(obj.type()) {
             case ObjectType.RETURN_VALUE:
                 auto retVal = cast(ReturnValue) obj;
@@ -98,7 +114,7 @@ Objekt evalProgram(Program program) {
             case ObjectType.ERROR:
                 return obj;
             default:
-                break;
+                continue;
         }
     }
 
@@ -183,15 +199,15 @@ Objekt evalIntegerInfixExpression(string operator, Objekt left, Objekt right) {
 }
 
 ///
-Objekt evalIfExpression(IfExpression ie) {
-    auto condition = eval(ie.condition);
+Objekt evalIfExpression(IfExpression ie, ref Environment env) {
+    auto condition = eval(ie.condition, env);
     if(isError(condition))
         return condition;
-        
+
     if(isTruthy(condition)) 
-        return eval(ie.consequence);        
+        return eval(ie.consequence, env);        
     else if(ie.alternative !is null) 
-        return eval(ie.alternative);
+        return eval(ie.alternative, env);
     else
         return NULL;
 }
@@ -205,10 +221,10 @@ bool isTruthy(Objekt obj) {
 }
 
 /+++/
-Objekt evalBlockStatement(BlockStatement block) {
+Objekt evalBlockStatement(BlockStatement block, ref Environment env) {
     Objekt obj;
     foreach (stmt; block.statements) {
-        obj = eval(stmt);
+        obj = eval(stmt, env);
 
         if(obj !is null) {
             auto type = obj.type();
@@ -231,4 +247,13 @@ bool isError(Objekt obj) {
         return obj.type() == ObjectType.ERROR;
 
     return false;
+}
+
+/+++/
+Objekt evalIdentifier(Identifier node, ref Environment env) {
+    auto val = env.get(node.value);
+    if(val is null)
+        return newError("identifier not found: " ~ node.value);
+    
+    return val;
 }
