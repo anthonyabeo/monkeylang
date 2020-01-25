@@ -23,7 +23,7 @@ Objekt eval(Node node) {
 
     switch(nde) {
         case "ast.ast.Program":
-            obj = evalStatements((cast(Program) node).statements);
+            obj = evalProgram(cast(Program) node);
             break;
         case "ast.ast.ExpressionStatement":
             obj = eval((cast(ExpressionStatement) node).expression);
@@ -31,12 +31,18 @@ Objekt eval(Node node) {
         case "ast.ast.BlockStatement":
             auto blockStmt = cast(BlockStatement) node;
 
-            obj = evalStatements(blockStmt.statements);
+            obj = evalBlockStatement(blockStmt);
             break;
         case "ast.ast.IfExpression":
             auto ifExpr = cast(IfExpression) node;
 
             obj = evalIfExpression(ifExpr);
+            break;
+        case "ast.ast.ReturnStatement":
+            auto retStmt = cast(ReturnStatement) node;
+            auto val = eval(retStmt.returnValue);
+
+            obj = new ReturnValue(val);
             break;
 
         // Expressions
@@ -68,10 +74,15 @@ Objekt eval(Node node) {
 }
 
 ///
-Objekt evalStatements(Statement[] statements) {
+Objekt evalProgram(Program program) {
     Objekt obj;
-    foreach(stmt; statements) {
+
+    foreach(stmt; program.statements) {
         obj = eval(stmt);
+
+        auto retVal = cast(ReturnValue) obj;
+        if(retVal !is null)
+            return retVal.value;
     }
 
     return obj;
@@ -113,6 +124,7 @@ Objekt evalMinusOperatorExpression(Objekt right) {
     return new Integer(-value);
 }
 
+/+++/
 Objekt evalInfixExpression(string operator, Objekt left, Objekt right) {
     if(left.type() == ObjectType.INTEGER && right.type() == ObjectType.INTEGER)
         return evalIntegerInfixExpression(operator, left, right);
@@ -124,6 +136,7 @@ Objekt evalInfixExpression(string operator, Objekt left, Objekt right) {
         return NULL;
 }
 
+/+++/
 Objekt evalIntegerInfixExpression(string operator, Objekt left, Objekt right) {
     auto leftVal = (cast(Integer) left).value;
     auto rightVal = (cast(Integer) right).value;
@@ -150,6 +163,7 @@ Objekt evalIntegerInfixExpression(string operator, Objekt left, Objekt right) {
     }
 }
 
+///
 Objekt evalIfExpression(IfExpression ie) {
     auto condition = eval(ie.condition);
     if(isTruthy(condition)) 
@@ -160,9 +174,22 @@ Objekt evalIfExpression(IfExpression ie) {
         return NULL;
 }
 
+///
 bool isTruthy(Objekt obj) {
     if(obj.inspect() == NULL.inspect()) return false;
     else if(obj.inspect() == TRUE.inspect())  return true;
     else if(obj.inspect() == FALSE.inspect()) return false;
     else return true;
+}
+
+/+++/
+Objekt evalBlockStatement(BlockStatement block) {
+    Objekt obj;
+    foreach (stmt; block.statements) {
+        obj = eval(stmt);
+        if(obj !is null && obj.type() == ObjectType.RETURN_VALUE)
+            return obj;
+    }
+
+    return obj;
 }
