@@ -7,6 +7,7 @@ enum ObjectType {
     INTEGER,
     BOOLEAN,
     NULL,
+    RETURN_VALUE,
 }
 
 /+++/
@@ -67,5 +68,25 @@ class Null : Objekt {
     /+++/
     string inspect() {
         return "null";
+    }
+}
+
+/+++/
+class ReturnValue : Objekt {
+    Objekt value;   /// value to be returned
+
+    /+++/
+    this(Objekt value) {
+        this.value = value;
+    }
+
+    /+++/
+    ObjectType type() {
+        return ObjectType.RETURN_VALUE;
+    }
+
+    /+++/
+    string inspect() {
+        return this.value.inspect();
     }
 }
