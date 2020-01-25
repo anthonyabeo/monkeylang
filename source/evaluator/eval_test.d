@@ -15,6 +15,7 @@ unittest {
     testEvalBooleanExpression();
     testBangOperator();
     testIfElseExpressions();
+    TestReturnStatements(); 
 }
 
 ///
@@ -137,6 +138,7 @@ void testBangOperator() {
     }
 }
 
+/+++/
 void testIfElseExpressions() {
     alias IfElseExp = Tuple!(string, "input", string, "expected");
 
@@ -164,6 +166,7 @@ void testIfElseExpressions() {
     }
 }
 
+/+++/
 bool testNullObject(Objekt obj) {
     if(obj.inspect() != NULL.inspect()) {
         stderr.writeln("object is not NULL. got=%s (%s)", obj, obj);
@@ -171,4 +174,21 @@ bool testNullObject(Objekt obj) {
     }
 
     return true;
+}
+
+/+++/
+void TestReturnStatements() {
+    alias RetS = Tuple!(string, "input", long, "expected");
+
+    auto tests = [
+        RetS("return 10;", 10),
+        RetS("return 10; 9;", 10),
+        RetS("return 2 * 5; 9;", 10),
+        RetS("9; return 2 * 5; 9;", 10)
+    ];
+
+    foreach(tt; tests) {
+        auto evaluated = testEval(tt.input);
+        assert(testIntegerObject(evaluated, tt.expected));
+    }
 }
