@@ -1,6 +1,10 @@
 module objekt.objekt;
 
 import std.string;
+import std.array;
+
+import ast.ast;
+import objekt.environment;
 
 /// 
 enum ObjectType {
@@ -9,6 +13,7 @@ enum ObjectType {
     NULL,
     RETURN_VALUE,
     ERROR,
+    FUNCTION,
 }
 
 /+++/
@@ -109,5 +114,36 @@ class Err : Objekt {
     ///
     string inspect() {
         return "ERROR: " ~ this.message;
+    }
+}
+
+///
+class Function : Objekt {
+    Identifier[] parameters;  /// function parameters
+    BlockStatement fnBody;  /// function body
+    Environment env;        /// environment
+
+    ///
+    this(Identifier[] params, ref Environment env, BlockStatement fnBody) {
+        this.parameters = params;
+        this.env = env;
+        this.fnBody = fnBody;
+    }
+
+    ///
+    ObjectType type() {
+        return ObjectType.FUNCTION;
+    }
+
+    ///
+    string inspect() {
+        string[] params;
+        foreach (p; this.parameters) {
+            params ~= p.asString(); 
+        }
+
+        string s = "fn(" ~ join(params, ", ") ~ ") {\n" ~ this.fnBody.asString() ~ "\n}";
+
+        return s;
     }
 }
