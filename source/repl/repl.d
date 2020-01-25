@@ -9,7 +9,8 @@ import lexer.lexer : Lexer;
 import parser.parser : Parser;
 import ast.ast : Program;
 import evaluator.eval;
-
+import objekt.objekt;
+import objekt.environment;
 
 /// monkey face
 const MONKEY_FACE = `    __,__
@@ -34,6 +35,8 @@ void start() {
     Parser parser;
     Program program;
 
+    auto env = Environment((Objekt[string]).init);
+
     while(true) {
         write(PROMPT);
         foreach(line; stdin.byLine()) {
@@ -46,8 +49,8 @@ void start() {
                 continue;
             }
 
-            auto evaluated = eval(program);
-            if(evaluated !is null)
+            auto evaluated = eval(program, env);
+            if(evaluated.type() != ObjectType.NULL)
                 writefln("%s", evaluated.inspect());
 
             break;
