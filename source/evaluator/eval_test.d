@@ -15,7 +15,8 @@ unittest {
     testEvalBooleanExpression();
     testBangOperator();
     testIfElseExpressions();
-    TestReturnStatements(); 
+    TestReturnStatements();
+    TestErrorHandling(); 
 }
 
 ///
@@ -190,5 +191,41 @@ void TestReturnStatements() {
     foreach(tt; tests) {
         auto evaluated = testEval(tt.input);
         assert(testIntegerObject(evaluated, tt.expected));
+    }
+}
+
+///
+void TestErrorHandling() {
+    alias ErrS = Tuple!(string, "input", string, "expectedMessage");
+
+    auto tests = [
+        ErrS("5 + true;", "type mismatch: INTEGER + BOOLEAN"),
+        ErrS("5 + true; 5;", "type mismatch: INTEGER + BOOLEAN"),
+        ErrS("-true", "unknown operator: -BOOLEAN"),
+        ErrS("true + false;", "unknown operator: BOOLEAN + BOOLEAN"),
+        ErrS("5; true + false; 5", "unknown operator: BOOLEAN + BOOLEAN"),
+        ErrS("if (10 > 1) { true + false; }", "unknown operator: BOOLEAN + BOOLEAN"),
+        ErrS("
+                if (10 > 1) {
+                    if (10 > 1) {
+                        return true + false;
+                    }
+                    return 1;
+                }
+            ", 
+            "unknown operator: BOOLEAN + BOOLEAN"
+        )
+    ];
+
+    foreach(tt; tests) {
+        auto evaluated = testEval(tt.input);
+
+        auto errObj = cast(Err) evaluated;
+        if(errObj is null) {
+            stderr.writeln("no error object returned. got=%s(%s)", evaluated, evaluated);
+            continue;
+        }
+
+        assert(errObj.message == tt.expectedMessage);
     }
 }
