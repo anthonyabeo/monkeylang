@@ -14,17 +14,18 @@ import objekt.objekt;
 import objekt.environment;
 
 /// monkey face
-const MONKEY_FACE = `    __,__
+const MONKEY_FACE = 
+                    `    __,__
                    .--. .-" "-. .--.
-                 / .. \/ .-. .-. \/ .. \
-                 | | '| / Y \ |' | |
-                | \ \ \ 0 | 0 / / / |
-                \ '- ,\.-"""""""-./, -' /
+                 / ..\/ .-. .-. \/ ..\
+                |   | '| / Y \ |' |   |
+                |  \ \ \ 0 | 0 / / /  |
+                 \ '-,\.-""""""-./,-'/
                   ''-' /_ ^ ^ _\ '-''
-                     | \._ _./ |
-                     \ \ '~' / /
-                    '._ '-=-' _.'
-                       '-----' 
+                      | \._ _./ |
+                      \ \ '~' / /
+                     '._ '-=-' _.'
+                        '-----' 
             `;
 
 /// prompt for the interpreter console
@@ -42,7 +43,7 @@ void start() {
 
     while(true) {
         write(PROMPT);
-        
+
         readln(input);
         auto line = strip(input);
 
@@ -66,6 +67,6 @@ void printParserErrors(string[] errors) {
     writeln(MONKEY_FACE);
     writeln("Woops! We ran into some monkey business here!\nparser errors:");
     foreach(msg; errors) {
-        stderr.writefln("\t", msg);
+        stderr.writefln("\t%s", msg);
     }
 }
