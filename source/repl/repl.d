@@ -3,6 +3,7 @@ module repl.repl;
 import std.stdio;
 import std.conv;
 import std.file;
+import std.string;
 
 import token.token;
 import lexer.lexer : Lexer;
@@ -37,24 +38,26 @@ void start() {
 
     auto env = new Environment((Objekt[string]).init);
 
+    char[] input;
+
     while(true) {
         write(PROMPT);
-        foreach(line; stdin.byLine()) {
-            lexer = Lexer(to!string(line));
-            parser = Parser(lexer);
-            program = parser.parseProgram();
+        
+        readln(input);
+        auto line = strip(input);
 
-            if(parser.errs.length != 0) {
-                printParserErrors(parser.errs);
-                continue;
-            }
+        lexer = Lexer(to!string(line));
+        parser = Parser(lexer);
+        program = parser.parseProgram();
 
-            auto evaluated = eval(program, env);
-            if(evaluated.type() != ObjectType.NULL)
-                writefln("%s", evaluated.inspect());
-
-            break;
+        if(parser.errs.length != 0) {
+            printParserErrors(parser.errs);
+            continue;
         }
+
+        auto evaluated = eval(program, env);
+        if(evaluated.type() != ObjectType.NULL)
+            writefln("%s", evaluated.inspect());
     }
 }
 
