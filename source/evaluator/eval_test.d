@@ -86,7 +86,7 @@ Objekt testEval(string input) {
     auto lex = Lexer(input);
     auto parser = Parser(lex);
     auto program = parser.parseProgram();
-    auto env = new Environment((Objekt[string]).init);
+    auto env = new Environment();
 
     return eval(program, env);
 }

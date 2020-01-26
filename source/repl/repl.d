@@ -37,17 +37,15 @@ void start() {
     Parser parser;
     Program program;
 
-    auto env = new Environment((Objekt[string]).init);
+    auto env = new Environment();
 
-    char[] input;
+    string line;
 
     while(true) {
         write(PROMPT);
+        line = strip(readln());
 
-        readln(input);
-        auto line = strip(input);
-
-        lexer = Lexer(to!string(line));
+        lexer = Lexer(line);
         parser = Parser(lexer);
         program = parser.parseProgram();
 

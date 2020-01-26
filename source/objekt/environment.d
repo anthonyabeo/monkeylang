@@ -8,13 +8,13 @@ class Environment {
     Environment outer;      /// enclosing scope environment
 
     ///
-    this(Objekt[string] store) {
-        this.store = store;
+    this() {
+        this.store = (Objekt[string]).init;
     }
 
     ///
     static newEnclosingEnvironment(Environment outer) {
-        auto env = new Environment((Objekt[string]).init);
+        auto env = new Environment();
         env.outer = outer;
 
         return env;
