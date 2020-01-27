@@ -98,14 +98,18 @@ unittest {
         assert(tok.literal == token.literal);
     }
 
-    input = "if (5 < 10) {
+    input = `if (5 < 10) {
                 return true;
             } else {
                 return false;
             }
             
             10 == 10;
-            10 != 9;";
+            10 != 9;
+            
+            "foobar"
+            "foo bar"
+        `;
 
     tests = [
         Token(TokenType.IF, "if"),
@@ -133,6 +137,9 @@ unittest {
         Token(TokenType.NOT_EQ, "!="),
         Token(TokenType.INT, "9"),
         Token(TokenType.SEMICOLON, ";"),
+        Token(TokenType.STRING, "foobar"),
+        Token(TokenType.STRING, "foo bar"),
+        Token(TokenType.EOF, ""),
     ];
 
     lexer = new Lexer(input);
