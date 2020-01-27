@@ -22,6 +22,7 @@ unittest {
     testFunctionObject();
     testClosures();
     testStringLiteral();
+    testStringConcatenation();
 }
 
 ///
@@ -221,6 +222,7 @@ void testErrorHandling() {
             "unknown operator: BOOLEAN + BOOLEAN"
         ),
         ErrS("foobar", "identifier not found: foobar"),
+        ErrS(`"Hello" - "World"`, "unknown operator: STRING - STRING"),
     ];
 
     foreach(tt; tests) {
@@ -323,5 +325,21 @@ void testStringLiteral() {
     if(str.value != "hello world") {
         stderr.writeln("String has wrong value. got=%s", str.value);
         assert(str.value == "hello world");
+    }
+}
+
+void testStringConcatenation() {
+    auto input = `"Hello" + " " + "World!"`;
+
+    auto evaluated = testEval(input);
+    auto str = cast(String) evaluated;
+    if(str is null) {
+        stderr.writeln("object is not String. got=%s (%s)", evaluated, evaluated);
+        assert(str !is null);
+    }
+
+    if(str.value != "Hello World!") {
+        stderr.writeln("String has wrong value. got=%s", str.value);
+        assert(str.value == "Hello World!");
     }
 }
