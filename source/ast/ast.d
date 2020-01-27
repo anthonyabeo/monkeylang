@@ -60,6 +60,40 @@ class Program : Node {
 }
 
 /+++/
+class ArrayLiteral : Expression {
+    Token token;                /// the [ token
+    Expression[] elements;      /// array elements
+
+    /+++/
+    this(Token token) {
+        this.token = token;
+    }
+    
+    /***********************************
+     * expressionNode does nothing in particular.
+     */
+    void expressionNode()  {}
+
+    /+++/
+    string tokenLiteral() {
+        return this.token.literal;
+    }
+
+    /+++/
+    string asString() {
+        string[] elems;
+        foreach(e; this.elements) {
+            elems ~= e.asString();
+        }
+
+        string s = "[" ~ join(elems, ", ") ~ "]";
+
+        return s;
+    }
+}
+
+
+/+++/
 class BooleanLiteral : Expression {
     Token token;    /// token
     bool value;     /// value
