@@ -7,6 +7,8 @@ import std.string;
 import ast.ast;
 import objekt.objekt;
 import objekt.environment;
+import evaluator.builtins;
+import evaluator.utils;
 
 Boolean TRUE;   /// true
 Boolean FALSE;  /// false
@@ -272,10 +274,10 @@ Objekt evalBlockStatement(BlockStatement block, Environment env) {
     return obj;
 }
 
-///
-Err newError(T...) (string fmt, T args) {
-    return new Err(format(fmt, args));
-}
+// ///
+// Err newError(T...) (string fmt, T args) {
+//     return new Err(format(fmt, args));
+// }
 
 ///
 bool isError(Objekt obj) {
@@ -288,10 +290,14 @@ bool isError(Objekt obj) {
 /+++/
 Objekt evalIdentifier(Identifier node, Environment env) {
     auto val = env.get(node.value);
-    if(val is null)
-        return newError("identifier not found: " ~ node.value);
+    if(val !is null)
+        return val;
     
-    return val;
+    auto builtin = builtins.get(node.value, null);
+    if(builtin !is null) 
+        return builtin;
+
+    return newError("identifier not found: " ~ node.value);
 }
 
 Objekt[] evalExpressions(Expression[] exps, Environment env) {
@@ -308,15 +314,24 @@ Objekt[] evalExpressions(Expression[] exps, Environment env) {
 }
 
 Objekt applyFunction(Objekt fxn, Objekt[] args) {
-    auto fn = cast(Function) fxn;
-    if(fn is null) {
-        return newError("not a function: %s", fn.type());
+    switch(fxn.type()) {
+        case ObjectType.FUNCTION:
+            auto fn = cast(Function) fxn;
+
+            if(fn is null) {
+                return newError("not a function: %s", fn.type());
+            }
+
+            auto extendedEnv = extendFunctionEnv(fn, args);
+            auto evaluated = eval(fn.fnBody, extendedEnv);
+
+            return unwrapReturnValue(evaluated);
+        case ObjectType.BUILTIN:
+            auto fn = cast(BuiltIn) fxn;
+            return fn.fxn(args);
+        default:
+            return newError("not a function: %s", fxn.type());
     }
-
-    auto extendedEnv = extendFunctionEnv(fn, args);
-    auto evaluated = eval(fn.fnBody, extendedEnv);
-
-    return unwrapReturnValue(evaluated);
 }
 
 Environment extendFunctionEnv(Function fn, Objekt[] args) {

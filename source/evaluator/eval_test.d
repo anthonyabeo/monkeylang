@@ -12,17 +12,18 @@ import objekt.environment;
 
 
 unittest {
-    testEvalIntegerExpression();
-    testEvalBooleanExpression();
-    testBangOperator();
-    testIfElseExpressions();
-    testReturnStatements();
-    testErrorHandling(); 
-    testLetStatements();
-    testFunctionObject();
-    testClosures();
-    testStringLiteral();
-    testStringConcatenation();
+    // testEvalIntegerExpression();
+    // testEvalBooleanExpression();
+    // testBangOperator();
+    // testIfElseExpressions();
+    // testReturnStatements();
+    // testErrorHandling(); 
+    // testLetStatements();
+    // testFunctionObject();
+    // testClosures();
+    // testStringLiteral();
+    // testStringConcatenation();
+    testBuiltInFunctions();
 }
 
 ///
@@ -341,5 +342,43 @@ void testStringConcatenation() {
     if(str.value != "Hello World!") {
         stderr.writeln("String has wrong value. got=%s", str.value);
         assert(str.value == "Hello World!");
+    }
+}
+
+void testBuiltInFunctions() {
+    struct BinFxn(T) {
+        string input;
+        T expected;
+    }
+
+    auto tests = tuple(
+        BinFxn!int(`len("")`, 0),
+        BinFxn!int(`len("four")`, 4),
+        BinFxn!int(`len("hello world")`, 11),
+        BinFxn!string(`len(1)`, "argument to `len` not supported, got INTEGER"),
+        BinFxn!string(`len("one", "two")`, "wrong number of arguments. got=2, want=1")
+    );
+
+    foreach(tt; tests) {
+        auto evaluated = testEval(tt.input);
+        switch(to!string(typeid(typeof(tt.expected)))) {
+            case "int":
+                assert(testIntegerObject(evaluated, to!long(tt.expected)));
+                break;
+            case "immutable(char)[]":
+                auto errObj = cast(Err) evaluated;
+                if(errObj is null) {
+                    stderr.writeln("object is not Error. got=%s (%s)", evaluated, evaluated);
+                    continue;
+                }
+
+                if(errObj.message != to!string(tt.expected)) {
+                    stderr.writeln("wrong error message. expected=%s, got=%s", tt.expected, errObj.message);
+                    assert(errObj.message == to!string(tt.expected));
+                }
+                break;
+            default:
+                continue;
+        }
     }
 }
