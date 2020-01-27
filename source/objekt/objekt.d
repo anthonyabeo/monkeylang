@@ -14,6 +14,7 @@ enum ObjectType {
     RETURN_VALUE,
     ERROR,
     FUNCTION,
+    STRING,
 }
 
 /+++/
@@ -42,6 +43,25 @@ class Integer : Objekt {
     }
 }
 
+/+++/
+class String : Objekt {
+    string value;
+
+    /+++/
+    this(string value) {
+        this.value = value;
+    }
+    
+    /+++/
+    ObjectType type() {
+        return ObjectType.STRING;
+    }
+
+    /+++/
+    string inspect() {
+        return this.value;
+    }
+}
 
 /+++/
 class Boolean : Objekt {
