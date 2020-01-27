@@ -7,6 +7,7 @@ enum TokenType {
 
     IDENTIFIER,
     INT,
+    STRING,
 
     // Operators
     ASSIGN,
