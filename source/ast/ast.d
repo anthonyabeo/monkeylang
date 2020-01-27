@@ -115,6 +115,33 @@ class IntegerLiteral : Expression {
 }
 
 /+++/
+class StringLiteral : Expression {
+    Token token;
+    string value;
+
+    /+++/
+    this(Token token, string value) {
+        this.token = token;
+        this.value = value;
+    }
+    
+    /***********************************
+     * expressionNode does nothing in particular.
+     */
+    void expressionNode()  {}
+
+    /+++/
+    string tokenLiteral() {
+        return this.token.literal;
+    }
+
+    /+++/
+    string asString() {
+        return this.token.literal;
+    }
+}
+
+/+++/
 class CallExpression : Expression {
     Token token;         /// token
     Expression fxn;      /// function
