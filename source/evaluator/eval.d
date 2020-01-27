@@ -184,6 +184,8 @@ Objekt evalMinusOperatorExpression(Objekt right) {
 Objekt evalInfixExpression(string operator, Objekt left, Objekt right) {
     if(left.type() == ObjectType.INTEGER && right.type() == ObjectType.INTEGER)
         return evalIntegerInfixExpression(operator, left, right);
+    else if(left.type() == ObjectType.STRING && right.type() == ObjectType.STRING)
+        return evalStringInfixExpression(operator, left, right);
     else if(operator == "==")
         return nativeBoolToBooleanObject(left == right);
     else if(operator == "!=")
@@ -219,6 +221,17 @@ Objekt evalIntegerInfixExpression(string operator, Objekt left, Objekt right) {
         default:
             return newError("unknown operator: %s %s %s", left.type(), operator, right.type());
     }
+}
+
+///
+Objekt evalStringInfixExpression(string operator, Objekt left, Objekt right) {
+    if(operator != "+")
+        return newError("unknown operator: %s %s %s", left.type(), operator, right.type());
+    
+    auto leftVal = (cast(String) left).value;
+    auto rightVal = (cast(String) right).value;
+    
+    return new String(leftVal ~ rightVal);
 }
 
 ///
