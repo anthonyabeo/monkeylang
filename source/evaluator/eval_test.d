@@ -21,6 +21,7 @@ unittest {
     testLetStatements();
     testFunctionObject();
     testClosures();
+    testStringLiteral();
 }
 
 ///
@@ -307,4 +308,20 @@ void testClosures() {
     ";
 
     testIntegerObject(testEval(input), 4);
+}
+
+void testStringLiteral() {
+    auto input = `"hello world"`;
+
+    auto evaluated = testEval(input);
+    auto str = cast(String) evaluated;
+    if(str is null) {
+        stderr.writeln("object is not String. got=%s (%s)", evaluated, evaluated);
+        assert(str !is null);
+    }
+
+    if(str.value != "hello world") {
+        stderr.writeln("String has wrong value. got=%s", str.value);
+        assert(str.value == "hello world");
+    }
 }
