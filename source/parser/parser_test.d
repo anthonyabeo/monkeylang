@@ -218,6 +218,7 @@ unittest {
     testCallExpressionParsing();
     testLetStatements();
     testStringLiteralExpression();
+    testParsingArrayLiterals();
 }
 
 /+++/
@@ -479,4 +480,29 @@ void testStringLiteralExpression() {
         stderr.writeln("literal.Value not %s. got=%s", "hello world", strLit.value);
         assert(strLit.value == "hello world");
     }
+}
+
+void testParsingArrayLiterals() {
+    auto input = "[1, 2 * 2, 3 + 3]";
+
+    auto lex = Lexer(input);
+    auto parser = Parser(lex);
+    auto program = parser.parseProgram();
+    checkParserErrors(parser);
+
+    auto stmt = cast(ExpressionStatement) program.statements[0];
+    auto array = cast(ArrayLiteral) stmt.expression;
+    if(array is null) {
+        stderr.writeln("exp not ArrayLiteral. got=%s", stmt.expression.asString());
+        assert(array !is null);
+    }
+
+    if(array.elements.length != 3) {
+        stderr.writeln("len(array.Elements) not 3. got=%d", array.elements.length);
+        assert(array.elements.length == 3);
+    }
+
+    testIntegerLiteral(array.elements[0], 1);
+    testInfixExpression(array.elements[1], 2, "*", 2);
+    testInfixExpression(array.elements[2], 3, "+", 3);
 }

@@ -69,6 +69,7 @@ struct Parser {
         this.registerPrefixFxn(TokenType.IF, &Parser.parseIfExpression);
         this.registerPrefixFxn(TokenType.FUNCTION, &Parser.parseFunctionLiteral);
         this.registerPrefixFxn(TokenType.STRING, &Parser.parseStringLiteral);
+        this.registerPrefixFxn(TokenType.LBRACKET, &Parser.parseArrayLiteral);
 
         this.infixParseFxns = (infixParseFn[TokenType]).init;
         this.registerInfixFxn(TokenType.PLUS, &Parser.parseInfixExpression);
@@ -99,9 +100,42 @@ struct Parser {
     }
 
     /+++/
+    static Expression parseArrayLiteral(ref Parser parser) {
+        auto array = new ArrayLiteral(parser.curToken);
+
+        array.elements = parser.parseExpressionList(TokenType.RBRACKET);
+
+        return array;
+    }
+
+    /+++/
+    Expression[] parseExpressionList(TokenType endToken) {
+        Expression[] expList;
+
+        if(this.peekTokenIs(endToken)) {
+            this.nextToken();
+            return expList;
+        }
+
+        this.nextToken();
+        expList ~= this.parseExpression(OpPreced.LOWEST);
+
+        while(this.peekTokenIs(TokenType.COMMA)) {
+            this.nextToken();
+            this.nextToken();
+            expList ~= this.parseExpression(OpPreced.LOWEST);
+        }
+
+        if(!this.expectPeek(endToken))
+            return null;
+
+        return expList;
+    }
+
+    /+++/
     static Expression parseCallExpression(ref Parser parser, ref Expression fxn) {
         auto exp = new CallExpression(parser.curToken, fxn);
-        exp.args = parser.parseCallArguments();
+        exp.args = parser.parseExpressionList(TokenType.RPAREN);
         return exp;
     }
 

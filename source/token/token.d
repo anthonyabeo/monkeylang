@@ -27,6 +27,8 @@ enum TokenType {
     RBRACE,
     EQ,
     NOT_EQ,
+    LBRACKET,
+    RBRACKET,
 
     // Keywords
     FUNCTION,
