@@ -91,6 +91,12 @@ struct Lexer {
             case '/':
                 tok = Token(TokenType.SLASH, to!string(this.ch));
                 break;
+            case '[':
+                tok = Token(TokenType.LBRACKET, to!string(this.ch));
+                break;
+            case ']':
+                tok = Token(TokenType.RBRACKET, to!string(this.ch));
+                break;
             case '!':
                 if(this.peekPosition() == '=') {
                     auto ch = this.ch;
