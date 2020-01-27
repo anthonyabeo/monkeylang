@@ -68,6 +68,7 @@ struct Parser {
         this.registerPrefixFxn(TokenType.LPAREN, &Parser.parseGroupedExpression);
         this.registerPrefixFxn(TokenType.IF, &Parser.parseIfExpression);
         this.registerPrefixFxn(TokenType.FUNCTION, &Parser.parseFunctionLiteral);
+        this.registerPrefixFxn(TokenType.STRING, &Parser.parseStringLiteral);
 
         this.infixParseFxns = (infixParseFn[TokenType]).init;
         this.registerInfixFxn(TokenType.PLUS, &Parser.parseInfixExpression);
@@ -204,6 +205,11 @@ struct Parser {
     }
 
     /+++/
+    static Expression parseStringLiteral(ref Parser parser) {
+        return new StringLiteral(parser.curToken, parser.curToken.literal);
+    }
+
+    /+++/
     static Expression parseIdentifier(ref Parser parser) {
         return new Identifier(parser.curToken, parser.curToken.literal);
     }
@@ -323,7 +329,7 @@ struct Parser {
     Expression parseExpression(OpPreced prec) {
         auto prefix = this.prefixParseFxns.get(this.curToken.type, null);
         if(prefix is null) {
-            this.noPrefixParseFnError(this.curToken.literal);
+            this.noPrefixParseFnError(this.curToken.type);
             return null;
         }
 
@@ -426,7 +432,7 @@ struct Parser {
             this.errs ~= msg;
         }
 
-        void noPrefixParseFnError(string tt) {
+        void noPrefixParseFnError(TokenType tt) {
             this.errs ~= format("no prefix parse function for %s found", tt);
         }
 }
