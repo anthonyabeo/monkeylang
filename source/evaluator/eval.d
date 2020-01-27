@@ -88,6 +88,9 @@ Objekt eval(Node node, Environment env) {
         case "ast.ast.IntegerLiteral":
             obj = new Integer((cast(IntegerLiteral) node).value);
             break;
+        case "ast.ast.StringLiteral":
+            obj = new String((cast(StringLiteral) node).value);
+            break;
         case "ast.ast.BooleanLiteral":
             obj = nativeBoolToBooleanObject((cast(BooleanLiteral)node).value);
             break;
