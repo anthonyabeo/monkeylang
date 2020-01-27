@@ -15,7 +15,10 @@ enum ObjectType {
     ERROR,
     FUNCTION,
     STRING,
+    BUILTIN,
 }
+
+alias BuiltInFunction = Objekt function(Objekt[] args...);
 
 /+++/
 interface Objekt {
@@ -165,5 +168,24 @@ class Function : Objekt {
         string s = "fn(" ~ join(params, ", ") ~ ") {\n" ~ this.fnBody.asString() ~ "\n}";
 
         return s;
+    }
+}
+
+class BuiltIn : Objekt {
+    BuiltInFunction fxn;
+
+    /+++/
+    this(BuiltInFunction fxn) {
+        this.fxn = fxn;
+    }
+
+    /+++/
+    ObjectType type() {
+        return ObjectType.BUILTIN;
+    }
+
+    /+++/
+    string inspect() {
+        return "builtin function";
     }
 }
