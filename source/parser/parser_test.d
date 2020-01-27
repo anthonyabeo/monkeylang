@@ -217,6 +217,7 @@ unittest {
     testFunctionLiteralParsing();
     testCallExpressionParsing();
     testLetStatements();
+    testStringLiteralExpression();
 }
 
 /+++/
@@ -455,5 +456,27 @@ void testLetStatements() {
 
         if(!testLiteralExpression(val, tt.expectedValue))
             return;
+    }
+}
+
+///
+void testStringLiteralExpression() {
+    auto input = `"hello world"`;
+
+    auto lex = Lexer(input);
+    auto parser = Parser(lex);
+    auto program = parser.parseProgram();
+    checkParserErrors(parser);
+
+    auto stmt = cast(ExpressionStatement) program.statements[0];
+    auto strLit = cast(StringLiteral) stmt.expression;
+    if(strLit is null) {
+        stderr.writeln("exp not StringLiteral. got=%s", stmt.expression.asString());
+        assert(strLit !is null);
+    }
+
+    if(strLit.value != "hello world") {
+        stderr.writeln("literal.Value not %s. got=%s", "hello world", strLit.value);
+        assert(strLit.value == "hello world");
     }
 }
