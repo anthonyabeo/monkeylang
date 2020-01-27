@@ -108,6 +108,10 @@ struct Lexer {
                 tok.literal = "";
                 tok.type = TokenType.EOF;
                 break;
+            case '"':
+                tok.type = TokenType.STRING;
+                tok.literal = this.readString();
+                break;
             default:
                 if (isLetter(this.ch)) {
                     tok.literal = readIdentifier();
@@ -156,6 +160,17 @@ private:
         while(isDigit(this.ch))
             this.readChar();
         
+        return this.input[pos .. this.position];
+    }
+
+    string readString() {
+        auto pos = this.position + 1;
+        while(true) {
+            this.readChar();
+            if(this.ch == '"' || this.ch == 0)
+                break;
+        }
+
         return this.input[pos .. this.position];
     }
 }
