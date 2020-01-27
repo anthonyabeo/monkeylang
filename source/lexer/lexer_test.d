@@ -109,6 +109,8 @@ unittest {
             
             "foobar"
             "foo bar"
+
+            [1, 2];
         `;
 
     tests = [
@@ -139,6 +141,12 @@ unittest {
         Token(TokenType.SEMICOLON, ";"),
         Token(TokenType.STRING, "foobar"),
         Token(TokenType.STRING, "foo bar"),
+        Token(TokenType.LBRACKET, "["),
+        Token(TokenType.INT, "1"),
+        Token(TokenType.COMMA, ","),
+        Token(TokenType.INT, "2"),
+        Token(TokenType.RBRACKET, "]"),
+        Token(TokenType.SEMICOLON, ";"),
         Token(TokenType.EOF, ""),
     ];
 
