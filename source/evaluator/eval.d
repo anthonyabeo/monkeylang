@@ -85,8 +85,17 @@ Objekt eval(Node node, Environment env) {
                 return args[0];
 
             return applyFunction(fn, args);
-            
-        // Expressions
+        case "ast.ast.IndexExpression":
+            auto indexExp = cast(IndexExpression) node;
+            auto left = eval(indexExp.left, env);
+            if(isError(left))
+                return left;
+
+            auto index = eval(indexExp.index, env);
+            if(isError(index))
+                return index;
+
+            return evalIndexExpression(left, index);
         case "ast.ast.ArrayLiteral":
             auto arrLitNode = cast(ArrayLiteral) node;
 
@@ -358,4 +367,22 @@ Objekt unwrapReturnValue(Objekt obj) {
         return retValue.value;
 
     return obj;
+}
+
+Objekt evalIndexExpression(Objekt left, Objekt index) {
+    if(left.type() == ObjectType.ARRAY && index.type() == ObjectType.INTEGER)
+        return evalArrayIndexExpression(left, index);
+    else
+        return newError("index operator not supported: %s", left.type());
+}
+
+Objekt evalArrayIndexExpression(Objekt array, Objekt index) {
+    auto arrayObject = cast(Array) array;
+    auto idx = (cast(Integer) index).value ;
+    auto max = to!size_t(arrayObject.elements.length - 1);
+
+    if(idx < 0 || idx > max )
+        return NULL;
+    
+    return arrayObject.elements[idx];
 }
