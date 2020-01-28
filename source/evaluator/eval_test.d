@@ -25,6 +25,7 @@ unittest {
     testStringConcatenation();
     testBuiltInFunctions();
     testArrayLiterals();
+    testArrayIndexExpression();
 }
 
 ///
@@ -402,4 +403,35 @@ void testArrayLiterals() {
     testIntegerObject(result.elements[0], 1);
     testIntegerObject(result.elements[1], 4);
     testIntegerObject(result.elements[2], 6);
+}
+
+void testArrayIndexExpression() {
+    struct ArrIndExp(T) {
+        string input;
+        T expected;
+    }
+
+    auto tests = tuple(
+        ArrIndExp!int("[1, 2, 3][0]", 1),
+        ArrIndExp!int("[1, 2, 3][1]", 2),
+        ArrIndExp!int("[1, 2, 3][2]",3),
+        ArrIndExp!int("let i = 0; [1][i];", 1),
+        ArrIndExp!int("[1, 2, 3][1 + 1];", 3),
+        ArrIndExp!int("let myArray = [1, 2, 3]; myArray[2];", 3),
+        ArrIndExp!int("let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];", 6),
+        ArrIndExp!int("let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]", 2),
+        ArrIndExp!string("[1, 2, 3][3]", "null"),
+        ArrIndExp!string("[1, 2, 3][-1]", "null")
+    );
+
+    foreach(tt; tests) {
+        auto evaluated = testEval(tt.input);
+        try {
+            auto integer = to!long(tt.expected);
+            assert(testIntegerObject(evaluated, integer));
+        }
+        catch(ConvException ce) {
+            assert(testNullObject(evaluated));
+        }   
+    }
 }
