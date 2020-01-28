@@ -98,6 +98,9 @@ unittest {
     testStringLiteralExpression();
     testParsingArrayLiterals();
     testParsingIndexExpressions();
+    testParsingHashLiteralsStringKeys();
+    testParsingEmptyHashLiteral();
+    testParsingHashLiteralsWithExpressions();
 }
 
 /+++/
@@ -543,4 +546,112 @@ void testPrefixExpressionParsing() {
 
         if(!testIntegerLiteral(prefixExpr.right, t.integerValue)) return;
     }
+}
+
+void testParsingHashLiteralsStringKeys() {
+    auto input = `{"one": 1, "two": 2, "three": 3}`;
+
+    auto lex = Lexer(input);
+    auto parser = Parser(lex);
+    auto program = parser.parseProgram();
+    checkParserErrors(parser);
+
+    auto stmt = cast(ExpressionStatement) program.statements[0];
+    auto hash = cast(HashLiteral) stmt.expression;
+    if(hash is null) {
+        stderr.writeln("exp is not ast.HashLiteral. got=%s", stmt.expression.asString());
+        assert(hash !is null);
+    }
+
+    if(hash.pairs.length != 3) {
+        stderr.writeln("hash.Pairs has wrong length. got=%d", hash.pairs.length);
+        assert(hash.pairs.length == 3);
+    }
+
+    auto expected = [
+        "one": 1,
+        "two": 2,
+        "three": 3,
+    ];
+
+    foreach(key, value; hash.pairs) {
+        auto literal = cast(StringLiteral) key;
+        if(literal is null) {
+            stderr.writeln("key is not ast.StringLiteral. got=%s", key.asString());
+            assert(literal !is null);
+        }
+
+        auto expectedValue = expected[literal.asString()];
+        assert(testIntegerLiteral(value, expectedValue));
+    }
+}
+
+void testParsingEmptyHashLiteral() {
+    auto input = "{}";
+
+    auto lex = Lexer(input);
+    auto parser = Parser(lex);
+    auto program = parser.parseProgram();
+    checkParserErrors(parser);
+
+    auto stmt = cast(ExpressionStatement) program.statements[0];
+    auto hash = cast(HashLiteral) stmt.expression;
+    if(hash is null) {
+        stderr.writeln("exp is not ast.HashLiteral. got=%s", stmt.expression.asString());
+        assert(hash !is null);
+    }
+
+    if(hash.pairs.length != 0) {
+        stderr.writeln("hash.pairs has wrong length. got=%d", hash.pairs.length);
+        assert(hash.pairs.length == 0);
+    }
+}
+
+void testParsingHashLiteralsWithExpressions() {
+    auto input = `{"one": 0 + 1, "two": 10 - 8, "three": 15 / 5}`;
+
+    auto lex = Lexer(input);
+    auto parser = Parser(lex);
+    auto program = parser.parseProgram();
+    checkParserErrors(parser);
+
+    auto stmt = cast(ExpressionStatement) program.statements[0];
+    auto hash = cast(HashLiteral) stmt.expression;
+    if(hash is null) {
+        stderr.writeln("exp is not ast.HashLiteral. got=%s", stmt.expression.asString());
+        assert(hash !is null);
+    }
+
+    if(hash.pairs.length != 3) {
+        stderr.writeln("hash.Pairs has wrong length. got=%d", hash.pairs.length);
+        assert(hash.pairs.length == 3);
+    }
+
+    auto tests = [
+        "one" : function(Expression e) {
+            testInfixExpression(e, 0, "+", 1);
+        },
+        "two" : function(Expression e) {
+            testInfixExpression(e, 10, "-", 8);
+        },
+        "three" :  function(Expression e) {
+            testInfixExpression(e, 15, "/", 5);
+        },
+    ];
+
+    foreach(key, value; hash.pairs) {
+        auto literal = cast(StringLiteral) key;
+        if(literal is null) {
+            stderr.writeln("key is not ast.StringLiteral. got=%s", key.asString());
+            continue;
+        }
+
+        auto testFunc = tests.get(literal.asString(), null);
+        if(testFunc is null) {
+            stderr.writeln("No test function for key %s found", literal.asString());
+            continue;
+        }
+
+        testFunc(value);
+    }   
 }

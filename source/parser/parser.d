@@ -72,6 +72,7 @@ struct Parser {
         this.registerPrefixFxn(TokenType.FUNCTION, &Parser.parseFunctionLiteral);
         this.registerPrefixFxn(TokenType.STRING, &Parser.parseStringLiteral);
         this.registerPrefixFxn(TokenType.LBRACKET, &Parser.parseArrayLiteral);
+        this.registerPrefixFxn(TokenType.LBRACE, &Parser.parseHashLiteral);
 
         this.infixParseFxns = (infixParseFn[TokenType]).init;
         this.registerInfixFxn(TokenType.PLUS, &Parser.parseInfixExpression);
@@ -100,6 +101,33 @@ struct Parser {
     void nextToken() {
         this.curToken = this.peekToken;
         this.peekToken = this.lex.nextToken();
+    }
+
+    /+++/
+    static Expression parseHashLiteral(ref Parser parser) {
+        auto hashLit = new HashLiteral(parser.curToken);
+        hashLit.pairs = (Expression[Expression]).init;
+
+        while(!parser.peekTokenIs(TokenType.RBRACE)) {
+            parser.nextToken();
+            auto key = parser.parseExpression(OpPreced.LOWEST);
+
+            if(!parser.expectPeek(TokenType.COLON))
+                return null;
+
+            parser.nextToken();
+            auto value = parser.parseExpression(OpPreced.LOWEST);
+
+            hashLit.pairs[key] = value;
+
+            if(!parser.peekTokenIs(TokenType.RBRACE) && !parser.expectPeek(TokenType.COMMA))
+                return null;
+        }
+
+        if(!parser.expectPeek(TokenType.RBRACE))
+            return null;
+
+        return hashLit;
     }
 
     /+++/
