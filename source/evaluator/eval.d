@@ -8,17 +8,6 @@ import ast.ast;
 import objekt.objekt;
 import objekt.environment;
 import evaluator.builtins;
-import evaluator.utils;
-
-Boolean TRUE;   /// true
-Boolean FALSE;  /// false
-Null NULL;      /// null
-
-static this() {
-    NULL = new Null(); 
-    TRUE = new Boolean(true),
-    FALSE = new Boolean(false);
-}
 
 ///
 Objekt eval(Node node, Environment env) {
@@ -303,19 +292,6 @@ bool isError(Objekt obj) {
         return obj.type() == ObjectType.ERROR;
 
     return false;
-}
-
-/+++/
-Objekt evalIdentifier(Identifier node, Environment env) {
-    auto val = env.get(node.value);
-    if(val !is null)
-        return val;
-    
-    auto builtin = builtins.get(node.value, null);
-    if(builtin !is null) 
-        return builtin;
-
-    return newError("identifier not found: " ~ node.value);
 }
 
 Objekt[] evalExpressions(Expression[] exps, Environment env) {

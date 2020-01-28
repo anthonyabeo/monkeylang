@@ -9,7 +9,7 @@ import parser.parser;
 import objekt.objekt;
 import evaluator.eval;
 import objekt.environment;
-
+import evaluator.builtins : NULL;
 
 unittest {
     testEvalIntegerExpression();
