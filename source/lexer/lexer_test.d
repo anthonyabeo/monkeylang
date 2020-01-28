@@ -111,6 +111,7 @@ unittest {
             "foo bar"
 
             [1, 2];
+            {"foo": "bar"}
         `;
 
     tests = [
@@ -147,6 +148,11 @@ unittest {
         Token(TokenType.INT, "2"),
         Token(TokenType.RBRACKET, "]"),
         Token(TokenType.SEMICOLON, ";"),
+        Token(TokenType.LBRACE, "{"),
+        Token(TokenType.STRING, "foo"),
+        Token(TokenType.COLON, ":"),
+        Token(TokenType.STRING, "bar"),
+        Token(TokenType.RBRACE, "}"),
         Token(TokenType.EOF, ""),
     ];
 
