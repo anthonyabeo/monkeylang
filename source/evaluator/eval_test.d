@@ -24,6 +24,7 @@ unittest {
     testStringLiteral();
     testStringConcatenation();
     testBuiltInFunctions();
+    testArrayLiterals();
 }
 
 ///
@@ -381,4 +382,24 @@ void testBuiltInFunctions() {
                 continue;
         }
     }
+}
+
+void testArrayLiterals() {
+    auto input = "[1, 2 * 2, 3 + 3]";
+
+    auto evaluated = testEval(input);
+    auto result = cast(Array) evaluated;
+    if(result is null) {
+        stderr.writeln("object is not Array. got=%s (%s)", evaluated.inspect(), evaluated.inspect());
+        assert(result !is null);
+    }
+
+    if(result.elements.length != 3) {
+        stderr.writeln("array has wrong num of elements. got=%d", result.elements.length);
+        assert(result.elements.length == 3);
+    }
+
+    testIntegerObject(result.elements[0], 1);
+    testIntegerObject(result.elements[1], 4);
+    testIntegerObject(result.elements[2], 6);
 }

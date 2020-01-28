@@ -87,6 +87,15 @@ Objekt eval(Node node, Environment env) {
             return applyFunction(fn, args);
             
         // Expressions
+        case "ast.ast.ArrayLiteral":
+            auto arrLitNode = cast(ArrayLiteral) node;
+
+            auto elements = evalExpressions(arrLitNode.elements, env);
+            if(elements.length == 1 && isError(elements[0]))
+                return elements[0];
+            
+            obj = new Array(elements);
+            break;
         case "ast.ast.IntegerLiteral":
             obj = new Integer((cast(IntegerLiteral) node).value);
             break;

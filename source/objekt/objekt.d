@@ -16,6 +16,7 @@ enum ObjectType {
     FUNCTION,
     STRING,
     BUILTIN,
+    ARRAY,
 }
 
 alias BuiltInFunction = Objekt function(Objekt[] args...);
@@ -171,6 +172,7 @@ class Function : Objekt {
     }
 }
 
+/+++/
 class BuiltIn : Objekt {
     BuiltInFunction fxn;
 
@@ -187,5 +189,32 @@ class BuiltIn : Objekt {
     /+++/
     string inspect() {
         return "builtin function";
+    }
+}
+
+/+++/
+class Array : Objekt {
+    Objekt[] elements;
+
+    /+++/
+    this(Objekt[] elements) {
+        this.elements = elements;
+    }
+    
+    /+++/
+    ObjectType type() {
+        return ObjectType.ARRAY;
+    }
+
+    /+++/
+    string inspect() {
+        string[] elements;
+        foreach(elem; this.elements) {
+            elements ~= elem.inspect();
+        }
+
+        string s = "[" ~ join(elements, ", ") ~ "]";
+
+        return s;
     }
 }
