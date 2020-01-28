@@ -60,6 +60,39 @@ class Program : Node {
 }
 
 /+++/
+class HashLiteral : Expression {
+    Token token;                    /// the { token
+    Expression[Expression] pairs;   /// map pairs
+
+    ///
+    this(ref Token token) {
+        this.token = token;
+    }   
+
+    /***********************************
+     * expressionNode does nothing in particular.
+     */
+    void expressionNode()  {}
+
+    /+++/
+    string tokenLiteral() {
+        return this.token.literal;
+    }
+
+    string asString() {
+        string[] pairs;
+        foreach(key, entry; this.pairs) {
+            pairs ~= format("%s:%s", key.asString(), entry.asString());
+        }
+
+        string s = "{" ~ join(pairs, ", ") ~ "}";
+
+        return s;
+    }
+    
+}
+
+/+++/
 class IndexExpression : Expression {
     Token token;
     Expression left;
