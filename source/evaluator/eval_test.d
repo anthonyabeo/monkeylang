@@ -12,17 +12,17 @@ import objekt.environment;
 
 
 unittest {
-    // testEvalIntegerExpression();
-    // testEvalBooleanExpression();
-    // testBangOperator();
-    // testIfElseExpressions();
-    // testReturnStatements();
-    // testErrorHandling(); 
-    // testLetStatements();
-    // testFunctionObject();
-    // testClosures();
-    // testStringLiteral();
-    // testStringConcatenation();
+    testEvalIntegerExpression();
+    testEvalBooleanExpression();
+    testBangOperator();
+    testIfElseExpressions();
+    testReturnStatements();
+    testErrorHandling(); 
+    testLetStatements();
+    testFunctionObject();
+    testClosures();
+    testStringLiteral();
+    testStringConcatenation();
     testBuiltInFunctions();
 }
 

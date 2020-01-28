@@ -149,43 +149,6 @@ unittest {
         assert(infixExpr.operator == t.operator);
         if(!testIntegerLiteral(infixExpr.right, t.rightValue)) return;
     }
-    
-
-    alias MoreInfixEntry = Tuple!(string, "input", string, "expected");
-    auto moreTests = [
-        MoreInfixEntry("-a * b", "((-a) * b)"),
-        MoreInfixEntry("!-a", "(!(-a))"),
-        MoreInfixEntry("a + b + c", "((a + b) + c)"),
-        MoreInfixEntry("a + b - c", "((a + b) - c)"),
-        MoreInfixEntry("a * b * c", "((a * b) * c)"),
-        MoreInfixEntry("a * b / c", "((a * b) / c)"),
-        MoreInfixEntry("a + b / c", "(a + (b / c))"),
-        MoreInfixEntry("a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"),
-        MoreInfixEntry("3 + 4; -5 * 5", "(3 + 4)((-5) * 5)"),
-        MoreInfixEntry("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"),
-        MoreInfixEntry("5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))"),
-        MoreInfixEntry("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"),
-        MoreInfixEntry("true", "true"),
-        MoreInfixEntry("false", "false"),
-        MoreInfixEntry("3 > 5 == false", "((3 > 5) == false)"),
-        MoreInfixEntry("3 < 5 == true", "((3 < 5) == true)"),
-        MoreInfixEntry("(5 + 5) * 2", "((5 + 5) * 2)"),
-        MoreInfixEntry("2 / (5 + 5)", "(2 / (5 + 5))"),
-        MoreInfixEntry("-(5 + 5)", "(-(5 + 5))"),
-        MoreInfixEntry("!(true == true)", "(!(true == true))"),
-        MoreInfixEntry("a + add(b * c) + d", "((a + add((b * c))) + d)"),
-        MoreInfixEntry("add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"),
-        MoreInfixEntry("add(a + b + c * d / f + g)", "add((((a + b) + ((c * d) / f)) + g))")
-    ];
-
-    foreach(t; moreTests) {
-        auto lex3 = Lexer(t.input);
-        auto parser3 = Parser(lex3);
-        auto program3 = parser3.parseProgram();
-        checkParserErrors(parser3);
-
-        assert(program3.asString() == t.expected);
-    }
 
     // TEST IF STATEMENT
     input = "if (x < y) { x }" ;
@@ -214,11 +177,13 @@ unittest {
     assert(testIdentifier(conseq.expression, "x"));
     assert(ifExpr.alternative is null);
 
+    testOperatorPrecedenceParsing();
     testFunctionLiteralParsing();
     testCallExpressionParsing();
     testLetStatements();
     testStringLiteralExpression();
     testParsingArrayLiterals();
+    testParsingIndexExpressions();
 }
 
 /+++/
@@ -505,4 +470,71 @@ void testParsingArrayLiterals() {
     testIntegerLiteral(array.elements[0], 1);
     testInfixExpression(array.elements[1], 2, "*", 2);
     testInfixExpression(array.elements[2], 3, "+", 3);
+}
+
+void testParsingIndexExpressions() {
+    auto input = "myArray[1 + 1]";
+
+    auto lex = Lexer(input);
+    auto parser = Parser(lex);
+    auto program = parser.parseProgram();
+    checkParserErrors(parser);
+
+    auto stmt = cast(ExpressionStatement) program.statements[0];
+    auto indexExp = cast(IndexExpression) stmt.expression;
+    if(indexExp is null) {
+        stderr.writeln("exp not *ast.IndexExpression. got=%s", stmt.expression.asString());
+        assert(indexExp !is null);
+    }
+
+    if(!testIdentifier(indexExp.left, "myArray"))
+        return;
+    
+    if(!testInfixExpression(indexExp.index, 1, "+", 1))
+        return;
+}
+
+void testOperatorPrecedenceParsing() {
+    alias MoreInfixEntry = Tuple!(string, "input", string, "expected");
+    auto moreTests = [
+        MoreInfixEntry("-a * b", "((-a) * b)"),
+        MoreInfixEntry("!-a", "(!(-a))"),
+        MoreInfixEntry("a + b + c", "((a + b) + c)"),
+        MoreInfixEntry("a + b - c", "((a + b) - c)"),
+        MoreInfixEntry("a * b * c", "((a * b) * c)"),
+        MoreInfixEntry("a * b / c", "((a * b) / c)"),
+        MoreInfixEntry("a + b / c", "(a + (b / c))"),
+        MoreInfixEntry("a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"),
+        MoreInfixEntry("3 + 4; -5 * 5", "(3 + 4)((-5) * 5)"),
+        MoreInfixEntry("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"),
+        MoreInfixEntry("5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))"),
+        MoreInfixEntry("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"),
+        MoreInfixEntry("true", "true"),
+        MoreInfixEntry("false", "false"),
+        MoreInfixEntry("3 > 5 == false", "((3 > 5) == false)"),
+        MoreInfixEntry("3 < 5 == true", "((3 < 5) == true)"),
+        MoreInfixEntry("(5 + 5) * 2", "((5 + 5) * 2)"),
+        MoreInfixEntry("2 / (5 + 5)", "(2 / (5 + 5))"),
+        MoreInfixEntry("-(5 + 5)", "(-(5 + 5))"),
+        MoreInfixEntry("!(true == true)", "(!(true == true))"),
+        MoreInfixEntry("a + add(b * c) + d", "((a + add((b * c))) + d)"),
+        MoreInfixEntry("add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"),
+        MoreInfixEntry("add(a + b + c * d / f + g)", "add((((a + b) + ((c * d) / f)) + g))"),
+        MoreInfixEntry("a * [1, 2, 3, 4][b * c] * d", "((a * ([1, 2, 3, 4][(b * c)])) * d)"),
+        MoreInfixEntry("add(a * b[2], b[1], 2 * [1, 2][1])", "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))")
+    ];
+
+    foreach(t; moreTests) {
+        auto lex3 = Lexer(t.input);
+        auto parser3 = Parser(lex3);
+        auto program3 = parser3.parseProgram();
+        checkParserErrors(parser3);
+
+        auto actual = program3.asString();
+        if(actual != t.expected) {
+            stderr.writeln("expected=%s, got=%s", t.expected, actual);
+            assert(actual == t.expected);
+        }
+        
+    }
 }
