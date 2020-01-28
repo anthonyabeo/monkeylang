@@ -39,6 +39,11 @@ interface Hashable {
 class Hash : Objekt {
     HashPair[HashKey] pairs;
 
+    ///
+    this(HashPair[HashKey] pairs) {
+        this.pairs = pairs;
+    }
+
     /+++/
     ObjectType type() {
         return ObjectType.HASH;
@@ -58,7 +63,7 @@ class Hash : Objekt {
 }
 
 /+++/
-class Integer : Objekt {
+class Integer : Objekt, Hashable {
     long value;     /// the value of the integer
 
     /+++/
@@ -76,13 +81,13 @@ class Integer : Objekt {
         return format("%d", this.value);
     }
 
-    HashKey hashkey() {
+    HashKey hashKey() {
         return HashKey(this.type(), to!size_t(this.value));
     }
 }
 
 /+++/
-class String : Objekt {
+class String : Objekt, Hashable {
     string value;
 
     /+++/
@@ -110,7 +115,7 @@ class String : Objekt {
 }
 
 /+++/
-class Boolean : Objekt {
+class Boolean : Objekt, Hashable {
     bool value; /// bool value
 
     /+++/

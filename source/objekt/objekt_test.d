@@ -24,7 +24,7 @@ void testStringHashKey() {
         assert(diff1.hashKey() == diff2.hashKey());
     }
 
-    if(hello1.toHash() == diff1.toHash()) {
+    if(hello1.hashKey() == diff1.hashKey()) {
         stderr.writeln("strings with different content have same hash keys");
         assert(hello1.hashKey() != diff1.hashKey());
     }
