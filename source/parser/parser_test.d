@@ -88,95 +88,9 @@ unittest {
     assert(iliteral.value == 5);
     assert(iliteral.tokenLiteral() == "5");
 
-    // testing prefix literals
-    alias Entry = Tuple!(string, "input", 
-                         string, "operator", 
-                         long, "integerValue");
-
-    auto prefixTests = [
-        Entry("!5;", "!", 5),
-        Entry("-15;", "-", 15)
-    ];
-
-    foreach(t; prefixTests) {
-        auto lex1 = Lexer(t.input);
-        auto parser1 = Parser(lex1);
-        auto program1 = parser1.parseProgram();
-        checkParserErrors(parser1);
-
-        assert(program1 !is null);
-        assert(program1.statements.length == 1);
-
-        auto expStmt1 = cast(ExpressionStatement) program1.statements[0]; 
-        assert(expStmt1 !is null);
-
-        auto prefixExpr = cast(PrefixExpression) expStmt1.expression;
-        assert(prefixExpr.operator == t.operator);
-
-        if(!testIntegerLiteral(prefixExpr.right, t.integerValue)) return;
-    }
-
-    // TESTING INFIX OPERATORS
-    alias InfixEntry = Tuple!(string, "input", long, "leftValue", 
-                              string, "operator", long, "rightValue");
-
-    auto infixTests = [
-        InfixEntry("5 + 5;", 5, "+", 5),
-        InfixEntry("5 - 5;", 5, "-", 5),
-        InfixEntry("5 * 5;", 5, "*", 5),
-        InfixEntry("5 / 5;", 5, "/", 5),
-        InfixEntry("5 > 5;", 5, ">", 5),
-        InfixEntry("5 < 5;", 5, "<", 5),
-        InfixEntry("5 == 5;", 5, "==", 5),
-        InfixEntry("5 != 5;", 5, "!=", 5),
-    ];
-
-    foreach(t; infixTests) {
-        auto lex2 = Lexer(t.input);
-        auto parser2 = Parser(lex2);
-        auto program2 = parser2.parseProgram();
-        checkParserErrors(parser2);
-
-        assert(program2 !is null);
-        assert(program2.statements.length == 1);
-
-        auto expStmt2 = cast(ExpressionStatement) program2.statements[0]; 
-        assert(expStmt2 !is null);
-
-        auto infixExpr = cast(InfixExpression) expStmt2.expression;
-
-        if(!testIntegerLiteral(infixExpr.left, t.leftValue)) return;
-        assert(infixExpr.operator == t.operator);
-        if(!testIntegerLiteral(infixExpr.right, t.rightValue)) return;
-    }
-
-    // TEST IF STATEMENT
-    input = "if (x < y) { x }" ;
-
-    auto lex4 = Lexer(input);
-    auto parser4 = Parser(lex4);
-    auto program4 = parser4.parseProgram();
-    checkParserErrors(parser4);
-
-    assert(program4 !is null);
-    assert(program4.statements.length == 1);
-
-    auto expStmt4 = cast(ExpressionStatement) program4.statements[0]; 
-    assert(expStmt4 !is null);
-
-    auto ifExpr = cast(IfExpression) expStmt4.expression;
-    assert(ifExpr !is null);
-
-    assert(testInfixExpression(ifExpr.condition, "x", "<", "y"));
-
-    assert(ifExpr.consequence.statements.length == 1);
-
-    auto conseq = cast(ExpressionStatement) ifExpr.consequence.statements[0];
-    assert(conseq !is null);
-
-    assert(testIdentifier(conseq.expression, "x"));
-    assert(ifExpr.alternative is null);
-
+    testPrefixExpressionParsing();
+    testInfixExpressionParsing();
+    testIfStatementParsing();
     testOperatorPrecedenceParsing();
     testFunctionLiteralParsing();
     testCallExpressionParsing();
@@ -536,5 +450,97 @@ void testOperatorPrecedenceParsing() {
             assert(actual == t.expected);
         }
         
+    }
+}
+
+void testIfStatementParsing() {
+    auto input = "if (x < y) { x }" ;
+
+    auto lex4 = Lexer(input);
+    auto parser4 = Parser(lex4);
+    auto program4 = parser4.parseProgram();
+    checkParserErrors(parser4);
+
+    assert(program4 !is null);
+    assert(program4.statements.length == 1);
+
+    auto expStmt4 = cast(ExpressionStatement) program4.statements[0]; 
+    assert(expStmt4 !is null);
+
+    auto ifExpr = cast(IfExpression) expStmt4.expression;
+    assert(ifExpr !is null);
+
+    assert(testInfixExpression(ifExpr.condition, "x", "<", "y"));
+
+    assert(ifExpr.consequence.statements.length == 1);
+
+    auto conseq = cast(ExpressionStatement) ifExpr.consequence.statements[0];
+    assert(conseq !is null);
+
+    assert(testIdentifier(conseq.expression, "x"));
+    assert(ifExpr.alternative is null);
+}
+
+void testInfixExpressionParsing() {
+    alias InfixEntry = Tuple!(string, "input", long, "leftValue", 
+                              string, "operator", long, "rightValue");
+
+    auto infixTests = [
+        InfixEntry("5 + 5;", 5, "+", 5),
+        InfixEntry("5 - 5;", 5, "-", 5),
+        InfixEntry("5 * 5;", 5, "*", 5),
+        InfixEntry("5 / 5;", 5, "/", 5),
+        InfixEntry("5 > 5;", 5, ">", 5),
+        InfixEntry("5 < 5;", 5, "<", 5),
+        InfixEntry("5 == 5;", 5, "==", 5),
+        InfixEntry("5 != 5;", 5, "!=", 5),
+    ];
+
+    foreach(t; infixTests) {
+        auto lex2 = Lexer(t.input);
+        auto parser2 = Parser(lex2);
+        auto program2 = parser2.parseProgram();
+        checkParserErrors(parser2);
+
+        assert(program2 !is null);
+        assert(program2.statements.length == 1);
+
+        auto expStmt2 = cast(ExpressionStatement) program2.statements[0]; 
+        assert(expStmt2 !is null);
+
+        auto infixExpr = cast(InfixExpression) expStmt2.expression;
+
+        if(!testIntegerLiteral(infixExpr.left, t.leftValue)) return;
+        assert(infixExpr.operator == t.operator);
+        if(!testIntegerLiteral(infixExpr.right, t.rightValue)) return;
+    }
+}
+
+void testPrefixExpressionParsing() {
+    alias Entry = Tuple!(string, "input", 
+                         string, "operator", 
+                         long, "integerValue");
+
+    auto prefixTests = [
+        Entry("!5;", "!", 5),
+        Entry("-15;", "-", 15)
+    ];
+
+    foreach(t; prefixTests) {
+        auto lex1 = Lexer(t.input);
+        auto parser1 = Parser(lex1);
+        auto program1 = parser1.parseProgram();
+        checkParserErrors(parser1);
+
+        assert(program1 !is null);
+        assert(program1.statements.length == 1);
+
+        auto expStmt1 = cast(ExpressionStatement) program1.statements[0]; 
+        assert(expStmt1 !is null);
+
+        auto prefixExpr = cast(PrefixExpression) expStmt1.expression;
+        assert(prefixExpr.operator == t.operator);
+
+        if(!testIntegerLiteral(prefixExpr.right, t.integerValue)) return;
     }
 }
