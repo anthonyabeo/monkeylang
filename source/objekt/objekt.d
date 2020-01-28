@@ -2,6 +2,8 @@ module objekt.objekt;
 
 import std.string;
 import std.array;
+import std.conv;
+import std.digest.murmurhash;
 
 import ast.ast;
 import objekt.environment;
@@ -45,6 +47,10 @@ class Integer : Objekt {
     string inspect() {
         return format("%d", this.value);
     }
+
+    HashKey hashkey() {
+        return HashKey(this.type(), to!size_t(this.value));
+    }
 }
 
 /+++/
@@ -65,6 +71,14 @@ class String : Objekt {
     string inspect() {
         return this.value;
     }
+
+    /+++/
+    HashKey hashKey() {
+        MurmurHash3!32 hasher;
+        hasher.put(cast(ubyte[]) this.value);
+
+        return HashKey(this.type(), to!size_t(hasher.get()));
+    }
 }
 
 /+++/
@@ -84,6 +98,11 @@ class Boolean : Objekt {
     /+++/
     string inspect() {
         return format("%s", this.value);
+    }
+
+    HashKey hashKey() {
+        ulong value = this.value ? 1 : 0;
+        return HashKey(this.type(), value);
     }
 }
 
@@ -200,7 +219,7 @@ class Array : Objekt {
     this(Objekt[] elements) {
         this.elements = elements;
     }
-    
+
     /+++/
     ObjectType type() {
         return ObjectType.ARRAY;
