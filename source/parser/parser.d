@@ -19,7 +19,8 @@ enum OpPreced : ubyte {
     SUM,            // +
     PRODUCT,        // *
     PREFIX,         // -X or !X
-    CALL            // myFunction(X)
+    CALL,           // myFunction(X)
+    INDEX,          // array[index]
 }
 
 /// Operator Precedence
@@ -32,7 +33,8 @@ enum precedence = [
     TokenType.MINUS : OpPreced.SUM,
     TokenType.SLASH : OpPreced.PRODUCT,
     TokenType.ASTERISK : OpPreced.PRODUCT,
-    TokenType.LPAREN: OpPreced.CALL
+    TokenType.LPAREN: OpPreced.CALL,
+    TokenType.LBRACKET : OpPreced.INDEX,
 ];
 
 /+++/
@@ -81,6 +83,7 @@ struct Parser {
         this.registerInfixFxn(TokenType.LT, &Parser.parseInfixExpression);
         this.registerInfixFxn(TokenType.GT, &Parser.parseInfixExpression);
         this.registerInfixFxn(TokenType.LPAREN, &Parser.parseCallExpression);
+        this.registerInfixFxn(TokenType.LBRACKET, &Parser.parseIndexExpression);
     }
 
     /// postblit constructor
@@ -97,6 +100,19 @@ struct Parser {
     void nextToken() {
         this.curToken = this.peekToken;
         this.peekToken = this.lex.nextToken();
+    }
+
+    /+++/
+    static Expression parseIndexExpression(ref Parser parser, ref Expression left) {
+        auto indexExp = new IndexExpression(parser.curToken, left);
+
+        parser.nextToken();
+        indexExp.index = parser.parseExpression(OpPreced.LOWEST);
+
+        if(!parser.expectPeek(TokenType.RBRACKET))
+            return null;
+
+        return indexExp;
     }
 
     /+++/
