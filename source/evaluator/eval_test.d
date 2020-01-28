@@ -9,7 +9,7 @@ import parser.parser;
 import objekt.objekt;
 import evaluator.eval;
 import objekt.environment;
-import evaluator.builtins : NULL;
+import evaluator.builtins : NULL, TRUE, FALSE;
 
 unittest {
     testEvalIntegerExpression();
@@ -26,6 +26,7 @@ unittest {
     testBuiltInFunctions();
     testArrayLiterals();
     testArrayIndexExpression();
+    testHashLiterals();
 }
 
 ///
@@ -433,5 +434,43 @@ void testArrayIndexExpression() {
         catch(ConvException ce) {
             assert(testNullObject(evaluated));
         }   
+    }
+}
+
+void testHashLiterals() {
+    auto input =`let two = "two";
+                {
+                    "five": 10 - 9,
+                    two: 1 + 1,
+                    "thr" + "ee": 6 / 2,
+                    4: 4,
+                    true: 5,
+                    false: 6
+                }`;
+
+    auto evaluated = testEval(input);
+    auto result = cast(Hash) evaluated;
+    if(result is null) {
+        stderr.writeln("Eval didn't return Hash. got=%s (%s)", evaluated, evaluated);
+        assert(result !is null);
+    }
+
+    auto expected = [
+        (new String("five")).hashKey()   : 1,
+        (new String("two")).hashKey()   : 2,
+        (new String("three")).hashKey() : 3,
+        (new Integer(4)).hashKey()      : 4,
+        TRUE.hashKey()                  : 5,
+        FALSE.hashKey()                 : 6,
+    ];
+
+    if(result.pairs.length != expected.length) {
+        stderr.writefln("Hash has wrong num of pairs. got=%d", result.pairs.length);
+        assert(result.pairs.length == expected.length);
+    }
+
+    foreach(expKey, expVal; expected) {
+        auto pair = result.pairs[expKey];
+        assert(testIntegerObject(pair.value, expVal));
     }
 }

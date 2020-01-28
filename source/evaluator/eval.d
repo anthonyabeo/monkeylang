@@ -85,6 +85,9 @@ Objekt eval(Node node, Environment env) {
                 return index;
 
             return evalIndexExpression(left, index);
+        case "ast.ast.HashLiteral":
+            auto hashLitNode = cast(HashLiteral) node;
+            return evalHashLiteral(hashLitNode, env);
         case "ast.ast.ArrayLiteral":
             auto arrLitNode = cast(ArrayLiteral) node;
 
@@ -361,4 +364,26 @@ Objekt evalArrayIndexExpression(Objekt array, Objekt index) {
         return NULL;
     
     return arrayObject.elements[idx];
+}
+
+Objekt evalHashLiteral(HashLiteral node, Environment env) {
+    auto pairs = (HashPair[HashKey]).init;
+    foreach(keyNode, valueNode; node.pairs) {
+        auto key = eval(keyNode, env);
+        if(isError(key))
+            return key;
+
+        auto hashKey = cast(Hashable) key;
+        if(hashKey is null)
+            return newError("unusable as hash key: %s", key.type());
+
+        auto value = eval(valueNode, env);
+        if(isError(value))
+            return value;
+
+        auto hashed = hashKey.hashKey();
+        pairs[hashed] = HashPair(key, value);
+    }
+
+    return new Hash(pairs);
 }
