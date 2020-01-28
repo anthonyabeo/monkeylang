@@ -29,6 +29,7 @@ enum TokenType {
     NOT_EQ,
     LBRACKET,
     RBRACKET,
+    COLON,
 
     // Keywords
     FUNCTION,

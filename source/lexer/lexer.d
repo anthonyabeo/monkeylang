@@ -97,6 +97,9 @@ struct Lexer {
             case ']':
                 tok = Token(TokenType.RBRACKET, to!string(this.ch));
                 break;
+            case ':':
+                tok = Token(TokenType.COLON, to!string(this.ch));
+                break;
             case '!':
                 if(this.peekPosition() == '=') {
                     auto ch = this.ch;
