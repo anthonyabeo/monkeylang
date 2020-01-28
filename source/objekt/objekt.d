@@ -19,6 +19,7 @@ enum ObjectType {
     STRING,
     BUILTIN,
     ARRAY,
+    HASH,
 }
 
 alias BuiltInFunction = Objekt function(Objekt[] args...);
@@ -27,6 +28,33 @@ alias BuiltInFunction = Objekt function(Objekt[] args...);
 interface Objekt {
     ObjectType type();  /// the type of the value
     string inspect();   /// introspection
+}
+
+/+++/
+interface Hashable {
+    HashKey hashKey();
+}
+
+/+++/
+class Hash : Objekt {
+    HashPair[HashKey] pairs;
+
+    /+++/
+    ObjectType type() {
+        return ObjectType.HASH;
+    }
+
+    /+++/
+    string inspect() {
+        string[] pairs;
+        foreach(key, pair; this.pairs) {
+            pairs ~= format("%s: %s", pair.key.inspect(), pair.value.inspect());
+        }
+
+        string s = "{" ~ join(pairs, ", ") ~ "}";
+
+        return s;
+    }
 }
 
 /+++/
@@ -236,4 +264,14 @@ class Array : Objekt {
 
         return s;
     }
+}
+
+struct HashKey {
+    ObjectType type; 
+    size_t value;
+}
+
+struct HashPair {
+    Objekt key;
+    Objekt value; 
 }
