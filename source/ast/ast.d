@@ -60,6 +60,35 @@ class Program : Node {
 }
 
 /+++/
+class IndexExpression : Expression {
+    Token token;
+    Expression left;
+    Expression index;
+
+    /+++/
+    this(Token token, ref Expression left) {
+        this.token = token;
+        this.left = left;
+    }
+
+    /***********************************
+     * expressionNode does nothing in particular.
+     */
+    void expressionNode()  {}
+
+    /+++/
+    string tokenLiteral() {
+        return this.token.literal;
+    }
+
+    /+++/
+    string asString() {
+        string s = "(" ~ left.asString() ~ "[" ~ index.asString() ~ "])";
+        return s;
+    }
+}
+
+/+++/
 class ArrayLiteral : Expression {
     Token token;                /// the [ token
     Expression[] elements;      /// array elements
