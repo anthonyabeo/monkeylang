@@ -227,6 +227,7 @@ void testErrorHandling() {
         ),
         ErrS("foobar", "identifier not found: foobar"),
         ErrS(`"Hello" - "World"`, "unknown operator: STRING - STRING"),
+        ErrS(`{"name": "Monkey"}[fn(x) { x }];`, "unusable as hash key: FUNCTION",),
     ];
 
     foreach(tt; tests) {
@@ -238,7 +239,10 @@ void testErrorHandling() {
             continue;
         }
 
-        assert(errObj.message == tt.expectedMessage);
+        if(errObj.message != tt.expectedMessage) {
+            stderr.writefln("wrong error message. expected=%s, got=%s", tt.expectedMessage, errObj.message);
+            assert(errObj.message == tt.expectedMessage);
+        }
     }
 }
 
@@ -472,5 +476,33 @@ void testHashLiterals() {
     foreach(expKey, expVal; expected) {
         auto pair = result.pairs[expKey];
         assert(testIntegerObject(pair.value, expVal));
+    }
+}
+
+void testHashIndexExpression() {
+    struct HashIndExp(T) {
+        string input;
+        T expected;
+    }
+
+    auto tests = tuple(
+        HashIndExp!int(`{"foo": 5}["foo"]`, 5),
+        HashIndExp!string(`{"foo": 5}["bar"]`, "null"),
+        HashIndExp!int(`let key = "foo"; {"foo": 5}[key]`, 5),
+        HashIndExp!string(`{}["foo"]`, "null"),
+        HashIndExp!int(`{5: 5}[5]`, 5),
+        HashIndExp!int(`{true: 5}[true]`, 5),
+        HashIndExp!int(`{false: 5}[false]`, 5),
+    );
+
+    foreach(tt; tests) {
+        auto evaluated = testEval(tt.input);
+        try {
+            auto integer = to!long(tt.expected);
+            assert(testIntegerObject(evaluated, integer));
+        }
+        catch(ConvException ce) {
+            assert(testNullObject(evaluated));
+        }
     }
 }
