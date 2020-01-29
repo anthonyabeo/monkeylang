@@ -10,84 +10,10 @@ import lexer.lexer;
 import ast.ast;
 
 unittest {
-    auto input = "let x = 5;
-                  let y = 10;
-                  let foobar = 838383;";
-
-    auto lex = Lexer(input);
-    auto parser = Parser(lex);
-    auto program = parser.parseProgram();
-    checkParserErrors(parser);
-
-    assert(program !is null);
-    assert(program.statements.length == 3);
-
-    auto tests = [
-        tuple("x"),
-        tuple("y"),
-        tuple("foobar")
-    ];
-
-    foreach(offset, tt; tests) {
-        auto stmt = program.statements[offset];
-        assert(testLetStatement(stmt, tt[0]));
-    }
-
-    input = "return 5;
-             return 10;
-             return 993322;";
-
-    lex = Lexer(input);
-    parser = Parser(lex);
-    program = parser.parseProgram();
-    checkParserErrors(parser);
-
-    assert(program !is null);
-    assert(program.statements.length == 3);
-
-    foreach(stmt; program.statements) {
-        auto returnStmt = cast(ReturnStatement) stmt;
-        assert(returnStmt !is null);
-        assert(returnStmt.tokenLiteral() == "return");
-    }
-
-    input = "foobar;";
-
-    lex = Lexer(input);
-    parser = Parser(lex);
-    program = parser.parseProgram();
-    checkParserErrors(parser);
-
-    assert(program !is null);
-    assert(program.statements.length == 1);
-
-    auto expStmt = cast(ExpressionStatement) program.statements[0]; 
-    assert(expStmt !is null);
-
-    auto ident = cast(Identifier) expStmt.expression;
-    assert(ident !is null);
-    assert(ident.value == "foobar");
-    assert(ident.tokenLiteral() == "foobar");
-
-    // testing integer literals
-    input = "5;";
-
-    lex = Lexer(input);
-    parser = Parser(lex);
-    program = parser.parseProgram();
-    checkParserErrors(parser);
-
-    assert(program !is null);
-    assert(program.statements.length == 1);
-
-    expStmt = cast(ExpressionStatement) program.statements[0]; 
-    assert(expStmt !is null);
-
-    auto iliteral = cast(IntegerLiteral) expStmt.expression;
-    assert(iliteral !is null);
-    assert(iliteral.value == 5);
-    assert(iliteral.tokenLiteral() == "5");
-
+    testIdentifiersInLetStatements();
+    testReturnStatements();
+    testStringLiterals();
+    testIntegerLiterals();
     testPrefixExpressionParsing();
     testInfixExpressionParsing();
     testIfStatementParsing();
@@ -654,4 +580,90 @@ void testParsingHashLiteralsWithExpressions() {
 
         testFunc(value);
     }   
+}
+
+void testIntegerLiterals() {
+    // testing integer literals
+    auto input = "5;";
+
+    auto lex = Lexer(input);
+    auto parser = Parser(lex);
+    auto program = parser.parseProgram();
+    checkParserErrors(parser);
+
+    assert(program !is null);
+    assert(program.statements.length == 1);
+
+    auto expStmt = cast(ExpressionStatement) program.statements[0]; 
+    assert(expStmt !is null);
+
+    auto iliteral = cast(IntegerLiteral) expStmt.expression;
+    assert(iliteral !is null);
+    assert(iliteral.value == 5);
+    assert(iliteral.tokenLiteral() == "5");
+}
+
+void testStringLiterals() {
+    auto input = "foobar;";
+
+    auto lex = Lexer(input);
+    auto parser = Parser(lex);
+    auto program = parser.parseProgram();
+    checkParserErrors(parser);
+
+    assert(program !is null);
+    assert(program.statements.length == 1);
+
+    auto expStmt = cast(ExpressionStatement) program.statements[0]; 
+    assert(expStmt !is null);
+
+    auto ident = cast(Identifier) expStmt.expression;
+    assert(ident !is null);
+    assert(ident.value == "foobar");
+    assert(ident.tokenLiteral() == "foobar");
+}
+
+void testReturnStatements() {
+    auto input = "return 5;
+                 return 10;
+                 return 993322;";
+
+    auto lex = Lexer(input);
+    auto parser = Parser(lex);
+    auto program = parser.parseProgram();
+    checkParserErrors(parser);
+
+    assert(program !is null);
+    assert(program.statements.length == 3);
+
+    foreach(stmt; program.statements) {
+        auto returnStmt = cast(ReturnStatement) stmt;
+        assert(returnStmt !is null);
+        assert(returnStmt.tokenLiteral() == "return");
+    }
+}
+
+void testIdentifiersInLetStatements() {
+    auto input = "let x = 5;
+                  let y = 10;
+                  let foobar = 838383;";
+
+    auto lex = Lexer(input);
+    auto parser = Parser(lex);
+    auto program = parser.parseProgram();
+    checkParserErrors(parser);
+
+    assert(program !is null);
+    assert(program.statements.length == 3);
+
+    auto tests = [
+        tuple("x"),
+        tuple("y"),
+        tuple("foobar")
+    ];
+
+    foreach(offset, tt; tests) {
+        auto stmt = program.statements[offset];
+        assert(testLetStatement(stmt, tt[0]));
+    }
 }
