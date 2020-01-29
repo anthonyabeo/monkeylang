@@ -111,6 +111,15 @@ static this() {
                     
                 }
             ),
+        "puts" : new BuiltIn(
+                    function Objekt(Objekt[] args...) { 
+                        foreach(arg; args) {
+                            writeln(arg.inspect());
+                        }
+
+                        return NULL;
+                    }
+                ),
     ];
 }
 
