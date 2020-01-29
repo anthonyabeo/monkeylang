@@ -30,3 +30,33 @@ Feel free to type in commands
 Hello World!
 >>> 
 ```
+
+## MONKEYLANG IN ACTION
+```
+// Integers & arithmetic expressions
+let version = 1 + (50 / 2) - (8 * 3);
+
+// Strings
+let name = "The Monkey programming language";
+
+// Booleans
+let isMonkeyFastNow = true;
+
+// Arrays & Hashes
+let people = [{"name": "Anna", "age": 24}, {"name": "Bob", "age": 99}];
+
+// Functions
+let getName = fn(person) { person["name"]; };
+getName(people[0]); // => "Anna"
+getName(people[1]); // => "Bob"
+
+// `newAdder` returns a closure that makes use of the free variables `a` and `b`:
+let newAdder = fn(a, b) {
+    fn(c) { a + b + c };
+};
+// This constructs a new `adder` function:
+let adder = newAdder(1, 2);
+
+adder(8); // => 11
+
+```
