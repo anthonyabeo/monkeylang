@@ -3,6 +3,7 @@ module evaluator.eval;
 import std.stdio;
 import std.conv;
 import std.string;
+import core.exception;
 
 import ast.ast;
 import objekt.objekt;
@@ -351,6 +352,8 @@ Objekt unwrapReturnValue(Objekt obj) {
 Objekt evalIndexExpression(Objekt left, Objekt index) {
     if(left.type() == ObjectType.ARRAY && index.type() == ObjectType.INTEGER)
         return evalArrayIndexExpression(left, index);
+    else if(left.type() == ObjectType.HASH)
+        return evalHashIndexExpression(left, index);
     else
         return newError("index operator not supported: %s", left.type());
 }
@@ -386,4 +389,21 @@ Objekt evalHashLiteral(HashLiteral node, Environment env) {
     }
 
     return new Hash(pairs);
+}
+
+Objekt evalHashIndexExpression(Objekt hash, Objekt index) {
+    auto hashObj = cast(Hash) hash;
+    auto key = cast(Hashable) index;
+    if(key is null)
+        return newError("unusable as hash key: %s", index.type());
+
+    HashPair pair;
+    try {
+        pair = hashObj.pairs[key.hashKey()];
+    }
+    catch(RangeError re) {
+        return NULL;
+    }
+
+    return pair.value;
 }
