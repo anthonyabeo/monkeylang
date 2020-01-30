@@ -1,6 +1,6 @@
 # THE MONKEY PROGRAMMING LANGUAGE
 
-This project is my implementation of the monkey programming language (monkeylang) in D. monkeylang is interpreted programming language from the books ["Writing an Interpreter in Go"](https://interpreterbook.com/) and ["Writing a compiler in Go"](https://compilerbook.com/) by Thorsten Ball.
+This project is my implementation of the monkey programming language (monkeylang) in D. monkeylang is interpreted programming language from the books ["Writing an Interpreter in Go"](https://interpreterbook.com/) and ["Writing a compiler in Go"](https://compilerbook.com/) by [Thorsten Ball](https://twitter.com/thorstenball).
 
 ## SETUP
 The tool needed to test and run this project are:  
@@ -32,7 +32,7 @@ Hello World!
 ```
 
 ## MONKEYLANG IN ACTION
-```
+```rust
 // Integers & arithmetic expressions
 let version = 1 + (50 / 2) - (8 * 3);
 
@@ -58,5 +58,4 @@ let newAdder = fn(a, b) {
 let adder = newAdder(1, 2);
 
 adder(8); // => 11
-
 ```
