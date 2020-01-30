@@ -298,6 +298,7 @@ bool isError(Objekt obj) {
     return false;
 }
 
+///
 Objekt[] evalExpressions(Expression[] exps, Environment env) {
     Objekt[] result;
 
@@ -311,6 +312,9 @@ Objekt[] evalExpressions(Expression[] exps, Environment env) {
     return result;
 }
 
+/***********************************
+* applyFunction
+*/
 Objekt applyFunction(Objekt fxn, Objekt[] args) {
     switch(fxn.type()) {
         case ObjectType.FUNCTION:
@@ -332,6 +336,7 @@ Objekt applyFunction(Objekt fxn, Objekt[] args) {
     }
 }
 
+///
 Environment extendFunctionEnv(Function fn, Objekt[] args) {
     auto env = Environment.newEnclosingEnvironment(fn.env);
     foreach(paramIdx, param; fn.parameters) {
@@ -341,6 +346,7 @@ Environment extendFunctionEnv(Function fn, Objekt[] args) {
     return env;
 }
 
+///
 Objekt unwrapReturnValue(Objekt obj) {
     auto retValue = cast(ReturnValue) obj;
     if(retValue !is null)
@@ -349,6 +355,7 @@ Objekt unwrapReturnValue(Objekt obj) {
     return obj;
 }
 
+///
 Objekt evalIndexExpression(Objekt left, Objekt index) {
     if(left.type() == ObjectType.ARRAY && index.type() == ObjectType.INTEGER)
         return evalArrayIndexExpression(left, index);
@@ -358,17 +365,19 @@ Objekt evalIndexExpression(Objekt left, Objekt index) {
         return newError("index operator not supported: %s", left.type());
 }
 
+///
 Objekt evalArrayIndexExpression(Objekt array, Objekt index) {
     auto arrayObject = cast(Array) array;
     auto idx = (cast(Integer) index).value ;
-    auto max = to!size_t(arrayObject.elements.length - 1);
+    const max = to!size_t(arrayObject.elements.length - 1);
 
-    if(idx < 0 || idx > max )
+    if(idx < 0 || idx > max)
         return NULL;
     
     return arrayObject.elements[idx];
 }
 
+///
 Objekt evalHashLiteral(HashLiteral node, Environment env) {
     auto pairs = (HashPair[HashKey]).init;
     foreach(keyNode, valueNode; node.pairs) {
@@ -391,6 +400,7 @@ Objekt evalHashLiteral(HashLiteral node, Environment env) {
     return new Hash(pairs);
 }
 
+///
 Objekt evalHashIndexExpression(Objekt hash, Objekt index) {
     auto hashObj = cast(Hash) hash;
     auto key = cast(Hashable) index;

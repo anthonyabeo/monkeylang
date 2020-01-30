@@ -1,9 +1,12 @@
 {
-	"authors": [
-		"Abeo Anthony Anabila"
-	],
-	"copyright": "Copyright © 2020, Abeo Anthony Anabila",
+	"name": "monkey",
 	"description": "The Monkey Programming Language",
+	"authors": ["Abeo Anthony Anabila <anthonyabeo@gmail.com>"],
+	"copyright": "Copyright © 2020, Abeo Anthony Anabila",
 	"license": "MIT",
-	"name": "monkey"
+	"toolchainRequirements": {
+		"dmd": "no",
+		"dub": ">=1.18.0",
+		"frontend": ">=2.087"
+	}
 }

@@ -64,7 +64,9 @@ class HashLiteral : Expression {
     Token token;                    /// the { token
     Expression[Expression] pairs;   /// map pairs
 
-    ///
+    /***********************************
+     * Constructor
+     */
     this(ref Token token) {
         this.token = token;
     }   
@@ -79,13 +81,14 @@ class HashLiteral : Expression {
         return this.token.literal;
     }
 
+    /+++/
     string asString() {
-        string[] pairs;
+        string[] pairsArr;
         foreach(key, entry; this.pairs) {
-            pairs ~= format("%s:%s", key.asString(), entry.asString());
+            pairsArr ~= format("%s:%s", key.asString(), entry.asString());
         }
 
-        string s = "{" ~ join(pairs, ", ") ~ "}";
+        string s = "{" ~ join(pairsArr, ", ") ~ "}";
 
         return s;
     }
@@ -94,11 +97,13 @@ class HashLiteral : Expression {
 
 /+++/
 class IndexExpression : Expression {
-    Token token;
-    Expression left;
-    Expression index;
+    Token token;        /// token
+    Expression left;    /// left
+    Expression index;   /// index
 
-    /+++/
+    /***********************************
+     * Constructor
+     */
     this(Token token, ref Expression left) {
         this.token = token;
         this.left = left;
@@ -126,7 +131,9 @@ class ArrayLiteral : Expression {
     Token token;                /// the [ token
     Expression[] elements;      /// array elements
 
-    /+++/
+    /***********************************
+     * Constructor
+     */
     this(Token token) {
         this.token = token;
     }
@@ -155,12 +162,16 @@ class ArrayLiteral : Expression {
 }
 
 
-/+++/
+/***********************************
+* BooleanLiteral
+*/
 class BooleanLiteral : Expression {
     Token token;    /// token
     bool value;     /// value
 
-    /+++/
+    /***********************************
+     * Constructor
+     */
     this(Token token, bool value) {
         this.token = token;
         this.value = value;
@@ -212,10 +223,12 @@ class IntegerLiteral : Expression {
 
 /+++/
 class StringLiteral : Expression {
-    Token token;
-    string value;
+    Token token;        /// token
+    string value;       /// value
 
-    /+++/
+    /***********************************
+     * Constructor
+     */
     this(Token token, string value) {
         this.token = token;
         this.value = value;
@@ -282,7 +295,9 @@ class FunctionLiteral : Expression {
     Identifier[] parameters;    /// parameters
     BlockStatement fnBody;      /// body
 
-    /+++/
+    /***********************************
+     * Constructor
+     */
     this(Token token) {
         this.token = token;
     }
@@ -322,7 +337,9 @@ class IfExpression : Expression {
     BlockStatement consequence; /// block state fot the if-clause
     BlockStatement alternative; /// block statement for the else-clause
 
-    /+++/
+    /***********************************
+     * Constructor
+     */
     this(Token token) {
         this.token = token;
     }
@@ -355,7 +372,9 @@ class InfixExpression : Expression {
     string operator;    /// operator
     Expression right;   /// right
 
-    /+++/
+    /***********************************
+     * Constructor
+     */
     this(Token token, Expression left, string operator) {
         this.token = token;
         this.left = left;
@@ -387,7 +406,9 @@ class PrefixExpression : Expression {
     string operator;    /// operator
     Expression right;   /// the right expression node
 
-    /+++/
+    /***********************************
+     * Constructor
+     */
     this(Token token, string operator) {
         this.token = token;
         this.operator = operator;
@@ -444,7 +465,9 @@ class BlockStatement : Statement {
     Token token;            /// token
     Statement[] statements; /// array of statements in this block
 
-    /+++/
+    /***********************************
+     * Constructor
+     */
     this(Token token) {
         this.token = token;
         this.statements = [];
