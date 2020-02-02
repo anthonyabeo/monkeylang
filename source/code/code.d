@@ -6,7 +6,7 @@ import std.typecons;
 import std.bitmanip;
 import std.stdio;
 
-alias Intructions = ubyte[];
+alias Instructions = ubyte[];
 alias Opcode = ubyte;
 
 /// OPCODES
@@ -14,7 +14,7 @@ enum OPCODE : Opcode {
     OpConstant,
 }
 
-Definition[OPCODE] definitions; ///
+Definition[OPCODE] definitions; /// definitions
 
 ///
 static this() {
@@ -54,6 +54,7 @@ class Definition {
     }
 }
 
+///
 ubyte[] make(Opcode op, int[] operands...) {
     ubyte[] instruction = [];
 
@@ -71,7 +72,7 @@ ubyte[] make(Opcode op, int[] operands...) {
 
     size_t offset = 1;
     foreach(i, o; operands) {
-        auto width = def.operandWidths[i];
+        immutable width = def.operandWidths[i];
         switch (width) {
             case 2:
                 auto results = nativeToBigEndian(cast(ushort) o);

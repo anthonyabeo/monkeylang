@@ -17,7 +17,7 @@ void testMake() {
                          ubyte[], "expected");
 
     auto tests = [
-        Instr(OPCODE.OpConstant, [65534], [cast(ubyte) OPCODE.OpConstant, 255, 254]),
+        Instr(OPCODE.OpConstant, [65_534], [cast(ubyte) OPCODE.OpConstant, 255, 254]),
     ];
 
     foreach(tt; tests) {
