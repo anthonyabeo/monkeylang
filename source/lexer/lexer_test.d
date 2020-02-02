@@ -19,7 +19,7 @@ unittest {
         Token(TokenType.EOF, "")
     ];
 
-    auto lexer = new Lexer(input);
+    auto lexer = Lexer(input);
     foreach(index, token; tests) {
         const tok = lexer.nextToken();
         
@@ -90,7 +90,7 @@ unittest {
         Token(TokenType.EOF, ""),
     ];
 
-    lexer = new Lexer(input);
+    lexer = Lexer(input);
     foreach(index, token; tests) {
         const tok = lexer.nextToken();
         
@@ -156,7 +156,7 @@ unittest {
         Token(TokenType.EOF, ""),
     ];
 
-    lexer = new Lexer(input);
+    lexer = Lexer(input);
     foreach(index, token; tests) {
         const tok = lexer.nextToken();
         

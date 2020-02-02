@@ -8,6 +8,7 @@ unittest {
     testStringHashKey();
 }
 
+///
 void testStringHashKey() {
     auto hello1 = new String("Hello World");
     auto hello2 = new String("Hello World");
