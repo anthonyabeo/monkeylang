@@ -24,20 +24,26 @@ enum OpPreced : ubyte {
 }
 
 /// Operator Precedence
-enum precedence = [
-    TokenType.EQ : OpPreced.EQUALS,
-    TokenType.NOT_EQ : OpPreced.EQUALS,
-    TokenType.LT : OpPreced.LESSGREATER,
-    TokenType.GT : OpPreced.LESSGREATER,
-    TokenType.PLUS : OpPreced.SUM,
-    TokenType.MINUS : OpPreced.SUM,
-    TokenType.SLASH : OpPreced.PRODUCT,
-    TokenType.ASTERISK : OpPreced.PRODUCT,
-    TokenType.LPAREN: OpPreced.CALL,
-    TokenType.LBRACKET : OpPreced.INDEX,
-];
+OpPreced[TokenType] precedence;
 
-/+++/
+static this() {
+    precedence = [
+        TokenType.EQ : OpPreced.EQUALS,
+        TokenType.NOT_EQ : OpPreced.EQUALS,
+        TokenType.LT : OpPreced.LESSGREATER,
+        TokenType.GT : OpPreced.LESSGREATER,
+        TokenType.PLUS : OpPreced.SUM,
+        TokenType.MINUS : OpPreced.SUM,
+        TokenType.SLASH : OpPreced.PRODUCT,
+        TokenType.ASTERISK : OpPreced.PRODUCT,
+        TokenType.LPAREN: OpPreced.CALL,
+        TokenType.LBRACKET : OpPreced.INDEX,
+    ];
+}
+
+
+/++
+ +/
 struct Parser {
     Lexer lex;          /// the lexer to retrieve tokens from.
     Token curToken;     /// provides access to the current token
@@ -116,9 +122,7 @@ struct Parser {
                 return null;
 
             parser.nextToken();
-            auto value = parser.parseExpression(OpPreced.LOWEST);
-
-            hashLit.pairs[key] = value;
+            hashLit.pairs[key] = parser.parseExpression(OpPreced.LOWEST);
 
             if(!parser.peekTokenIs(TokenType.RBRACE) && !parser.expectPeek(TokenType.COMMA))
                 return null;
