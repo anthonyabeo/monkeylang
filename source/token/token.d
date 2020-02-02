@@ -42,15 +42,20 @@ enum TokenType {
 }
 
 ///
-enum keywords = [
-    "let": TokenType.LET,
-    "fn": TokenType.FUNCTION,
-    "return": TokenType.RETURN,
-    "true": TokenType.TRUE,
-    "false": TokenType.FALSE,
-    "if": TokenType.IF,
-    "else": TokenType.ELSE
-];
+TokenType[string] keywords;
+
+static this() {
+    keywords = [
+        "let": TokenType.LET,
+        "fn": TokenType.FUNCTION,
+        "return": TokenType.RETURN,
+        "true": TokenType.TRUE,
+        "false": TokenType.FALSE,
+        "if": TokenType.IF,
+        "else": TokenType.ELSE
+    ];
+}
+
 
 /+++/
 TokenType lookUpIndentifier(string ident) {
