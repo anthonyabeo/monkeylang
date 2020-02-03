@@ -29,8 +29,8 @@ static this() {
  +      op = opcode
  +
  +   Return:
- +/
-const(Definition) lookUp(ubyte op) {
+ +++++++++++++++++++++++++++++++++++++++++++++/
+Definition lookUp(ubyte op) {
     if(cast(OPCODE)op !in definitions)
         return null;
 
@@ -47,7 +47,7 @@ class Definition {
     +   Params:
     +      name = 
     +      opWidth = 
-    +/
+    ++++++++++++++++++++++++++++++++++++++++++++/
     this(string name, int[] opWidth) {
         this.name = name;
         this.operandWidths = opWidth;
@@ -55,7 +55,7 @@ class Definition {
 }
 
 ///
-ubyte[] make(Opcode op, int[] operands...) {
+ubyte[] make(Opcode op, size_t[] operands...) {
     ubyte[] instruction = [];
 
     auto def = definitions[cast(OPCODE) op];
@@ -86,4 +86,81 @@ ubyte[] make(Opcode op, int[] operands...) {
     }
 
     return instruction;
+}
+
+/++
+ +
+ +
+ +/
+string asString(Instructions ins) {
+    string o;
+    
+    size_t i = 0;
+    while(i < ins.length) {
+        auto def = lookUp(ins[i]);
+        if(def is null) {
+            o ~= format("ERROR: %s\n", def);
+            continue;
+        }
+
+        auto result = readOperands(def, ins[i+1..$]);
+        auto operands = result[0], read = result[1];
+
+        o ~= format("%04d %s\n", i, fmtInstruction(ins, def, operands));
+
+        i += 1 + read;
+    }
+
+    return o;
+}
+
+///
+string fmtInstruction(Instructions ins, Definition def, int[] operands) {
+    auto operandCount = def.operandWidths.length;
+    if(operands.length != operandCount) {
+        return format("ERROR: operand len %d does not match defined %d\n",
+                        operands.length, operandCount);
+    }
+        
+    switch(operandCount) {
+        case 1:
+            return format("%s %d", def.name, operands[0]);
+        default:
+            return format("ERROR: unhandled operandCount for %s\n", def.name);
+    }
+        
+}
+
+///
+Tuple!(int[], int) readOperands(Definition def, Instructions ins) {
+    auto operands = new int[def.operandWidths.length];
+    auto offset = 0;
+    foreach(i, width; def.operandWidths) {
+        switch(width) {
+            case 2:
+                operands[i] = readUint16(ins[offset .. $]);
+                offset += width;
+                break;
+            default:
+                break;
+        }
+    }
+
+    return tuple(operands, offset);
+}
+
+/**
+	Generate the 16-bit numerical value from an array of two bytes
+	in a big-endian format.
+
+	Params:
+		data = an immutable array of bytes of size 2 in big endian format;
+
+	Returns:
+		the 16-bit numerical value of this array representation.
+*/
+auto readUint16(ubyte[] data) 
+{
+	return data[0] << 8  | 
+	       data[1];
 }
