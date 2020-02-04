@@ -14,6 +14,10 @@ struct Compiler {
     Instructions instructions;  /// instructions
     Objekt[] constants;         /// constants
 
+    this(this) {
+        this.constants = constants.dup;
+    }
+    
     /++++++++++++++++++++++++++++
      + Params:
      +    node =
@@ -98,4 +102,8 @@ struct Compiler {
  struct Bytecode {
     Instructions instructions;  /// instructions
     Objekt[] constants;         /// constants
+
+    this(this) {
+        this.constants = constants.dup;
+    }
  }
