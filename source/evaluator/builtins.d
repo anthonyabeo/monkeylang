@@ -12,16 +12,13 @@ Boolean TRUE;   /// true
 Boolean FALSE;  /// false
 Null NULL;      /// null
 
+BuiltIn[string] builtins; /// BuiltIn bin;
+
 static this() {
     NULL = new Null(); 
     TRUE = new Boolean(true),
     FALSE = new Boolean(false);
-}
 
-// BuiltIn bin;
-BuiltIn[string] builtins;
-
-static this() {
     builtins = [
         "len" :  new BuiltIn(
                 function Objekt(Objekt[] args...) { 
