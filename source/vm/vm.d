@@ -63,17 +63,13 @@ struct VM {
 
                     break;
                 
-                case OPCODE.OpAdd:
-                    const right = this.pop();
-                    const left = this.pop();
-                    auto leftValue = (cast(Integer) left).value;
-                    auto rightValue = (cast(Integer) right).value;
-
-                    auto result = leftValue + rightValue;
-                    this.push(new Integer(result));
+                case OPCODE.OpAdd, OPCODE.OpSub, OPCODE.OpMul, OPCODE.OpDiv:
+                    auto err = this.executeBinaryOperation(op);
+                    if(err !is null)
+                        return err;
 
                     break;
-                
+                    
                 case OPCODE.OpPop:
                     this.pop();
                     break;
@@ -81,6 +77,48 @@ struct VM {
         }
 
         return null;
+    }
+
+    ///
+    Error executeBinaryOperation(OPCODE op) {
+        auto right = this.pop();
+        auto left = this.pop();
+
+        auto leftType = left.type();
+        auto rightType = right.type();
+
+        if(leftType == ObjectType.INTEGER && rightType == ObjectType.INTEGER) {
+            return this.executeBinaryIntegerOperation(op, left, right);
+        }
+
+        return new Error(format("unsupported types for binary operation: %s %s",
+                            leftType, rightType));
+    }
+
+    ///
+    Error executeBinaryIntegerOperation(OPCODE op, Objekt left, Objekt right) {
+        auto leftValue = (cast(Integer) left).value;
+        auto rightValue = (cast(Integer) right).value;
+
+        long result;
+        switch(op) {
+            case OPCODE.OpAdd:
+                result = leftValue + rightValue;
+                break;
+            case OPCODE.OpMul:
+                result = leftValue * rightValue;
+                break;
+            case OPCODE.OpSub:
+                result = leftValue - rightValue;
+                break;
+            case OPCODE.OpDiv:
+                result = leftValue / rightValue;
+                break;
+            default:
+                return new Error(format("unknown integer operator: %d", op));
+        }
+
+        return this.push(new Integer(result));
     }
 
     ///
