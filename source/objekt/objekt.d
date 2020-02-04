@@ -246,7 +246,7 @@ class BuiltIn : Objekt {
 
 /+++/
 class Array : Objekt {
-    Objekt[] elements;
+    Objekt[] elements;  /// array elements
 
     /+++/
     this(Objekt[] elements) {
@@ -271,12 +271,14 @@ class Array : Objekt {
     }
 }
 
+/+++/
 struct HashKey {
-    ObjectType type; 
-    size_t value;
+    ObjectType type;    /// type
+    size_t value;       /// value
 }
 
+/+++/
 struct HashPair {
-    Objekt key;
-    Objekt value; 
+    Objekt key;     /// key
+    Objekt value;   /// value
 }
