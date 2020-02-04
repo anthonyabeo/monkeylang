@@ -58,6 +58,17 @@ struct VM {
                         return err;
 
                     break;
+                
+                case OPCODE.OpAdd:
+                    const right = this.pop();
+                    const left = this.pop();
+                    auto leftValue = (cast(Integer) left).value;
+                    auto rightValue = (cast(Integer) right).value;
+
+                    auto result = leftValue + rightValue;
+                    this.push(new Integer(result));
+
+                    break;
             }
         }
 
@@ -73,5 +84,13 @@ struct VM {
         this.sp++;
 
         return null;
+    }
+
+    ///
+    Objekt pop() {
+        auto obj = this.stack[this.sp - 1];
+        this.sp--;
+
+        return obj;
     }
 }
