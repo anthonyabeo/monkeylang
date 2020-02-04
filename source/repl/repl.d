@@ -70,9 +70,9 @@ void start() {
             continue;
         }
 
-        auto stackTop = machine.stackTop();
-        if(stackTop.type() != ObjectType.NULL)
-            writefln("%s", stackTop.inspect());
+        auto lastPopped = machine.lastPoppedStackElem();
+        if(lastPopped.type() != ObjectType.NULL)
+            writefln("%s", lastPopped.inspect());
     }
 }
 
