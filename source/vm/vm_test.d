@@ -23,6 +23,15 @@ void testIntegerArithmetic() {
         VMTestCase!int("1", 1),
         VMTestCase!int("2", 2),
         VMTestCase!int("1+2", 3),
+        VMTestCase!int("1 - 2", -1),
+        VMTestCase!int("1 * 2", 2),
+        VMTestCase!int("4 / 2", 2),
+        VMTestCase!int("50 / 2 * 2 + 10 - 5", 55),
+        VMTestCase!int("5 + 5 + 5 + 5 - 10", 10),
+        VMTestCase!int("2 * 2 * 2 * 2 * 2", 32),
+        VMTestCase!int("5 * 2 + 10", 20),
+        VMTestCase!int("5 + 2 * 10", 25),
+        VMTestCase!int("5 * (2 + 10)", 60),
     ];
 
     runVMTests!int(tests);
@@ -41,14 +50,14 @@ void runVMTests(T) (VMTestCase!(T)[] tests) {
         auto compiler = Compiler();
         auto err = compiler.compile(program);
         if(err !is null) {
-            stderr.writefln("compiler error: %s", err);
+            stderr.writefln("compiler error: %s", err.msg);
             assert(err is null);
         }
 
         auto vm = VM(compiler.bytecode());
         err = vm.run();
         if(err !is null) {
-            stderr.writefln("vm error: %s", err);
+            stderr.writefln("vm error: %s", err.msg);
             assert(err is null);
         }
 
