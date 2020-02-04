@@ -36,6 +36,17 @@ void testIntegerArithmetic() {
                 make(OPCODE.OpConstant, 0), 
                 make(OPCODE.OpConstant, 1),
                 make(OPCODE.OpAdd),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!int(
+            "1; 2",
+            [1, 2],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpPop),
+                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpPop),
             ]
         ),
     ];
