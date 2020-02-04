@@ -1,6 +1,7 @@
 module compiler.compiler;
 
 import std.conv;
+import std.string;
 
 import ast.ast;
 import code.code;
@@ -52,6 +53,13 @@ struct Compiler {
                 if(err !is null)
                     return err;
 
+                switch(n.operator) {
+                    case "+":
+                        this.emit(OPCODE.OpAdd);
+                        break;
+                    default:
+                        return new Error(format("unknown operator %s", n.operator));
+                }
                 break;
             
             case "ast.ast.IntegerLiteral":

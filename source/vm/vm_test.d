@@ -22,7 +22,7 @@ void testIntegerArithmetic() {
     auto tests = [
         VMTestCase!int("1", 1),
         VMTestCase!int("2", 2),
-        VMTestCase!int("1+2", 2),
+        VMTestCase!int("1+2", 3),
     ];
 
     runVMTests!int(tests);
