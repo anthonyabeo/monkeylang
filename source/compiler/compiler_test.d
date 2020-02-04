@@ -34,7 +34,8 @@ void testIntegerArithmetic() {
             [1, 2], 
             [
                 make(OPCODE.OpConstant, 0), 
-                make(OPCODE.OpConstant, 1)
+                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpAdd),
             ]
         ),
     ];
@@ -53,18 +54,19 @@ void runCompilerTests(T) (CompilerTestCase!(T)[] tests) {
             stderr.writefln("compiler error: %s", err.msg);
             assert(err is null);
         }
-
-        auto bytecode = Bytecode();
+        
+        auto bytecode = compiler.bytecode();
+        
         err = testInstructions(tt.expectedInstructions, bytecode.instructions);
-        if(err is null) {
+        if(err !is null) {
             stderr.writefln("testInstructions failed: %s", err.msg);
-            assert(err !is null);
+            assert(err is null);
         }
 
         err = testConstants!int(tt.expectedConstants, bytecode.constants);
-        if(err is null) {
+        if(err !is null) {
             stderr.writefln("testConstants failed: %s", err.msg);
-            assert(err !is null);
+            assert(err is null);
         }
     }
 }
