@@ -52,7 +52,7 @@ void runVMTests(T) (VMTestCase!(T)[] tests) {
             assert(err is null);
         }
 
-        auto stackElem = vm.stackTop();
+        auto stackElem = vm.lastPoppedStackElem();
         testExpectedObject!T(tt.expected, stackElem);
     }
 }

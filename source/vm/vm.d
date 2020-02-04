@@ -19,7 +19,6 @@ struct VM {
     ///
     this(this) {
         this.stack = stack.dup;
-
     }
 
     /++++++++++++++++++++++++++++++
@@ -34,6 +33,11 @@ struct VM {
         this.stack = new Objekt[StackSize];
 
         this.sp = 0;
+    }
+
+    ///
+    Objekt lastPoppedStackElem() {
+        return this.stack[this.sp];
     }
 
     ///
@@ -68,6 +72,10 @@ struct VM {
                     auto result = leftValue + rightValue;
                     this.push(new Integer(result));
 
+                    break;
+                
+                case OPCODE.OpPop:
+                    this.pop();
                     break;
             }
         }
