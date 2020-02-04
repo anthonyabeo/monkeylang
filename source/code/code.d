@@ -12,6 +12,7 @@ alias Opcode = ubyte;
 /// OPCODES
 enum OPCODE : Opcode {
     OpConstant,
+    OpAdd,
 }
 
 Definition[OPCODE] definitions; /// definitions
@@ -20,6 +21,7 @@ Definition[OPCODE] definitions; /// definitions
 static this() {
     definitions = [
         OPCODE.OpConstant : new Definition("OpConstant", [2]),
+        OPCODE.OpAdd : new Definition("OpAdd", []),
     ];
 }
 
@@ -123,6 +125,8 @@ string fmtInstruction(Instructions ins, Definition def, int[] operands) {
     }
         
     switch(operandCount) {
+        case 0:
+            return def.name;
         case 1:
             return format("%s %d", def.name, operands[0]);
         default:
