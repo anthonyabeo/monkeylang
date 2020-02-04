@@ -42,7 +42,7 @@ struct Compiler {
                     return err;
 
                 this.emit(OPCODE.OpPop);
-                
+
                 break;
             
             case "ast.ast.InfixExpression":
@@ -58,6 +58,15 @@ struct Compiler {
                 switch(n.operator) {
                     case "+":
                         this.emit(OPCODE.OpAdd);
+                        break;
+                    case "-":
+                        this.emit(OPCODE.OpSub);
+                        break;
+                    case "*":
+                        this.emit(OPCODE.OpMul);
+                        break;
+                    case "/":
+                        this.emit(OPCODE.OpDiv);
                         break;
                     default:
                         return new Error(format("unknown operator %s", n.operator));
