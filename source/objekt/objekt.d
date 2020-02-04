@@ -26,18 +26,22 @@ alias BuiltInFunction = Objekt function(Objekt[] args...);
 
 /+++/
 interface Objekt {
-    ObjectType type();  /// the type of the value
-    string inspect();   /// introspection
+    /// the type of the value
+    ObjectType type();  
+
+    /// introspection
+    string inspect();   
 }
 
 /+++/
 interface Hashable {
+    /+++/
     HashKey hashKey();
 }
 
 /+++/
 class Hash : Objekt {
-    HashPair[HashKey] pairs;
+    HashPair[HashKey] pairs;    /// pairs
 
     ///
     this(HashPair[HashKey] pairs) {
@@ -80,7 +84,8 @@ class Integer : Objekt, Hashable {
     string inspect() {
         return format("%d", this.value);
     }
-
+    
+    /+++/
     HashKey hashKey() {
         return HashKey(this.type(), to!size_t(this.value));
     }
@@ -88,7 +93,7 @@ class Integer : Objekt, Hashable {
 
 /+++/
 class String : Objekt, Hashable {
-    string value;
+    string value;   /// value
 
     /+++/
     this(string value) {
@@ -133,6 +138,7 @@ class Boolean : Objekt, Hashable {
         return format("%s", this.value);
     }
 
+    /+++/
     HashKey hashKey() {
         ulong value = this.value ? 1 : 0;
         return HashKey(this.type(), value);
@@ -226,7 +232,7 @@ class Function : Objekt {
 
 /+++/
 class BuiltIn : Objekt {
-    BuiltInFunction fxn;
+    BuiltInFunction fxn;    /// function
 
     /+++/
     this(BuiltInFunction fxn) {
@@ -260,12 +266,12 @@ class Array : Objekt {
 
     /+++/
     string inspect() {
-        string[] elements;
+        string[] elems;
         foreach(elem; this.elements) {
-            elements ~= elem.inspect();
+            elems ~= elem.inspect();
         }
 
-        string s = "[" ~ join(elements, ", ") ~ "]";
+        string s = "[" ~ join(elems, ", ") ~ "]";
 
         return s;
     }

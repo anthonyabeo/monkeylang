@@ -41,6 +41,8 @@ struct Compiler {
                 if(err !is null)
                     return err;
 
+                this.emit(OPCODE.OpPop);
+                
                 break;
             
             case "ast.ast.InfixExpression":

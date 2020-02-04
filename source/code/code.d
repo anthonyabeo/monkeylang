@@ -13,6 +13,7 @@ alias Opcode = ubyte;
 enum OPCODE : Opcode {
     OpConstant,
     OpAdd,
+    OpPop,
 }
 
 Definition[OPCODE] definitions; /// definitions
@@ -22,6 +23,7 @@ static this() {
     definitions = [
         OPCODE.OpConstant : new Definition("OpConstant", [2]),
         OPCODE.OpAdd : new Definition("OpAdd", []),
+        OPCODE.OpPop : new Definition("OpPop", []),
     ];
 }
 
