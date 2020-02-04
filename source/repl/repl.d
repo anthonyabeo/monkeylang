@@ -12,6 +12,8 @@ import ast.ast : Program;
 import evaluator.eval;
 import objekt.objekt;
 import objekt.environment;
+import compiler.compiler;
+import vm.vm;
 
 /// monkey face
 const MONKEY_FACE = 
@@ -54,9 +56,23 @@ void start() {
             continue;
         }
 
-        auto evaluated = eval(program, env);
-        if(evaluated.type() != ObjectType.NULL)
-            writefln("%s", evaluated.inspect());
+        auto compiler = Compiler();
+        auto err = compiler.compile(program);
+        if(err !is null) {
+            writefln("Woops! Compilation failed:\n %s\n", err.msg);
+            continue;
+        }
+
+        auto machine = VM(compiler.bytecode());
+        err = machine.run();
+        if(err !is null) {
+            writefln("Woops! Executing bytecode failed:\n %s\n", err);
+            continue;
+        }
+
+        auto stackTop = machine.stackTop();
+        if(stackTop.type() != ObjectType.NULL)
+            writefln("%s", stackTop.inspect());
     }
 }
 
