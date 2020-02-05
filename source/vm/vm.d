@@ -96,10 +96,45 @@ struct VM {
                         return err;
 
                     break;
+                
+                case OPCODE.OpMinus:
+                    auto err = this.executeMinusOperator();
+                    if(err !is null)
+                        return err; 
+
+                    break;
+
+                case OPCODE.OpBang:
+                    auto err = this.executeBangOperator();
+                    if(err !is null)
+                        return err;
+
+                    break;
             }
         }
 
         return null;
+    }
+
+    ///
+    Error executeMinusOperator() {
+        auto operand = this.pop();
+        if(operand.type() != ObjectType.INTEGER) {
+            return new Error(format("unsupported type for negation: %s", 
+                                        operand.type()));
+        }
+
+        auto value = (cast(Integer) operand).value;
+
+        return this.push(new Integer(-value));
+    }
+
+    ///
+    Error executeBangOperator() {
+        auto operand = this.pop();
+        if(operand.inspect() == TRUE.inspect()) return this.push(FALSE);
+        else if(operand.inspect() == FALSE.inspect()) return this.push(TRUE);
+        else return this.push(FALSE);
     }
 
     /// 

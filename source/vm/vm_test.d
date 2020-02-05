@@ -40,6 +40,12 @@ void testBooleanExpressions() {
         VMTestCase!bool("(1 < 2) == false", false),
         VMTestCase!bool("(1 > 2) == true", false),
         VMTestCase!bool("(1 > 2) == false", true),
+        VMTestCase!bool("!true", false),
+        VMTestCase!bool("!false", true),
+        VMTestCase!bool("!5", false),
+        VMTestCase!bool("!!true", true),
+        VMTestCase!bool("!!false", false),
+        VMTestCase!bool("!!5", true),
     ];
 
     runVMTests!bool(tests);
@@ -76,6 +82,10 @@ void testIntegerArithmetic() {
         VMTestCase!int("5 * 2 + 10", 20),
         VMTestCase!int("5 + 2 * 10", 25),
         VMTestCase!int("5 * (2 + 10)", 60),
+        VMTestCase!int("-5", -5),
+        VMTestCase!int("-10", -10),
+        VMTestCase!int("-50 + 100 + -50", 0),
+        VMTestCase!int("(5 + 10 * 2 + 15 / 3) * 2 + -10", 50),
     ];
 
     runVMTests!int(tests);
