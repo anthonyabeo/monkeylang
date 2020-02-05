@@ -16,6 +16,22 @@ import compiler.compiler;
 unittest {
     testIntegerArithmetic();
     testBooleanExpressions();
+    testConditional();
+}
+
+///
+void testConditional() {
+    auto tests = [
+        VMTestCase!int("if (true) { 10 }", 10),
+        VMTestCase!int("if (true) { 10 } else { 20 }", 10),
+        VMTestCase!int("if (false) { 10 } else { 20 } ", 20),
+        VMTestCase!int("if (1) { 10 }", 10),
+        VMTestCase!int("if (1 < 2) { 10 }", 10),
+        VMTestCase!int("if (1 < 2) { 10 } else { 20 }", 10),
+        VMTestCase!int("if (1 > 2) { 10 } else { 20 }", 20),
+    ];
+
+    runVMTests!int(tests);
 }
 
 ///

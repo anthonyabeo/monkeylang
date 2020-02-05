@@ -110,6 +110,21 @@ struct VM {
                         return err;
 
                     break;
+                
+                case OPCODE.OpJumpNotTruthy:
+                    immutable pos = readUint16(this.instructions[ip+1 .. $]);
+                    ip += 2;
+
+                    auto condition = this.pop();
+                    if(!isTruthy(condition))
+                        ip = pos - 1;
+
+                    break;
+
+                case OPCODE.OpJump:
+                    immutable pos = readUint16(this.instructions[ip+1 .. $]);
+                    ip = pos - 1;
+                    break;
             }
         }
 
@@ -241,4 +256,12 @@ struct VM {
 
         return obj;
     }
+}
+
+///
+bool isTruthy(Objekt obj) {
+    if(obj.type() == ObjectType.BOOLEAN)
+        return (cast(Boolean) obj).value;
+    else
+        return true;
 }
