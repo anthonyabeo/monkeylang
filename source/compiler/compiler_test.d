@@ -3,6 +3,7 @@ module compiler.compiler_test;
 import std.stdio;
 import std.string;
 import std.conv;
+import std.typecons;
 
 import ast.ast;
 import code.code;
@@ -16,7 +17,10 @@ unittest {
     testIntegerArithmetic();
 }
 
-
+alias Tin = Tuple!(CompilerTestCase!int, CompilerTestCase!int, 
+                 CompilerTestCase!int, CompilerTestCase!int, 
+                 CompilerTestCase!int, CompilerTestCase!bool, 
+                 CompilerTestCase!bool);
 /++
  + 
  +/
@@ -28,7 +32,7 @@ struct CompilerTestCase(T) {
 
 ///
 void testIntegerArithmetic() {
-    auto tests = [
+    auto tests = tuple(
         CompilerTestCase!int(
             "1 + 2", 
             [1, 2], 
@@ -79,14 +83,30 @@ void testIntegerArithmetic() {
                 make(OPCODE.OpPop),
             ]
         ),
-    ];
+        CompilerTestCase!bool(
+            "true",
+            [],
+            [
+                make(OPCODE.OpTrue),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!bool(
+            "false",
+            [],
+            [
+                make(OPCODE.OpFalse),
+                make(OPCODE.OpPop),
+            ]
+        ),
+    );
 
-    runCompilerTests!int(tests);
+    runCompilerTests(tests);
 }
 
 ///
-void runCompilerTests(T) (CompilerTestCase!(T)[] tests) {
-    foreach (tt; tests) {
+void runCompilerTests(Tin tests) {
+    foreach (i, tt; tests) {
         auto program = parse(tt.input);
         auto compiler = Compiler();
 
@@ -104,7 +124,7 @@ void runCompilerTests(T) (CompilerTestCase!(T)[] tests) {
             assert(err is null);
         }
 
-        err = testConstants!int(tt.expectedConstants, bytecode.constants);
+        err = testConstants(tt.expectedConstants, bytecode.constants);
         if(err !is null) {
             stderr.writefln("testConstants failed: %s", err.msg);
             assert(err is null);

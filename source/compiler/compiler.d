@@ -80,6 +80,14 @@ struct Compiler {
 
                 break;
 
+            case "ast.ast.BooleanLiteral":
+                auto n = cast(BooleanLiteral) node;
+                if(n.value) 
+                    this.emit(OPCODE.OpTrue);
+                else
+                    this.emit(OPCODE.OpFalse);
+                    
+                break;
             default:
                 break;
         }
