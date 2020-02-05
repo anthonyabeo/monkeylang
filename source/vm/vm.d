@@ -89,10 +89,61 @@ struct VM {
                         return err;
 
                     break;
+                
+                case OPCODE.OpEqual, OPCODE.OpNotEqual, OPCODE.OpGreaterThan:
+                    auto err = this.executeComparison(op);
+                    if(err !is null)
+                        return err;
+
+                    break;
             }
         }
 
         return null;
+    }
+
+    /// 
+    Error executeComparison(OPCODE op) {
+        auto right = this.pop();
+        auto left = this.pop();
+
+        if(left.type() == ObjectType.INTEGER || right.type() == ObjectType.INTEGER) {
+            return this.executeIntegerComparison(op, left, right);
+        }
+
+        switch(op) {
+            case OPCODE.OpEqual:
+                return this.push(nativeBoolToBooleanObject(right == left));
+            case OPCODE.OpNotEqual:
+                return this.push(nativeBoolToBooleanObject(right != left));
+            default:
+                return new Error(format("unknown operator: %d (%s %s)",
+                                    op, left.type(), right.type()));
+        }
+    }
+
+    ///
+    Error executeIntegerComparison(OPCODE op, Objekt left, Objekt right) {
+        auto leftValue = (cast(Integer) left).value;
+        auto rightValue = (cast(Integer) right).value;
+
+        switch(op) {
+            case OPCODE.OpEqual:
+                return this.push(nativeBoolToBooleanObject(rightValue == leftValue));
+            case OPCODE.OpNotEqual:
+                return this.push(nativeBoolToBooleanObject(rightValue != leftValue));
+            case OPCODE.OpGreaterThan:
+                return this.push(nativeBoolToBooleanObject(leftValue > rightValue));
+            default:
+                return new Error(format("unknown operator: %d", op));
+
+        }
+    }
+
+    ///
+    Boolean nativeBoolToBooleanObject(bool input) {
+        if(input) return TRUE;
+        return FALSE;
     }
 
     ///

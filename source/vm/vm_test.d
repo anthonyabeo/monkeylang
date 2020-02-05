@@ -23,6 +23,23 @@ void testBooleanExpressions() {
     auto tests = [
         VMTestCase!bool("true", true),
         VMTestCase!bool("false", false),
+        VMTestCase!bool("1 < 2", true),
+        VMTestCase!bool("1 > 2", false),
+        VMTestCase!bool("1 < 1", false),
+        VMTestCase!bool("1 > 1", false),
+        VMTestCase!bool("1 == 1", true),
+        VMTestCase!bool("1 != 1", false),
+        VMTestCase!bool("1 == 2", false),
+        VMTestCase!bool("1 != 2", true),
+        VMTestCase!bool("true == true", true),
+        VMTestCase!bool("false == false", true),
+        VMTestCase!bool("true == false", false),
+        VMTestCase!bool("true != false", true),
+        VMTestCase!bool("false != true", true),
+        VMTestCase!bool("(1 < 2) == true", true),
+        VMTestCase!bool("(1 < 2) == false", false),
+        VMTestCase!bool("(1 > 2) == true", false),
+        VMTestCase!bool("(1 > 2) == false", true),
     ];
 
     runVMTests!bool(tests);
@@ -37,7 +54,7 @@ Error testBooleanObject(bool expected, Objekt actual) {
     }
 
     if(result.value != expected) {
-        return new Error(format("object has wrong value. got=%t, want=%t",
+        return new Error(format("object has wrong value. got=%s, want=%s",
                                    result.value, expected));
     }
 
@@ -81,13 +98,14 @@ void runVMTests(T) (VMTestCase!(T)[] tests) {
             assert(err is null);
         }
 
+        // writeln(compiler.bytecode());
         auto vm = VM(compiler.bytecode());
         err = vm.run();
         if(err !is null) {
             stderr.writefln("vm error: %s", err.msg);
             assert(err is null);
         }
-
+        // writeln("STACK: ", vm.stack);
         auto stackElem = vm.lastPoppedStackElem();
         testExpectedObject!T(tt.expected, stackElem);
     }
@@ -106,7 +124,7 @@ void testExpectedObject(T) (T expected, Objekt actual) {
         case "bool":
             auto err = testBooleanObject(cast(bool) expected, actual);
             if(err !is null) {
-                stderr.writefln("testBooleanObject failed: %s", err);
+                stderr.writefln("testBooleanObject failed: %s", err.msg);
                 assert(err is null);
             }
             break;
