@@ -290,6 +290,7 @@ void testStringLiteralExpression() {
     }
 }
 
+///
 void testParsingArrayLiterals() {
     auto input = "[1, 2 * 2, 3 + 3]";
 
@@ -315,6 +316,7 @@ void testParsingArrayLiterals() {
     testInfixExpression(array.elements[2], 3, "+", 3);
 }
 
+///
 void testParsingIndexExpressions() {
     auto input = "myArray[1 + 1]";
 
@@ -337,6 +339,7 @@ void testParsingIndexExpressions() {
         return;
 }
 
+///
 void testOperatorPrecedenceParsing() {
     alias MoreInfixEntry = Tuple!(string, "input", string, "expected");
     auto moreTests = [
@@ -382,6 +385,7 @@ void testOperatorPrecedenceParsing() {
     }
 }
 
+///
 void testIfStatementParsing() {
     auto input = "if (x < y) { x }" ;
 
@@ -410,6 +414,7 @@ void testIfStatementParsing() {
     assert(ifExpr.alternative is null);
 }
 
+///
 void testInfixExpressionParsing() {
     alias InfixEntry = Tuple!(string, "input", long, "leftValue", 
                               string, "operator", long, "rightValue");
@@ -445,6 +450,7 @@ void testInfixExpressionParsing() {
     }
 }
 
+///
 void testPrefixExpressionParsing() {
     alias Entry = Tuple!(string, "input", 
                          string, "operator", 
@@ -474,6 +480,7 @@ void testPrefixExpressionParsing() {
     }
 }
 
+///
 void testParsingHashLiteralsStringKeys() {
     auto input = `{"one": 1, "two": 2, "three": 3}`;
 
@@ -512,6 +519,7 @@ void testParsingHashLiteralsStringKeys() {
     }
 }
 
+///
 void testParsingEmptyHashLiteral() {
     auto input = "{}";
 
@@ -533,6 +541,7 @@ void testParsingEmptyHashLiteral() {
     }
 }
 
+///
 void testParsingHashLiteralsWithExpressions() {
     auto input = `{"one": 0 + 1, "two": 10 - 8, "three": 15 / 5}`;
 
@@ -582,6 +591,7 @@ void testParsingHashLiteralsWithExpressions() {
     }   
 }
 
+///
 void testIntegerLiterals() {
     // testing integer literals
     auto input = "5;";
@@ -603,6 +613,7 @@ void testIntegerLiterals() {
     assert(iliteral.tokenLiteral() == "5");
 }
 
+///
 void testStringLiterals() {
     auto input = "foobar;";
 
@@ -623,6 +634,7 @@ void testStringLiterals() {
     assert(ident.tokenLiteral() == "foobar");
 }
 
+///
 void testReturnStatements() {
     auto input = "return 5;
                  return 10;
@@ -643,6 +655,7 @@ void testReturnStatements() {
     }
 }
 
+///
 void testIdentifiersInLetStatements() {
     auto input = "let x = 5;
                   let y = 10;

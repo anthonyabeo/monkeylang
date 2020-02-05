@@ -5,7 +5,7 @@ import std.string;
 import code.code;
 import objekt.objekt;
 import compiler.compiler;
-import evaluator.builtins : TRUE, FALSE;
+import evaluator.builtins : TRUE, FALSE, NULL;
 
 
 const size_t StackSize = 2048;   /// stack size
@@ -125,6 +125,13 @@ struct VM {
                     immutable pos = readUint16(this.instructions[ip+1 .. $]);
                     ip = pos - 1;
                     break;
+                
+                case OPCODE.OpNull:
+                    auto err = this.push(NULL);
+                    if(err !is null)
+                        return err;
+                    
+                    break;
             }
         }
 
@@ -149,6 +156,7 @@ struct VM {
         auto operand = this.pop();
         if(operand.inspect() == TRUE.inspect()) return this.push(FALSE);
         else if(operand.inspect() == FALSE.inspect()) return this.push(TRUE);
+        else if(operand.inspect() == NULL.inspect()) return this.push(TRUE);
         else return this.push(FALSE);
     }
 
@@ -260,8 +268,7 @@ struct VM {
 
 ///
 bool isTruthy(Objekt obj) {
-    if(obj.type() == ObjectType.BOOLEAN)
-        return (cast(Boolean) obj).value;
-    else
-        return true;
+    if(obj.type() == ObjectType.BOOLEAN) return (cast(Boolean) obj).value;
+    else if(obj.type() == ObjectType.NULL) return false;
+    else return true;
 }

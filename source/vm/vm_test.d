@@ -3,6 +3,7 @@ module vm.vm_test;
 import std.stdio;
 import std.string;
 import std.conv;
+import std.typecons;
 
 import vm.vm;
 import ast.ast;
@@ -11,16 +12,18 @@ import lexer.lexer;
 import objekt.objekt;
 import parser.parser;
 import compiler.compiler;
+import evaluator.builtins : NULL;
 
 
 unittest {
     testIntegerArithmetic();
     testBooleanExpressions();
-    testConditional();
+    testIntegerConditional();
+    testNullConditional();
 }
 
 ///
-void testConditional() {
+void testIntegerConditional() {
     auto tests = [
         VMTestCase!int("if (true) { 10 }", 10),
         VMTestCase!int("if (true) { 10 } else { 20 }", 10),
@@ -29,9 +32,38 @@ void testConditional() {
         VMTestCase!int("if (1 < 2) { 10 }", 10),
         VMTestCase!int("if (1 < 2) { 10 } else { 20 }", 10),
         VMTestCase!int("if (1 > 2) { 10 } else { 20 }", 20),
+        VMTestCase!int("if ((if (false) { 10 })) { 10 } else { 20 }", 20),
     ];
 
     runVMTests!int(tests);
+}
+
+///
+void testNullConditional() {
+    auto tests = [
+        VMTestCase!Null("if (1 > 2) { 10 }", NULL),
+        VMTestCase!Null("if (false) { 10 }", NULL),
+    ];
+
+    foreach(tt; tests) {
+        auto program = parse(tt.input);
+        auto compiler = Compiler();
+        auto err = compiler.compile(program);
+        if(err !is null) {
+            stderr.writefln("compiler error: %s", err.msg);
+            assert(err is null);
+        }
+
+        auto vm = VM(compiler.bytecode());
+        err = vm.run();
+        if(err !is null) {
+            stderr.writefln("vm error: %s", err.msg);
+            assert(err is null);
+        }
+
+        auto stackElem = vm.lastPoppedStackElem();
+        testNullObject(stackElem);
+    }
 }
 
 ///
@@ -62,6 +94,7 @@ void testBooleanExpressions() {
         VMTestCase!bool("!!true", true),
         VMTestCase!bool("!!false", false),
         VMTestCase!bool("!!5", true),
+        VMTestCase!bool("!(if (false) { 5; })", true),
     ];
 
     runVMTests!bool(tests);
@@ -124,16 +157,23 @@ void runVMTests(T) (VMTestCase!(T)[] tests) {
             assert(err is null);
         }
 
-        // writeln(compiler.bytecode());
         auto vm = VM(compiler.bytecode());
         err = vm.run();
         if(err !is null) {
             stderr.writefln("vm error: %s", err.msg);
             assert(err is null);
         }
-        // writeln("STACK: ", vm.stack);
+
         auto stackElem = vm.lastPoppedStackElem();
         testExpectedObject!T(tt.expected, stackElem);
+    }
+}
+
+///
+void testNullObject(Objekt actual) {
+    if(actual.type() != NULL.type()) {
+        stderr.writefln("object is not Null: %s (%s)", actual, actual);
+        assert(actual.type() == NULL.type());
     }
 }
 
