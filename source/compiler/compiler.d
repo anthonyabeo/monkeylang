@@ -13,8 +13,10 @@ import objekt.objekt;
  + Compiler
  +/
 struct Compiler {
-    Instructions instructions;  /// instructions
-    Objekt[] constants;         /// constants
+    Instructions instructions;              /// instructions
+    Objekt[] constants;                     /// constants
+    EmittedInstruction lastInstruction;     /// last instruction
+    EmittedInstruction previousInstruction;  /// previous instruction
 
     this(this) {
         this.constants = constants.dup;
@@ -132,6 +134,56 @@ struct Compiler {
                 }
 
                 break;
+
+            case "ast.ast.IfExpression":
+                auto n = cast(IfExpression) node;
+                auto err = this.compile(n.condition);
+                if(err !is null)
+                    return err; 
+
+                auto jumpNotTruthyPos = this.emit(OPCODE.OpJumpNotTruthy, 9999);
+
+                err = this.compile(n.consequence);
+                if(err !is null)
+                    return err; 
+
+                if(this.lastInstructionIsPop())
+                    this.removeLastPop();
+
+                auto afterConsequencePos = this.instructions.length;
+                this.changeOperand(jumpNotTruthyPos, afterConsequencePos);
+
+                if(n.alternative is null) {
+                    afterConsequencePos = this.instructions.length;
+                    this.changeOperand(jumpNotTruthyPos, afterConsequencePos);
+                } else {
+                    auto jumpPos = this.emit(OPCODE.OpJump, 9999);
+
+                    afterConsequencePos = this.instructions.length;
+                    this.changeOperand(jumpNotTruthyPos, afterConsequencePos);
+
+                    err = this.compile(n.alternative);
+                    if(err !is null)
+                        return err;
+                    
+                    if(this.lastInstructionIsPop())
+                        this.removeLastPop();
+                    
+                    auto afterAlternativePos = this.instructions.length;
+                    this.changeOperand(jumpPos, afterAlternativePos);
+                }
+
+                break;
+
+            case "ast.ast.BlockStatement":
+                auto n = cast(BlockStatement) node;
+                foreach(s; n.statements) {
+                    auto err = this.compile(s);
+                    if(err !is null)
+                        return err; 
+                }
+
+                break;
             default:
                 break;
         }
@@ -155,6 +207,8 @@ struct Compiler {
         auto ins = make(op, operands);
         auto pos = this.addInstruction(ins);
 
+        this.setLastInstruction(cast(OPCODE) op, pos);
+
         return pos;
     }
 
@@ -164,6 +218,41 @@ struct Compiler {
         this.instructions ~= ins;
 
         return posNewInstruction;
+    }
+
+    ///
+    void setLastInstruction(OPCODE op, size_t pos) {
+        auto prev = this.lastInstruction;
+        auto last = EmittedInstruction(op, pos);
+
+        this.previousInstruction = prev;
+        this.lastInstruction = last;
+    }
+
+    ///
+    bool lastInstructionIsPop() {
+        return this.lastInstruction.opcode == OPCODE.OpPop;
+    }
+
+    ///
+    void removeLastPop() {
+        this.instructions = this.instructions[0 .. this.lastInstruction.pos];
+        this.lastInstruction = this.previousInstruction;
+    }
+
+    ///
+    void replaceInstruction(size_t pos, ubyte[] newInstruction) {
+        for(size_t i = 0; i < newInstruction.length; ++i) {
+            this.instructions[pos+i] = newInstruction[i];
+        }
+    }
+
+    ///
+    void changeOperand(size_t opPos, size_t operand) {
+        auto op = cast(OPCODE) this.instructions[opPos];
+        auto newInstruction = make(op, operand);
+
+        this.replaceInstruction(opPos, newInstruction);
     }
 }
 
@@ -177,4 +266,12 @@ struct Compiler {
     this(this) {
         this.constants = constants.dup;
     }
+ }
+
+/++++++++++++++++++++++++++++++
+ + EMITTED INSTRUCTION
+ +++++++++++++++++++++++++++++/
+ struct EmittedInstruction {
+     OPCODE opcode;
+     size_t pos;
  }

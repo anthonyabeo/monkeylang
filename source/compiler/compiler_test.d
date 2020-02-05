@@ -16,6 +16,7 @@ import compiler.compiler;
 unittest {
     testIntegerArithmetic();
     testBooleanExpressions();
+    testConditionals();
 }
 
 /++
@@ -188,6 +189,40 @@ void testBooleanExpressions() {
 }
 
 ///
+void testConditionals() {
+    auto tests = [
+        CompilerTestCase!int(
+            `if (true) { 10 }; 3333;`,
+            [10, 3333],
+            [
+                make(OPCODE.OpTrue),                /// 0000
+                make(OPCODE.OpJumpNotTruthy, 7),    /// 0001
+                make(OPCODE.OpConstant, 0),         /// 0004
+                make(OPCODE.OpPop),                 /// 0007
+                make(OPCODE.OpConstant, 1),         /// 0008
+                make(OPCODE.OpPop)                  /// 0011
+            ]
+        ),
+        CompilerTestCase!int(
+            `if (true) { 10 } else { 20 }; 3333;`,
+            [10, 20, 3333],
+            [
+                make(OPCODE.OpTrue),                /// 0000
+                make(OPCODE.OpJumpNotTruthy, 10),   /// 0001
+                make(OPCODE.OpConstant, 0),         /// 0004
+                make(OPCODE.OpJump, 13),            /// 0007
+                make(OPCODE.OpConstant, 1),         /// 0010
+                make(OPCODE.OpPop),                 /// 0013
+                make(OPCODE.OpConstant, 2),         /// 0014
+                make(OPCODE.OpPop),                 /// 0017
+            ]
+        ),
+    ];
+
+    runCompilerTests!int(tests);
+}
+
+///
 void runCompilerTests(T) (CompilerTestCase!(T)[] tests) {
     foreach (i, tt; tests) {
         auto program = parse(tt.input);
@@ -227,7 +262,8 @@ Program parse(string input) {
 Error testInstructions(Instructions[] expected, Instructions actual) {
     auto concatted = concatInstructions(expected);
     if (actual.length != concatted.length)
-        return new Error(format("wrong instructions length.\nwant=%s\ngot =%s", concatted, actual));
+        return new Error(format("wrong instructions length.\nwant=%s\ngot =%s", 
+                                asString(concatted), asString(actual)));
     
     foreach(i, ins; concatted) {
         if(actual[i] != ins)
