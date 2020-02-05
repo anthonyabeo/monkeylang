@@ -22,6 +22,8 @@ enum OPCODE : Opcode {
     OpEqual,
     OpNotEqual,
     OpGreaterThan,
+    OpMinus,
+    OpBang,
 }
 
 Definition[OPCODE] definitions; /// definitions
@@ -40,6 +42,8 @@ static this() {
         OPCODE.OpEqual : new Definition("OpEqual", []),
         OPCODE.OpNotEqual : new Definition("OpNotEqual", []),
         OPCODE.OpGreaterThan : new Definition("OpGreaterThan", []),
+        OPCODE.OpMinus : new Definition("OpMinus", []),
+        OPCODE.OpBang : new Definition("OpBang", []),
     ];
 }
 
