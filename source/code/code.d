@@ -17,6 +17,8 @@ enum OPCODE : Opcode {
     OpDiv,
     OpMul,
     OpPop,
+    OpTrue,
+    OpFalse,
 }
 
 Definition[OPCODE] definitions; /// definitions
@@ -26,10 +28,12 @@ static this() {
     definitions = [
         OPCODE.OpConstant : new Definition("OpConstant", [2]),
         OPCODE.OpAdd : new Definition("OpAdd", []),
-        OPCODE.OpSub : new Definition("OpAdd", []),
-        OPCODE.OpMul : new Definition("OpAdd", []),
-        OPCODE.OpDiv : new Definition("OpAdd", []),
+        OPCODE.OpSub : new Definition("OpSub", []),
+        OPCODE.OpMul : new Definition("OpMul", []),
+        OPCODE.OpDiv : new Definition("OpDiv", []),
         OPCODE.OpPop : new Definition("OpPop", []),
+        OPCODE.OpTrue : new Definition("OpTrue", []),
+        OPCODE.OpFalse : new Definition("OpFalse", []), 
     ];
 }
 
