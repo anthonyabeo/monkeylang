@@ -195,12 +195,14 @@ void testConditionals() {
             `if (true) { 10 }; 3333;`,
             [10, 3333],
             [
-                make(OPCODE.OpTrue),                /// 0000
-                make(OPCODE.OpJumpNotTruthy, 7),    /// 0001
-                make(OPCODE.OpConstant, 0),         /// 0004
-                make(OPCODE.OpPop),                 /// 0007
-                make(OPCODE.OpConstant, 1),         /// 0008
-                make(OPCODE.OpPop)                  /// 0011
+                make(OPCODE.OpTrue),                    /// 0000
+                make(OPCODE.OpJumpNotTruthy, 10),       /// 0001
+                make(OPCODE.OpConstant, 0),             /// 0004
+                make(OPCODE.OpJump, 11),                /// 0007
+                make(OPCODE.OpNull),                    /// 0010
+                make(OPCODE.OpPop),                     /// 0011
+                make(OPCODE.OpConstant, 1),             /// 0012
+                make(OPCODE.OpPop),                     /// 0015
             ]
         ),
         CompilerTestCase!int(

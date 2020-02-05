@@ -150,28 +150,24 @@ struct Compiler {
                 if(this.lastInstructionIsPop())
                     this.removeLastPop();
 
+                auto jumpPos = this.emit(OPCODE.OpJump, 9999);
+
                 auto afterConsequencePos = this.instructions.length;
                 this.changeOperand(jumpNotTruthyPos, afterConsequencePos);
 
                 if(n.alternative is null) {
-                    afterConsequencePos = this.instructions.length;
-                    this.changeOperand(jumpNotTruthyPos, afterConsequencePos);
+                    this.emit(OPCODE.OpNull);
                 } else {
-                    auto jumpPos = this.emit(OPCODE.OpJump, 9999);
-
-                    afterConsequencePos = this.instructions.length;
-                    this.changeOperand(jumpNotTruthyPos, afterConsequencePos);
-
                     err = this.compile(n.alternative);
                     if(err !is null)
                         return err;
                     
                     if(this.lastInstructionIsPop())
                         this.removeLastPop();
-                    
-                    auto afterAlternativePos = this.instructions.length;
-                    this.changeOperand(jumpPos, afterAlternativePos);
                 }
+
+                auto afterAlternativePos = this.instructions.length;
+                this.changeOperand(jumpPos, afterAlternativePos);
 
                 break;
 
