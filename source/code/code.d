@@ -19,6 +19,9 @@ enum OPCODE : Opcode {
     OpPop,
     OpTrue,
     OpFalse,
+    OpEqual,
+    OpNotEqual,
+    OpGreaterThan,
 }
 
 Definition[OPCODE] definitions; /// definitions
@@ -34,6 +37,9 @@ static this() {
         OPCODE.OpPop : new Definition("OpPop", []),
         OPCODE.OpTrue : new Definition("OpTrue", []),
         OPCODE.OpFalse : new Definition("OpFalse", []), 
+        OPCODE.OpEqual : new Definition("OpEqual", []),
+        OPCODE.OpNotEqual : new Definition("OpNotEqual", []),
+        OPCODE.OpGreaterThan : new Definition("OpGreaterThan", []),
     ];
 }
 
