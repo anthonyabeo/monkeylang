@@ -26,6 +26,7 @@ enum OPCODE : Opcode {
     OpBang,
     OpJumpNotTruthy,
     OpJump,
+    OpNull,
 }
 
 Definition[OPCODE] definitions; /// definitions
@@ -48,6 +49,7 @@ static this() {
         OPCODE.OpBang : new Definition("OpBang", []),
         OPCODE.OpJump : new Definition("OpJump", [2]),
         OPCODE.OpJumpNotTruthy : new Definition("OpJumpNotTruthy", [2]),
+        OPCODE.OpNull : new Definition("OpNull", []),
     ];
 }
 
