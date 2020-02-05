@@ -96,6 +96,15 @@ void testIntegerArithmetic() {
                 make(OPCODE.OpPop),
             ]
         ),
+        CompilerTestCase!int(
+            "-1",
+            [1],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpMinus),
+                make(OPCODE.OpPop),
+            ]
+        ),
     ];
 
     runCompilerTests!int(tests);
@@ -161,6 +170,15 @@ void testBooleanExpressions() {
                 make(OPCODE.OpTrue),
                 make(OPCODE.OpFalse),
                 make(OPCODE.OpNotEqual),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!int(
+            "!true",
+            [],
+            [
+                make(OPCODE.OpTrue),
+                make(OPCODE.OpBang),
                 make(OPCODE.OpPop),
             ]
         ),

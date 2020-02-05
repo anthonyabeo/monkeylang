@@ -113,6 +113,25 @@ struct Compiler {
                     this.emit(OPCODE.OpFalse);
                     
                 break;
+            
+            case "ast.ast.PrefixExpression":
+                auto n = cast(PrefixExpression) node;
+                auto err = this.compile(n.right);
+                if(err !is null)
+                    return err; 
+
+                switch(n.operator) {
+                    case "!":
+                        this.emit(OPCODE.OpBang);
+                        break;
+                    case "-":
+                        this.emit(OPCODE.OpMinus);
+                        break;
+                    default:
+                        return new Error(format("unknown operator %s", n.operator));
+                }
+
+                break;
             default:
                 break;
         }
