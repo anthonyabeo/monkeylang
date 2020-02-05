@@ -1,5 +1,6 @@
 module compiler.compiler;
 
+import std.stdio;
 import std.conv;
 import std.string;
 
@@ -47,6 +48,21 @@ struct Compiler {
             
             case "ast.ast.InfixExpression":
                 auto n = cast(InfixExpression) node;
+
+                if(n.operator == "<") {
+                    auto err = this.compile(n.right);
+                    if(err !is null)
+                        return err;
+
+                    err = this.compile(n.left);
+                    if(err !is null)
+                        return err;
+
+                    this.emit(OPCODE.OpGreaterThan);
+                    
+                    return null;
+                }
+
                 auto err = this.compile(n.left);
                 if(err !is null)
                     return err;
@@ -67,6 +83,15 @@ struct Compiler {
                         break;
                     case "/":
                         this.emit(OPCODE.OpDiv);
+                        break;
+                    case ">":
+                        this.emit(OPCODE.OpGreaterThan);
+                        break;
+                    case "==":
+                        this.emit(OPCODE.OpEqual);
+                        break;
+                    case "!=":
+                        this.emit(OPCODE.OpNotEqual);
                         break;
                     default:
                         return new Error(format("unknown operator %s", n.operator));

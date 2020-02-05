@@ -15,12 +15,9 @@ import compiler.compiler;
 
 unittest {
     testIntegerArithmetic();
+    testBooleanExpressions();
 }
 
-alias Tin = Tuple!(CompilerTestCase!int, CompilerTestCase!int, 
-                 CompilerTestCase!int, CompilerTestCase!int, 
-                 CompilerTestCase!int, CompilerTestCase!bool, 
-                 CompilerTestCase!bool);
 /++
  + 
  +/
@@ -32,7 +29,7 @@ struct CompilerTestCase(T) {
 
 ///
 void testIntegerArithmetic() {
-    auto tests = tuple(
+    auto tests = [
         CompilerTestCase!int(
             "1 + 2", 
             [1, 2], 
@@ -83,7 +80,7 @@ void testIntegerArithmetic() {
                 make(OPCODE.OpPop),
             ]
         ),
-        CompilerTestCase!bool(
+        CompilerTestCase!int(
             "true",
             [],
             [
@@ -91,7 +88,7 @@ void testIntegerArithmetic() {
                 make(OPCODE.OpPop),
             ]
         ),
-        CompilerTestCase!bool(
+        CompilerTestCase!int(
             "false",
             [],
             [
@@ -99,13 +96,81 @@ void testIntegerArithmetic() {
                 make(OPCODE.OpPop),
             ]
         ),
-    );
+    ];
 
-    runCompilerTests(tests);
+    runCompilerTests!int(tests);
 }
 
 ///
-void runCompilerTests(Tin tests) {
+void testBooleanExpressions() {
+    auto tests = [
+        CompilerTestCase!int(
+            "1 > 2",
+            [1, 2],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpGreaterThan),
+                make(OPCODE.OpPop),
+            ]     
+        ),
+        CompilerTestCase!int(
+            "1 < 2",
+            [2, 1],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpGreaterThan),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!int(
+            "1 == 2",
+            [1, 2],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpEqual),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!int(
+            "1 != 2",
+            [1, 2],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpNotEqual),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!int(
+            "true == false",
+            [],
+            [
+                make(OPCODE.OpTrue),
+                make(OPCODE.OpFalse),
+                make(OPCODE.OpEqual),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!int(
+            "true != false",
+            [],
+            [
+                make(OPCODE.OpTrue),
+                make(OPCODE.OpFalse),
+                make(OPCODE.OpNotEqual),
+                make(OPCODE.OpPop),
+            ]
+        ),
+    ];
+
+    runCompilerTests!int(tests);
+}
+
+///
+void runCompilerTests(T) (CompilerTestCase!(T)[] tests) {
     foreach (i, tt; tests) {
         auto program = parse(tt.input);
         auto compiler = Compiler();
