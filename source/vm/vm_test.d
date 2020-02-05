@@ -15,6 +15,33 @@ import compiler.compiler;
 
 unittest {
     testIntegerArithmetic();
+    testBooleanExpressions();
+}
+
+///
+void testBooleanExpressions() {
+    auto tests = [
+        VMTestCase!bool("true", true),
+        VMTestCase!bool("false", false),
+    ];
+
+    runVMTests!bool(tests);
+}
+
+///
+Error testBooleanObject(bool expected, Objekt actual) {
+    auto result = cast(Boolean) actual;
+    if(result is null) {
+        return new Error(format("object is not Boolean. got=%s (%s)",
+                            actual, actual));
+    }
+
+    if(result.value != expected) {
+        return new Error(format("object has wrong value. got=%t, want=%t",
+                                   result.value, expected));
+    }
+
+    return null;
 }
 
 ///
@@ -73,6 +100,13 @@ void testExpectedObject(T) (T expected, Objekt actual) {
             auto err = testIntegerObject(to!long(expected), actual);
             if(err !is null) {
                 stderr.writefln("testIntegerObject failed: %s", err.msg);
+                assert(err is null);
+            }
+            break;
+        case "bool":
+            auto err = testBooleanObject(cast(bool) expected, actual);
+            if(err !is null) {
+                stderr.writefln("testBooleanObject failed: %s", err);
                 assert(err is null);
             }
             break;

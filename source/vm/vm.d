@@ -5,6 +5,8 @@ import std.string;
 import code.code;
 import objekt.objekt;
 import compiler.compiler;
+import evaluator.builtins : TRUE, FALSE;
+
 
 const size_t StackSize = 2048;   /// stack size
 
@@ -72,6 +74,20 @@ struct VM {
                     
                 case OPCODE.OpPop:
                     this.pop();
+                    break;
+                
+                case OPCODE.OpTrue:
+                    auto err = this.push(TRUE);
+                    if(err !is null)
+                        return err;
+                    
+                    break;
+
+                case OPCODE.OpFalse:
+                    auto err = this.push(FALSE);
+                    if(err !is null)
+                        return err;
+
                     break;
             }
         }
