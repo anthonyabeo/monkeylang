@@ -13,7 +13,7 @@ import objekt.objekt;
 import parser.parser;
 import compiler.compiler;
 import evaluator.builtins : NULL;
-
+import compiler.symbol_table;
 
 unittest {
     testIntegerArithmetic();
@@ -41,6 +41,10 @@ void testIntegerConditional() {
 
 ///
 void testNullConditional() {
+    Objekt[] constants = [];        
+    Objekt[] globals = new Objekt[GLOBALS_SIZE];
+    auto symTable = SymbolTable();
+
     auto tests = [
         VMTestCase!Null("if (1 > 2) { 10 }", NULL),
         VMTestCase!Null("if (false) { 10 }", NULL),
@@ -48,14 +52,15 @@ void testNullConditional() {
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
-        auto compiler = Compiler();
+        auto compiler = Compiler(symTable, constants);
         auto err = compiler.compile(program);
         if(err !is null) {
             stderr.writefln("compiler error: %s", err.msg);
             assert(err is null);
         }
-
-        auto vm = VM(compiler.bytecode());
+        
+        auto code = compiler.bytecode();
+        auto vm = VM(code, globals);
         err = vm.run();
         if(err !is null) {
             stderr.writefln("vm error: %s", err.msg);
@@ -149,16 +154,21 @@ struct VMTestCase(T) {
 
 ///
 void runVMTests(T) (VMTestCase!(T)[] tests) {
+    Objekt[] constants = [];        
+    Objekt[] globals = new Objekt[GLOBALS_SIZE];
+    auto symTable = SymbolTable();
+
     foreach(tt; tests) {
         auto program = parse(tt.input);
-        auto compiler = Compiler();
+        auto compiler = Compiler(symTable, constants);
         auto err = compiler.compile(program);
         if(err !is null) {
             stderr.writefln("compiler error: %s", err.msg);
             assert(err is null);
         }
 
-        auto vm = VM(compiler.bytecode());
+        auto code = compiler.bytecode();
+        auto vm = VM(code, globals);
         err = vm.run();
         if(err !is null) {
             stderr.writefln("vm error: %s", err.msg);
