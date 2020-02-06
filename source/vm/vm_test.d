@@ -20,6 +20,7 @@ unittest {
     testBooleanExpressions();
     testIntegerConditional();
     testNullConditional();
+    testGlobalLetStatements();
 }
 
 ///
@@ -217,4 +218,15 @@ Error testIntegerObject(long expected, Objekt actual) {
         return new Error(format("object has wrong value. got=%d, want=%d", result.value, expected));
 
     return null;   
+}
+
+///
+void testGlobalLetStatements() {
+    auto tests = [
+        VMTestCase!int("let one = 1; one", 1),
+        VMTestCase!int("let one = 1; let two = 2; one + two", 3),
+        VMTestCase!int("let one = 1; let two = one + one; one + two", 3),
+    ];
+
+    runVMTests!int(tests);
 }
