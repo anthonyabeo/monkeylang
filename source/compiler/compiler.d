@@ -238,8 +238,8 @@ struct Compiler {
 
     ///
     void setLastInstruction(OPCODE op, size_t pos) {
-        auto prev = this.lastInstruction;
-        auto last = EmittedInstruction(op, pos);
+        immutable prev = this.lastInstruction;
+        immutable last = EmittedInstruction(op, pos);
 
         this.previousInstruction = prev;
         this.lastInstruction = last;
@@ -288,6 +288,6 @@ struct Compiler {
  + EMITTED INSTRUCTION
  +++++++++++++++++++++++++++++/
  struct EmittedInstruction {
-     OPCODE opcode;
-     size_t pos;
+     OPCODE opcode;         /// opcode
+     size_t pos;            /// position
  }

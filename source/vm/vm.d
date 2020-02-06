@@ -8,7 +8,8 @@ import compiler.compiler;
 import evaluator.builtins : TRUE, FALSE, NULL;
 
 
-const size_t StackSize = 2048;   /// stack size
+const size_t STACK_SIZE = 2048;      /// stack size
+const size_t GLOBALS_SIZE = 65_536;   /// globals size
 
 ///
 struct VM {
@@ -17,6 +18,8 @@ struct VM {
 
     Objekt[] stack;      /// stack
     size_t  sp;         /// stack pointer
+
+    Objekt[] globals;   /// globals
 
     ///
     this(this) {
@@ -32,7 +35,8 @@ struct VM {
         this.instructions = bytecode.instructions;
         this.constants = bytecode.constants;
 
-        this.stack = new Objekt[StackSize];
+        this.stack = new Objekt[STACK_SIZE];
+        this.globals = new Objekt[GLOBALS_SIZE];
 
         this.sp = 0;
     }
@@ -131,6 +135,24 @@ struct VM {
                     if(err !is null)
                         return err;
                     
+                    break;
+
+                case OPCODE.OpGetGlobal:
+                    auto globalIndex = readUint16(this.instructions[ip+1 .. $]);
+                    ip += 2;
+
+                    auto err = this.push(this.globals[globalIndex]);
+                    if(err !is null)
+                        return err;
+
+                    break;
+
+                case OPCODE.OpSetGlobal:
+                    auto globalIndex = readUint16(this.instructions[ip+1 .. $]);
+                    ip += 2;
+
+                    this.globals[globalIndex] = this.pop();
+
                     break;
             }
         }
@@ -248,7 +270,7 @@ struct VM {
 
     ///
     Error push(Objekt obj) {
-        if(this.sp >= StackSize)
+        if(this.sp >= STACK_SIZE)
             return new Error(format("stackoverflow"));
 
         this.stack[this.sp] = obj;
