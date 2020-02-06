@@ -14,6 +14,7 @@ import objekt.objekt;
 import objekt.environment;
 import compiler.compiler;
 import vm.vm;
+import compiler.symbol_table;
 
 /// monkey face
 const MONKEY_FACE = 
@@ -39,6 +40,11 @@ void start() {
     Parser parser;
     Program program;
 
+    Objekt[] constants;        
+    Objekt[] globals = new Objekt[GLOBALS_SIZE];
+    auto symTable = SymbolTable();
+    auto compiler = Compiler(symTable, constants);
+
     auto env = new Environment();
 
     string line;
@@ -56,14 +62,16 @@ void start() {
             continue;
         }
 
-        auto compiler = Compiler();
         auto err = compiler.compile(program);
         if(err !is null) {
             writefln("Woops! Compilation failed:\n %s\n", err.msg);
             continue;
         }
 
-        auto machine = VM(compiler.bytecode());
+        auto code = compiler.bytecode();
+        constants = code.constants;
+
+        auto machine = VM(code, globals);
         err = machine.run();
         if(err !is null) {
             writefln("Woops! Executing bytecode failed:\n %s\n", err);
