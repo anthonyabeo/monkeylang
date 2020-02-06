@@ -20,6 +20,10 @@ struct SymbolTable {
     Symbol[string] store;   /// store
     size_t numDefinitions;  /// number of definitions
     
+    this(this) {
+        this.store = store.dup;
+    }
+
     /++
      + Define
      +

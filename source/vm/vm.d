@@ -24,6 +24,8 @@ struct VM {
     ///
     this(this) {
         this.stack = stack.dup;
+        this.globals = globals.dup;
+        this.constants = constants.dup;
     }
 
     /++++++++++++++++++++++++++++++
@@ -31,12 +33,12 @@ struct VM {
      + Params:
      +     bytecode = 
      +++++++++++++++++++++++++++++/
-    this(Bytecode bytecode) {
+    this(ref Bytecode bytecode, Objekt[] globals) {
         this.instructions = bytecode.instructions;
         this.constants = bytecode.constants;
 
         this.stack = new Objekt[STACK_SIZE];
-        this.globals = new Objekt[GLOBALS_SIZE];
+        this.globals = globals;
 
         this.sp = 0;
     }
