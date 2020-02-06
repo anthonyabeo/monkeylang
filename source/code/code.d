@@ -27,6 +27,8 @@ enum OPCODE : Opcode {
     OpJumpNotTruthy,
     OpJump,
     OpNull,
+    OpGetGlobal,
+    OpSetGlobal,
 }
 
 Definition[OPCODE] definitions; /// definitions
@@ -50,6 +52,8 @@ static this() {
         OPCODE.OpJump : new Definition("OpJump", [2]),
         OPCODE.OpJumpNotTruthy : new Definition("OpJumpNotTruthy", [2]),
         OPCODE.OpNull : new Definition("OpNull", []),
+        OPCODE.OpGetGlobal : new Definition("OpGetGlobal", [2]),
+        OPCODE.OpSetGlobal : new Definition("OpSetGlobal", [2]),
     ];
 }
 
