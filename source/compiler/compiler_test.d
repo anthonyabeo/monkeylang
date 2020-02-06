@@ -17,6 +17,7 @@ unittest {
     testIntegerArithmetic();
     testBooleanExpressions();
     testConditionals();
+    testGlobalLetStatements();
 }
 
 /++
@@ -319,4 +320,44 @@ Error testIntegerObject(long expected, Objekt actual) {
         return new Error(format("object has wrong value. got=%d, want=%d", result.value, expected));
 
     return null;   
+}
+
+///
+void testGlobalLetStatements() {
+    auto tests = [
+        CompilerTestCase!int(
+            `let one = 1; let two = 2;`,
+            [1, 2],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpSetGlobal, 0),
+                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpSetGlobal, 1),
+            ]
+        ),
+        CompilerTestCase!int(
+            `let one = 1; one;`,
+            [1],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpSetGlobal, 0),
+                make(OPCODE.OpGetGlobal, 0),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!int(
+            `let one = 1; let two = one; two;`,
+            [1],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpSetGlobal, 0),
+                make(OPCODE.OpGetGlobal, 0),
+                make(OPCODE.OpSetGlobal, 1),
+                make(OPCODE.OpGetGlobal, 1),
+                make(OPCODE.OpPop),
+            ]
+        ),
+    ];
+
+    runCompilerTests!int(tests);
 }

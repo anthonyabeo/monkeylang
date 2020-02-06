@@ -7,16 +7,17 @@ import std.string;
 import ast.ast;
 import code.code;
 import objekt.objekt;
-
+import compiler.symbol_table;
 
 /++
  + Compiler
  +/
 struct Compiler {
-    Instructions instructions;              /// instructions
-    Objekt[] constants;                     /// constants
-    EmittedInstruction lastInstruction;     /// last instruction
+    Instructions instructions;               /// instructions
+    Objekt[] constants;                      /// constants
+    EmittedInstruction lastInstruction;      /// last instruction
     EmittedInstruction previousInstruction;  /// previous instruction
+    SymbolTable symTable;                    /// symbol table
 
     this(this) {
         this.constants = constants.dup;
@@ -179,6 +180,25 @@ struct Compiler {
                         return err; 
                 }
 
+                break;
+            
+            case "ast.ast.LetStatement":
+                auto n = cast(LetStatement) node;
+                auto err = this.compile(n.value);
+                if(err !is null)
+                    return err; 
+
+                auto symbol = this.symTable.define(n.name.value);
+                this.emit(OPCODE.OpSetGlobal, symbol.index);
+
+                break;
+            case "ast.ast.Identifier":
+                auto n = cast(Identifier) node;
+                auto symbol = this.symTable.resolve(n.value);
+                if(symbol.isNull)
+                    return new Error(format("undefined variable %s", n.value));
+                
+                this.emit(OPCODE.OpGetGlobal, symbol.index);
                 break;
             default:
                 break;
