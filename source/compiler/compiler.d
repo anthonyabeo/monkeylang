@@ -19,6 +19,15 @@ struct Compiler {
     EmittedInstruction previousInstruction;  /// previous instruction
     SymbolTable symTable;                    /// symbol table
 
+    /++++++++++++++++++++++++++++
+     + Params:
+     +    node =
+     ++++++++++++++++++++++++++++/
+    this(ref SymbolTable symTable, Objekt[] constants) {
+        this.symTable = symTable;
+        this.constants = constants;
+    }
+
     this(this) {
         this.constants = constants.dup;
     }
