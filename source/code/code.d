@@ -29,6 +29,7 @@ enum OPCODE : Opcode {
     OpNull,
     OpGetGlobal,
     OpSetGlobal,
+    OpArray,
 }
 
 Definition[OPCODE] definitions; /// definitions
@@ -54,6 +55,7 @@ static this() {
         OPCODE.OpNull : new Definition("OpNull", []),
         OPCODE.OpGetGlobal : new Definition("OpGetGlobal", [2]),
         OPCODE.OpSetGlobal : new Definition("OpSetGlobal", [2]),
+        OPCODE.OpArray : new Definition("OpArray", [2]),
     ];
 }
 
