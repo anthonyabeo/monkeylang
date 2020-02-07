@@ -239,9 +239,23 @@ struct VM {
         if(leftType == ObjectType.INTEGER && rightType == ObjectType.INTEGER) {
             return this.executeBinaryIntegerOperation(op, left, right);
         }
+        else if(leftType == ObjectType.STRING && rightType == ObjectType.STRING) {
+            return this.executeBinaryStringOperation(op, left, right);
+        }
 
         return new Error(format("unsupported types for binary operation: %s %s",
                             leftType, rightType));
+    }
+
+    ///
+    Error executeBinaryStringOperation(OPCODE op, Objekt left, Objekt right) {
+        if(op != OPCODE.OpAdd)
+            return new Error(format("unknown string operator: %d", op));
+
+        auto leftValue = (cast(String) left).value;
+        auto rightValue = (cast(String) right).value;
+
+        return this.push(new String(leftValue ~ rightValue));
     }
 
     ///

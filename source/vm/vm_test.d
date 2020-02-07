@@ -21,6 +21,7 @@ unittest {
     testIntegerConditional();
     testNullConditional();
     testGlobalLetStatements();
+    testStringExpressions();
 }
 
 ///
@@ -199,11 +200,19 @@ void testExpectedObject(T) (T expected, Objekt actual) {
             }
             break;
         case "bool":
-            auto err = testBooleanObject(cast(bool) expected, actual);
+            auto err = testBooleanObject(to!bool(expected), actual);
             if(err !is null) {
                 stderr.writefln("testBooleanObject failed: %s", err.msg);
                 assert(err is null);
             }
+            break;
+        case "immutable(char)[]":
+            auto err = testStringObject(to!string(expected), actual);
+            if(err !is null) {
+                stderr.writefln("testStringObject failed: %s", err);
+                assert(err is null);
+            }
+
             break;
         default:
             break;
@@ -239,4 +248,27 @@ void testGlobalLetStatements() {
     ];
 
     runVMTests!int(tests);
+}
+
+///
+void testStringExpressions() {
+    auto tests = [
+        VMTestCase!string(`"monkey"`, "monkey"),
+        VMTestCase!string(`"mon" + "key"`, "monkey"),
+        VMTestCase!string(`"mon" + "key" + "banana"`, "monkeybanana"),
+    ];
+
+    runVMTests!string(tests);
+}
+
+///
+Error testStringObject(string expected, Objekt actual) {
+    auto result = cast(String) actual;
+    if(result is null)
+        return new Error(format("object is not String. got=%s (%s)", actual, actual));
+
+    if(result.value != expected)
+        return new Error(format("object has wrong value. got=%s, want=%s", result.value, expected));
+
+    return null;
 }
