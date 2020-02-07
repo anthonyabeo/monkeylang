@@ -18,6 +18,7 @@ unittest {
     testBooleanExpressions();
     testConditionals();
     testGlobalLetStatements();
+    testStringExpressions();
 }
 
 /++
@@ -79,22 +80,6 @@ void testIntegerArithmetic() {
                 make(OPCODE.OpConstant, 0),
                 make(OPCODE.OpConstant, 1),
                 make(OPCODE.OpDiv),
-                make(OPCODE.OpPop),
-            ]
-        ),
-        CompilerTestCase!int(
-            "true",
-            [],
-            [
-                make(OPCODE.OpTrue),
-                make(OPCODE.OpPop),
-            ]
-        ),
-        CompilerTestCase!int(
-            "false",
-            [],
-            [
-                make(OPCODE.OpFalse),
                 make(OPCODE.OpPop),
             ]
         ),
@@ -184,6 +169,22 @@ void testBooleanExpressions() {
                 make(OPCODE.OpPop),
             ]
         ),
+        CompilerTestCase!int(
+            "true",
+            [],
+            [
+                make(OPCODE.OpTrue),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!int(
+            "false",
+            [],
+            [
+                make(OPCODE.OpFalse),
+                make(OPCODE.OpPop),
+            ]
+        ),
     ];
 
     runCompilerTests!int(tests);
@@ -245,7 +246,7 @@ void runCompilerTests(T) (CompilerTestCase!(T)[] tests) {
             assert(err is null);
         }
 
-        err = testConstants(tt.expectedConstants, bytecode.constants);
+        err = testConstants!T(tt.expectedConstants, bytecode.constants);
         if(err !is null) {
             stderr.writefln("testConstants failed: %s", err.msg);
             assert(err is null);
@@ -301,6 +302,12 @@ Error testConstants(T) (T[] expected, Objekt[] actual) {
                 if(err !is null)
                     return new Error(format("constant %d - testIntegerObject failed: %s", i, err.msg));
                 
+                break;
+            case "immutable(char)[]":
+                auto err = testStringObject(to!string(constant), actual[i]);
+                if(err !is null)
+                    return new Error(format("constant %d - testStringObject failed: %s",i, err.msg));
+
                 break;
             default:
                 break;
@@ -360,4 +367,42 @@ void testGlobalLetStatements() {
     ];
 
     runCompilerTests!int(tests);
+}
+
+///
+void testStringExpressions() {
+    auto tests = [
+        CompilerTestCase!string(
+            `"monkey"`,
+            ["monkey"],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!string(
+            `"mon" + "key"`,
+            ["mon", "key"],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpAdd),
+                make(OPCODE.OpPop),
+            ]
+        ),
+    ];
+
+    runCompilerTests!string(tests);
+}
+
+///
+Error testStringObject(string expected, Objekt actual) {
+    auto result = cast(String) actual;
+    if(result is null)
+        return new Error(format("object is not String. got=%s (%s)", actual, actual));
+
+    if(result.value != expected)
+        return new Error(format("object has wrong value. got=%s, want=%s", result.value, expected));
+
+    return null;
 }
