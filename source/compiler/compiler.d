@@ -216,6 +216,16 @@ struct Compiler {
                 this.emit(OPCODE.OpConstant, this.addConstant(str));
             
                 break;
+            case "ast.ast.ArrayLiteral":
+                auto n = cast(ArrayLiteral) node;
+                foreach(el; n.elements) {
+                    auto err = this.compile(el);
+                    if(err !is null)
+                        return err;
+                }
+
+                this.emit(OPCODE.OpArray, n.elements.length);
+                break;
             default:
                 break;
         }

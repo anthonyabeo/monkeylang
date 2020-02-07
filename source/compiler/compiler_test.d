@@ -19,6 +19,7 @@ unittest {
     testConditionals();
     testGlobalLetStatements();
     testStringExpressions();
+    testArrayLiterals();
 }
 
 /++
@@ -405,4 +406,48 @@ Error testStringObject(string expected, Objekt actual) {
         return new Error(format("object has wrong value. got=%s, want=%s", result.value, expected));
 
     return null;
+}
+
+///
+void testArrayLiterals() {
+    auto tests = [
+        CompilerTestCase!int(
+            "[]",
+            [],
+            [
+                make(OPCODE.OpArray, 0),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!int(
+            "[1, 2, 3]",
+            [1, 2, 3],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpConstant, 2),
+                make(OPCODE.OpArray, 3),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!int(
+            "[1 + 2, 3 - 4, 5 * 6]",
+            [1, 2, 3, 4, 5, 6],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpAdd),
+                make(OPCODE.OpConstant, 2),
+                make(OPCODE.OpConstant, 3),
+                make(OPCODE.OpSub),
+                make(OPCODE.OpConstant, 4),
+                make(OPCODE.OpConstant, 5),
+                make(OPCODE.OpMul),
+                make(OPCODE.OpArray, 3),
+                make(OPCODE.OpPop),
+            ]
+        ),
+    ];
+
+    runCompilerTests!int(tests);
 }
