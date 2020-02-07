@@ -22,6 +22,7 @@ unittest {
     testNullConditional();
     testGlobalLetStatements();
     testStringExpressions();
+    testArrayLiterals();
 }
 
 ///
@@ -271,4 +272,62 @@ Error testStringObject(string expected, Objekt actual) {
         return new Error(format("object has wrong value. got=%s, want=%s", result.value, expected));
 
     return null;
+}
+
+///
+void testArrayLiterals() {
+    int[] a;
+    auto tests = [
+        VMTestCase!(int[])("[]", a),
+        VMTestCase!(int[])("[1, 2, 3]", [1, 2, 3]),
+        VMTestCase!(int[])("[1 + 2, 3 * 4, 5 + 6]", [3, 12, 11]),
+    ];
+
+    Objekt[] constants = [];        
+    Objekt[] globals = new Objekt[GLOBALS_SIZE];
+    auto symTable = SymbolTable();
+
+    foreach(tt; tests) {
+        auto program = parse(tt.input);
+        auto compiler = Compiler(symTable, constants);
+        auto err = compiler.compile(program);
+        if(err !is null) {
+            stderr.writefln("compiler error: %s", err.msg);
+            assert(err is null);
+        }
+
+        auto code = compiler.bytecode();
+        auto vm = VM(code, globals);
+        err = vm.run();
+        if(err !is null) {
+            stderr.writefln("vm error: %s", err.msg);
+            assert(err is null);
+        }
+
+        auto stackElem = vm.lastPoppedStackElem();
+        testArrayObject(tt.expected, stackElem);
+    }
+}
+
+///
+void testArrayObject(int[] expected, Objekt actual) {
+    auto array = cast(Array) actual;
+    if(array is null) {
+        stderr.writefln("object not Array: %s (%s)", actual, actual);
+        return;
+    }
+
+    if(array.elements.length != expected.length) {
+        stderr.writefln("wrong num of elements. want=%d, got=%d",
+                            expected.length, array.elements.length);
+        return;
+    }
+
+    foreach(i, expectedElem; expected) {
+        auto err = testIntegerObject(to!long(expectedElem), array.elements[i]);
+        if(err !is null) {
+            stderr.writefln("testIntegerObject failed: %s", err);
+            assert(err is null);
+        }
+    }
 }

@@ -156,10 +156,33 @@ struct VM {
                     this.globals[globalIndex] = this.pop();
 
                     break;
+                
+                case OPCODE.OpArray:
+                    auto numElements = readUint16(this.instructions[ip+1..$]);
+                    ip += 2;
+
+                    auto array = this.buildArray(this.sp - numElements, this.sp);
+                    this.sp -= numElements;
+
+                    auto err = this.push(array);
+                    if(err !is null)
+                        return err;
+
+                    break;
             }
         }
 
         return null;
+    }
+
+    ///
+    Objekt buildArray(size_t startIndex, size_t endIndex) {
+        auto elements = new Objekt[endIndex-startIndex];
+        for(size_t i = startIndex; i < endIndex; ++i) {
+            elements[i-startIndex] = this.stack[i];
+        }
+
+        return new Array(elements);
     }
 
     ///
