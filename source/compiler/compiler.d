@@ -209,6 +209,13 @@ struct Compiler {
                 
                 this.emit(OPCODE.OpGetGlobal, symbol.index);
                 break;
+            
+            case "ast.ast.StringLiteral":
+                auto n = cast(StringLiteral) node; 
+                auto str = new String(n.value);
+                this.emit(OPCODE.OpConstant, this.addConstant(str));
+            
+                break;
             default:
                 break;
         }
