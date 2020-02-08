@@ -1,9 +1,10 @@
 module objekt.objekt;
 
+import std.stdio;
 import std.string;
 import std.array;
 import std.conv;
-import std.digest.murmurhash;
+import std.digest.crc;
 
 import ast.ast;
 import objekt.environment;
@@ -112,10 +113,7 @@ class String : Objekt, Hashable {
 
     /+++/
     HashKey hashKey() {
-        MurmurHash3!32 hasher;
-        hasher.put(cast(ubyte[]) this.value);
-
-        return HashKey(this.type(), to!size_t(hasher.get()));
+        return HashKey(this.type(), to!size_t(readUint32(crc32Of(this.value))));
     }
 }
 
@@ -287,4 +285,13 @@ struct HashKey {
 struct HashPair {
     Objekt key;     /// key
     Objekt value;   /// value
+}
+
+///
+uint readUint32(const ubyte[] data) 
+{
+	return data[0] << 24 |
+	       data[1] << 16 |
+		   data[2] << 8  |
+		   data[3];
 }
