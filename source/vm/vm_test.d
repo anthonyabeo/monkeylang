@@ -23,6 +23,7 @@ unittest {
     testGlobalLetStatements();
     testStringExpressions();
     testArrayLiterals();
+    testHashLiterals();
 }
 
 ///
@@ -325,6 +326,77 @@ void testArrayObject(int[] expected, Objekt actual) {
 
     foreach(i, expectedElem; expected) {
         auto err = testIntegerObject(to!long(expectedElem), array.elements[i]);
+        if(err !is null) {
+            stderr.writefln("testIntegerObject failed: %s", err);
+            assert(err is null);
+        }
+    }
+}
+
+///
+void testHashLiterals() {
+    size_t[HashKey] a;
+    auto tests = [
+        VMTestCase!(size_t[HashKey])("{}", a),
+        VMTestCase!(size_t[HashKey]) ("{1: 2, 2: 3}", [
+            (new Integer(1)).hashKey() : 2L,
+            (new Integer(2)).hashKey() : 3L,
+        ]),
+        VMTestCase!(size_t[HashKey]) ("{1 + 1: 2 * 2, 3 + 3: 4 * 4}", [
+            (new Integer(2)).hashKey() : 4L,
+            (new Integer(6)).hashKey() : 16L,
+        ])
+    ];
+
+    Objekt[] constants = [];        
+    Objekt[] globals = new Objekt[GLOBALS_SIZE];
+    auto symTable = SymbolTable();
+
+    foreach(tt; tests) {
+        auto program = parse(tt.input);
+        auto compiler = Compiler(symTable, constants);
+        auto err = compiler.compile(program);
+        if(err !is null) {
+            stderr.writefln("compiler error: %s", err.msg);
+            assert(err is null);
+        }
+
+        auto code = compiler.bytecode();
+        auto vm = VM(code, globals);
+        err = vm.run();
+        if(err !is null) {
+            stderr.writefln("vm error: %s", err.msg);
+            assert(err is null);
+        }
+
+        auto stackElem = vm.lastPoppedStackElem();
+        testHashObject(tt.expected, stackElem);
+    }
+}
+
+///
+void testHashObject(size_t[HashKey] expected, Objekt actual) {
+    auto hash = cast(Hash) actual;
+    if(hash is null) {
+        stderr.writefln("object is not Hash. got=%s (%s)", actual, actual);
+        assert(hash !is null);
+    }
+
+    if(hash.pairs.length != expected.length) {
+        stderr.writefln("hash has wrong number of Pairs. want=%d, got=%d",
+                            expected.length, hash.pairs.length);
+        assert(hash.pairs.length == expected.length);
+    }
+
+    foreach(expectedKey, expectedValue; expected) {
+        if(expectedKey !in hash.pairs) {
+            stderr.writefln("no pair for given key in Pairs");
+            assert(expectedKey in hash.pairs);
+        }
+
+        auto pair = hash.pairs[expectedKey];
+
+        auto err = testIntegerObject(expectedValue, pair.value);
         if(err !is null) {
             stderr.writefln("testIntegerObject failed: %s", err);
             assert(err is null);

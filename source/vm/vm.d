@@ -1,6 +1,9 @@
 module vm.vm;
 
 import std.string;
+import std.typecons;
+import std.conv;
+import std.stdio;
 
 import code.code;
 import objekt.objekt;
@@ -169,10 +172,45 @@ struct VM {
                         return err;
 
                     break;
+                
+                case OPCODE.OpHash:
+                    auto numElements = to!size_t(readUint16(this.instructions[ip+1..$]));
+                    ip += 2;
+                
+                    auto hash = this.buildHash(this.sp-numElements, this.sp);
+                    if(hash.isNull)
+                        return new Error(format("unusable as hash key"));
+                    
+                    this.sp -= numElements;
+
+                    auto err = this.push(hash);
+                    if(err !is null) 
+                        return err;
+                    
+                    break;
             }
         }
 
         return null;
+    }
+
+    ///
+    NullableRef!Hash buildHash(size_t startIndex, size_t endIndex) {
+        auto hashedPairs = (HashPair[HashKey]).init;
+        for(size_t i = startIndex; i < endIndex; i += 2) {
+            auto key = this.stack[i];
+            auto value = this.stack[i+1];
+
+            auto pair = HashPair(key, value);
+            auto hashKey = cast(Hashable) key;
+            if(hashKey is null)
+                return NullableRef!Hash();
+
+            hashedPairs[hashKey.hashKey()] = pair;
+        }
+
+        auto h = new Hash(hashedPairs);
+        return NullableRef!Hash(&h);
     }
 
     ///
