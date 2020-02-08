@@ -3,6 +3,7 @@ module compiler.compiler;
 import std.stdio;
 import std.conv;
 import std.string;
+import std.algorithm.sorting;
 
 import ast.ast;
 import code.code;
@@ -225,6 +226,26 @@ struct Compiler {
                 }
 
                 this.emit(OPCODE.OpArray, n.elements.length);
+                break;
+
+            case "ast.ast.HashLiteral":
+                auto n = cast(HashLiteral) node;
+
+                Expression[] keys = n.pairs.keys;
+                sort!((a, b) => a.asString() < b.asString()) (keys);
+ 
+                foreach (k; keys) {
+                    auto err = this.compile(k);
+                    if(err !is null)
+                        return err;
+
+                    err = this.compile(n.pairs[k]);
+                    if(err !is null)
+                        return null;
+                }
+
+                this.emit(OPCODE.OpHash, (n.pairs.length * 2));
+
                 break;
             default:
                 break;

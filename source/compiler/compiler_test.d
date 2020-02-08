@@ -20,6 +20,7 @@ unittest {
     testGlobalLetStatements();
     testStringExpressions();
     testArrayLiterals();
+    testHashLiterals();
 }
 
 /++
@@ -450,4 +451,50 @@ void testArrayLiterals() {
     ];
 
     runCompilerTests!int(tests);
+}
+
+///
+void testHashLiterals() {
+    auto tests = [
+        CompilerTestCase!int(
+            "{}",
+            [],
+            [
+                make(OPCODE.OpHash, 0),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!int(
+            "{1: 2, 3: 4, 5: 6}",
+            [1, 2, 3, 4, 5, 6],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpConstant, 2),
+                make(OPCODE.OpConstant, 3),
+                make(OPCODE.OpConstant, 4),
+                make(OPCODE.OpConstant, 5),
+                make(OPCODE.OpHash, 6),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!int(
+            "{1: 2 + 3, 4: 5 * 6}",
+            [1, 2, 3, 4, 5, 6],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpConstant, 2),
+                make(OPCODE.OpAdd),
+                make(OPCODE.OpConstant, 3),
+                make(OPCODE.OpConstant, 4),
+                make(OPCODE.OpConstant, 5),
+                make(OPCODE.OpMul),
+                make(OPCODE.OpHash, 4),
+                make(OPCODE.OpPop),
+            ]
+        ),
+    ];
+
+    runCompilerTests(tests);
 }
