@@ -31,6 +31,7 @@ enum OPCODE : Opcode {
     OpSetGlobal,
     OpArray,
     OpHash,
+    OpIndex,
 }
 
 Definition[OPCODE] definitions; /// definitions
@@ -58,6 +59,7 @@ static this() {
         OPCODE.OpSetGlobal : new Definition("OpSetGlobal", [2]),
         OPCODE.OpArray : new Definition("OpArray", [2]),
         OPCODE.OpHash : new Definition("OpHash", [2]),
+        OPCODE.OpIndex : new Definition("OpIndex", []),
     ];
 }
 
