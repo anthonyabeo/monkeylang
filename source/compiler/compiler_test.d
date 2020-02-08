@@ -21,6 +21,7 @@ unittest {
     testStringExpressions();
     testArrayLiterals();
     testHashLiterals();
+    testIndexExpressions();
 }
 
 /++
@@ -497,4 +498,41 @@ void testHashLiterals() {
     ];
 
     runCompilerTests(tests);
+}
+
+///
+void testIndexExpressions() {
+    auto tests = [
+        CompilerTestCase!int(
+            "[1, 2, 3][1 + 1]",
+            [1, 2, 3, 1, 1],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpConstant, 2),
+                make(OPCODE.OpArray, 3),
+                make(OPCODE.OpConstant, 3),
+                make(OPCODE.OpConstant, 4),
+                make(OPCODE.OpAdd),
+                make(OPCODE.OpIndex),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!int(
+            "{1: 2}[2 - 1]",
+            [1, 2, 2, 1],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpHash, 2),
+                make(OPCODE.OpConstant, 2),
+                make(OPCODE.OpConstant, 3),
+                make(OPCODE.OpSub),
+                make(OPCODE.OpIndex),
+                make(OPCODE.OpPop),
+            ]
+        ),
+    ];
+
+    runCompilerTests!int(tests);
 }

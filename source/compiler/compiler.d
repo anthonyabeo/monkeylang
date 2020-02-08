@@ -247,6 +247,20 @@ struct Compiler {
                 this.emit(OPCODE.OpHash, (n.pairs.length * 2));
 
                 break;
+            case "ast.ast.IndexExpression":
+                auto n = cast(IndexExpression) node;
+                auto err = this.compile(n.left);
+                if(err !is null)
+                    return err;
+
+                err = this.compile(n.index);
+                if(err !is null)
+                    return err;
+
+                this.emit(OPCODE.OpIndex);
+
+                break;
+
             default:
                 break;
         }
