@@ -24,6 +24,8 @@ unittest {
     testStringExpressions();
     testArrayLiterals();
     testHashLiterals();
+    testIntgerIndexExpressions();
+    testNullIndexExpressions();
 }
 
 ///
@@ -338,8 +340,8 @@ void testHashLiterals() {
     size_t[HashKey] a;
     auto tests = [
         VMTestCase!(size_t[HashKey])("{}", a),
-        VMTestCase!(size_t[HashKey]) ("{1: 2, 2: 3}", [
-            (new Integer(1)).hashKey() : 2L,
+        VMTestCase!(size_t[HashKey]) ("{5: 2, 2: 3}", [
+            (new Integer(5)).hashKey() : 2L,
             (new Integer(2)).hashKey() : 3L,
         ]),
         VMTestCase!(size_t[HashKey]) ("{1 + 1: 2 * 2, 3 + 3: 4 * 4}", [
@@ -401,5 +403,52 @@ void testHashObject(size_t[HashKey] expected, Objekt actual) {
             stderr.writefln("testIntegerObject failed: %s", err);
             assert(err is null);
         }
+    }
+}
+
+///
+void testIntgerIndexExpressions() {
+    auto tests = [
+        VMTestCase!int("[1, 2, 3][1]", 2),
+        VMTestCase!int("[1, 2, 3][0 + 2]", 3),
+        VMTestCase!int("[[1, 1, 1]][0][0]", 1),
+        VMTestCase!int("{5: 5, 2: 2}[5]", 5),
+        VMTestCase!int("{5: 5, 2: 2}[2]", 2),
+    ];
+
+    runVMTests!int(tests);
+}
+
+///
+void testNullIndexExpressions() {
+    auto tests = [
+        VMTestCase!Null("[][0]", NULL),
+        VMTestCase!Null("[1, 2, 3][99]", NULL),
+        VMTestCase!Null("[1][-1]", NULL),
+    ];
+
+    Objekt[] constants = [];        
+    Objekt[] globals = new Objekt[GLOBALS_SIZE];
+    auto symTable = SymbolTable();
+
+    foreach(tt; tests) {
+        auto program = parse(tt.input);
+        auto compiler = Compiler(symTable, constants);
+        auto err = compiler.compile(program);
+        if(err !is null) {
+            stderr.writefln("compiler error: %s", err.msg);
+            assert(err is null);
+        }
+
+        auto code = compiler.bytecode();
+        auto vm = VM(code, globals);
+        err = vm.run();
+        if(err !is null) {
+            stderr.writefln("vm error: %s", err.msg);
+            assert(err is null);
+        }
+
+        auto stackElem = vm.lastPoppedStackElem();
+        testNullObject(stackElem);
     }
 }

@@ -187,6 +187,15 @@ struct VM {
                     if(err !is null) 
                         return err;
                     
+
+                    break;
+                case OPCODE.OpIndex:
+                    auto index = this.pop();
+                    auto left = this.pop();
+
+                    auto err = this.executeIndexExpression(left, index);
+                    if(err !is null)
+                        return err;
                     break;
             }
         }
@@ -194,23 +203,60 @@ struct VM {
         return null;
     }
 
+    Error executeIndexExpression(Objekt left, Objekt index) {
+        if(left.type() == ObjectType.ARRAY && index.type() == ObjectType.INTEGER) 
+            return this.executeArrayIndex(left, index);
+        else if(left.type() == ObjectType.HASH)
+            return this.executeHashIndex(left, index);
+        else
+            return new Error(format("index operator not supported: %s", left.type()));
+    }
+
     ///
-    NullableRef!Hash buildHash(size_t startIndex, size_t endIndex) {
+    Error executeArrayIndex(Objekt array, Objekt index) {
+        auto arrayObject = cast(Array) array;
+        auto i = (cast(Integer) index).value;
+        auto max = cast(long) arrayObject.elements.length - 1;
+        
+        if(i < 0 || i > max) 
+            return this.push(NULL);
+        
+        return this.push(arrayObject.elements[i]);
+    }
+
+    ///
+    Error executeHashIndex(Objekt hash, Objekt index) {
+        auto hashObject = cast(Hash) hash;
+        auto key = cast(Hashable) index;
+        if (key is null)
+            return new Error(format("unusable as hash key: %s", index.type()));
+        
+        if(key.hashKey() !in hashObject.pairs)
+            return this.push(NULL);
+
+        auto pair = hashObject.pairs[key.hashKey()];
+
+        return this.push(pair.value);
+    }
+
+    ///
+    Nullable!Hash buildHash(size_t startIndex, size_t endIndex) {
         auto hashedPairs = (HashPair[HashKey]).init;
+        auto result = Nullable!Hash();
+
         for(size_t i = startIndex; i < endIndex; i += 2) {
             auto key = this.stack[i];
             auto value = this.stack[i+1];
 
-            auto pair = HashPair(key, value);
             auto hashKey = cast(Hashable) key;
             if(hashKey is null)
-                return NullableRef!Hash();
+                return result;
 
-            hashedPairs[hashKey.hashKey()] = pair;
+            hashedPairs[hashKey.hashKey()] = HashPair(key, value);
         }
 
-        auto h = new Hash(hashedPairs);
-        return NullableRef!Hash(&h);
+        result = new Hash(hashedPairs);
+        return result;
     }
 
     ///
