@@ -46,6 +46,10 @@ interface Hashable {
 class CompiledFunction : Objekt {
     Instructions instructions;      /// compiled instructions
 
+    this(Instructions instructions) {
+        this.instructions = instructions;
+    }
+
     /+++/
     ObjectType type() {
         return ObjectType.COMPILED_FUNCTION;
