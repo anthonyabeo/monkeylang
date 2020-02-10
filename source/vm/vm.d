@@ -197,12 +197,22 @@ struct VM {
                     if(err !is null)
                         return err;
                     break;
+
+                case OPCODE.OpCall:
+                    break;
+
+                case OPCODE.OpReturnValue:
+                    break;
+                
+                case OPCODE.OpReturn:
+                    break;
             }
         }
 
         return null;
     }
 
+    ///
     Error executeIndexExpression(Objekt left, Objekt index) {
         if(left.type() == ObjectType.ARRAY && index.type() == ObjectType.INTEGER) 
             return this.executeArrayIndex(left, index);
