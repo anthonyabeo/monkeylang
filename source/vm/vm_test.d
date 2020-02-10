@@ -49,6 +49,7 @@ void testNullConditional() {
     Objekt[] constants = [];        
     Objekt[] globals = new Objekt[GLOBALS_SIZE];
     auto symTable = SymbolTable();
+    auto skope = CompilationScope();
 
     auto tests = [
         VMTestCase!Null("if (1 > 2) { 10 }", NULL),
@@ -57,7 +58,7 @@ void testNullConditional() {
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
-        auto compiler = Compiler(symTable, constants);
+        auto compiler = Compiler(symTable, constants, skope);
         auto err = compiler.compile(program);
         if(err !is null) {
             stderr.writefln("compiler error: %s", err.msg);
@@ -162,10 +163,11 @@ void runVMTests(T) (VMTestCase!(T)[] tests) {
     Objekt[] constants = [];        
     Objekt[] globals = new Objekt[GLOBALS_SIZE];
     auto symTable = SymbolTable();
+    auto skope = CompilationScope();
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
-        auto compiler = Compiler(symTable, constants);
+        auto compiler = Compiler(symTable, constants, skope);
         auto err = compiler.compile(program);
         if(err !is null) {
             stderr.writefln("compiler error: %s", err.msg);
@@ -289,10 +291,11 @@ void testArrayLiterals() {
     Objekt[] constants = [];        
     Objekt[] globals = new Objekt[GLOBALS_SIZE];
     auto symTable = SymbolTable();
+    auto skope = CompilationScope();
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
-        auto compiler = Compiler(symTable, constants);
+        auto compiler = Compiler(symTable, constants, skope);
         auto err = compiler.compile(program);
         if(err !is null) {
             stderr.writefln("compiler error: %s", err.msg);
@@ -353,10 +356,11 @@ void testHashLiterals() {
     Objekt[] constants = [];        
     Objekt[] globals = new Objekt[GLOBALS_SIZE];
     auto symTable = SymbolTable();
+    auto skope = CompilationScope();
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
-        auto compiler = Compiler(symTable, constants);
+        auto compiler = Compiler(symTable, constants, skope);
         auto err = compiler.compile(program);
         if(err !is null) {
             stderr.writefln("compiler error: %s", err.msg);
@@ -430,10 +434,11 @@ void testNullIndexExpressions() {
     Objekt[] constants = [];        
     Objekt[] globals = new Objekt[GLOBALS_SIZE];
     auto symTable = SymbolTable();
+    auto skope = CompilationScope();
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
-        auto compiler = Compiler(symTable, constants);
+        auto compiler = Compiler(symTable, constants, skope);
         auto err = compiler.compile(program);
         if(err !is null) {
             stderr.writefln("compiler error: %s", err.msg);
