@@ -7,6 +7,7 @@ import std.conv;
 import std.digest.crc;
 
 import ast.ast;
+import code.code;
 import objekt.environment;
 
 /// 
@@ -21,6 +22,7 @@ enum ObjectType {
     BUILTIN,
     ARRAY,
     HASH,
+    COMPILED_FUNCTION,
 }
 
 alias BuiltInFunction = Objekt function(Objekt[] args...);
@@ -41,6 +43,21 @@ interface Hashable {
 }
 
 /+++/
+class CompiledFunction : Objekt {
+    Instructions instructions;      /// compiled instructions
+
+    /+++/
+    ObjectType type() {
+        return ObjectType.COMPILED_FUNCTION;
+    }
+
+    /+++/
+    string inspect() {
+        return format("CompiledFunction[%s]", this);
+    }
+}
+
+/+++/
 class Hash : Objekt {
     HashPair[HashKey] pairs;    /// pairs
 
@@ -56,12 +73,12 @@ class Hash : Objekt {
 
     /+++/
     string inspect() {
-        string[] pairs;
+        string[] prs;
         foreach(key, pair; this.pairs) {
-            pairs ~= format("%s: %s", pair.key.inspect(), pair.value.inspect());
+            prs ~= format("%s: %s", pair.key.inspect(), pair.value.inspect());
         }
 
-        string s = "{" ~ join(pairs, ", ") ~ "}";
+        string s = "{" ~ join(prs, ", ") ~ "}";
 
         return s;
     }
