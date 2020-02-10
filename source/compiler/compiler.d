@@ -14,23 +14,25 @@ import compiler.symbol_table;
  + Compiler
  +/
 struct Compiler {
-    Instructions instructions;               /// instructions
     Objekt[] constants;                      /// constants
-    EmittedInstruction lastInstruction;      /// last instruction
-    EmittedInstruction previousInstruction;  /// previous instruction
     SymbolTable symTable;                    /// symbol table
+    CompilationScope[] scopes;               /// Compilation Scopes
+    size_t scopeIndex;                        /// Scope Index
 
     /++++++++++++++++++++++++++++
      + Params:
      +    node =
      ++++++++++++++++++++++++++++/
-    this(ref SymbolTable symTable, Objekt[] constants) {
+    this(ref SymbolTable symTable, Objekt[] constants, CompilationScope skope) {
         this.symTable = symTable;
         this.constants = constants;
+        this.scopes ~= skope;
+        this.scopeIndex = 0;
     }
 
     this(this) {
         this.constants = constants.dup;
+        this.scopes = scopes.dup;
     }
     
     /++++++++++++++++++++++++++++
@@ -163,7 +165,7 @@ struct Compiler {
 
                 auto jumpPos = this.emit(OPCODE.OpJump, 9999);
 
-                auto afterConsequencePos = this.instructions.length;
+                auto afterConsequencePos = this.currentInstructions().length;
                 this.changeOperand(jumpNotTruthyPos, afterConsequencePos);
 
                 if(n.alternative is null) {
@@ -177,7 +179,7 @@ struct Compiler {
                         this.removeLastPop();
                 }
 
-                auto afterAlternativePos = this.instructions.length;
+                auto afterAlternativePos = this.currentInstructions().length;
                 this.changeOperand(jumpPos, afterAlternativePos);
 
                 break;
@@ -267,16 +269,39 @@ struct Compiler {
 
         return null;
     }
+    /+++/
+    void enterScope() {
+        auto scpe = CompilationScope();
+        this.scopes ~= scpe;
+        this.scopeIndex++;
+    }
+
+    /+++/
+    Instructions leaveScope() {
+        auto instructions = this.currentInstructions();
+
+        this.scopes = this.scopes[0..$-1];
+        this.scopeIndex--;
+
+        return instructions;
+    }
 
     /+++/
     Bytecode bytecode() {
-        return Bytecode(this.instructions, this.constants);
+        return Bytecode(this.currentInstructions(), this.constants);
+    }
+
+    ///
+    Instructions currentInstructions() {
+        return this.scopes[this.scopeIndex].instructions;
     }
 
     ///
     size_t addConstant(Objekt obj) {
         this.constants ~= obj;
-        return this.constants.length - 1;
+
+        auto len = this.constants.length;
+        return len - 1;
     }
 
     ///
@@ -291,44 +316,51 @@ struct Compiler {
 
     ///
     size_t addInstruction(ubyte[] ins) {
-        auto posNewInstruction = this.instructions.length;
-        this.instructions ~= ins;
+        auto posNewInstruction = this.currentInstructions().length;
+        auto updatedInstructions = (this.currentInstructions() ~ ins);
+        
+        this.scopes[this.scopeIndex].instructions = updatedInstructions;
 
         return posNewInstruction;
     }
 
     ///
     void setLastInstruction(OPCODE op, size_t pos) {
-        immutable prev = this.lastInstruction;
+        immutable prev = this.scopes[this.scopeIndex].lastInstruction;
         immutable last = EmittedInstruction(op, pos);
 
-        this.previousInstruction = prev;
-        this.lastInstruction = last;
+        this.scopes[this.scopeIndex].previosInstruction = prev;
+        this.scopes[this.scopeIndex].lastInstruction = last;
     }
 
     ///
     bool lastInstructionIsPop() {
-        return this.lastInstruction.opcode == OPCODE.OpPop;
+        return this.scopes[this.scopeIndex].lastInstruction.opcode == OPCODE.OpPop;
     }
 
     ///
     void removeLastPop() {
-        this.instructions = this.instructions[0 .. this.lastInstruction.pos];
-        this.lastInstruction = this.previousInstruction;
+        immutable last = this.scopes[this.scopeIndex].lastInstruction;
+        immutable previous = this.scopes[this.scopeIndex].previosInstruction;
+
+        auto old = this.currentInstructions();
+
+        this.scopes[this.scopeIndex].instructions = old[0..last.pos];
+        this.scopes[this.scopeIndex].lastInstruction = previous;
     }
 
     ///
     void replaceInstruction(size_t pos, ubyte[] newInstruction) {
+        auto ins = this.currentInstructions();
         for(size_t i = 0; i < newInstruction.length; ++i) {
-            this.instructions[pos+i] = newInstruction[i];
+            ins[pos+i] = newInstruction[i];
         }
     }
 
     ///
     void changeOperand(size_t opPos, size_t operand) {
-        auto op = cast(OPCODE) this.instructions[opPos];
+        auto op = cast(OPCODE) this.currentInstructions()[opPos];
         auto newInstruction = make(op, operand);
-
         this.replaceInstruction(opPos, newInstruction);
     }
 }
@@ -351,4 +383,13 @@ struct Compiler {
  struct EmittedInstruction {
      OPCODE opcode;         /// opcode
      size_t pos;            /// position
+ }
+
+ /++++++++++++++++++++++++++++++
+ + COMPILATION SCOPE
+ +++++++++++++++++++++++++++++/
+ struct CompilationScope {
+    Instructions instructions;              /// instructions
+    EmittedInstruction lastInstruction;     /// last instruction
+    EmittedInstruction previosInstruction;  /// previous instruction
  }
