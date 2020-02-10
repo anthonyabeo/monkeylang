@@ -23,7 +23,7 @@ struct Compiler {
      + Params:
      +    node =
      ++++++++++++++++++++++++++++/
-    this(ref SymbolTable symTable, Objekt[] constants, CompilationScope skope) {
+    this(ref SymbolTable symTable, Objekt[] constants, ref CompilationScope skope) {
         this.symTable = symTable;
         this.constants = constants;
         this.scopes ~= skope;
@@ -263,6 +263,29 @@ struct Compiler {
 
                 break;
 
+            case "ast.ast.FunctionLiteral":
+                auto n = cast(FunctionLiteral) node;
+                this.enterScope();
+
+                auto err = this.compile(n.fnBody);
+                if(err !is null) 
+                    return err;
+                
+                auto instructions = this.leaveScope();
+                auto compiledFn = new CompiledFunction(instructions);
+                this.emit(OPCODE.OpConstant, this.addConstant(compiledFn));
+
+                break;
+            case "ast.ast.ReturnStatement":
+                auto n = cast(ReturnStatement) node;
+
+                auto err = this.compile(n.returnValue);
+                if(err !is null)
+                    return err;
+            
+                this.emit(OPCODE.OpReturnValue);
+
+                break;
             default:
                 break;
         }
