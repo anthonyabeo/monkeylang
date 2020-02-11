@@ -26,6 +26,9 @@ unittest {
     testHashLiterals();
     testIntgerIndexExpressions();
     testNullIndexExpressions();
+    testCallingFunctionWithoutArguments();
+    testCallingFunctionWithArguments();
+    testFunctionsWithoutReturnValue();
 }
 
 ///
@@ -445,6 +448,61 @@ void testNullIndexExpressions() {
             assert(err is null);
         }
 
+        auto code = compiler.bytecode();
+        auto vm = VM(code, globals);
+        err = vm.run();
+        if(err !is null) {
+            stderr.writefln("vm error: %s", err.msg);
+            assert(err is null);
+        }
+
+        auto stackElem = vm.lastPoppedStackElem();
+        testNullObject(stackElem);
+    }
+}
+
+///
+void testCallingFunctionWithoutArguments() {
+    auto tests = [
+        VMTestCase!int(`let fivePlusTen = fn() { 5 + 10; }; fivePlusTen();`, 15),
+        VMTestCase!int(`let one = fn() { 1; };let two = fn() { 2; };one() + two()`, 3),
+        VMTestCase!int(`let a = fn() { 1 };let b = fn() { a() + 1 };let c = fn() { b() + 1 };c();`, 3),
+    ];
+
+    runVMTests!int(tests);
+}
+
+///
+void testCallingFunctionWithArguments() {
+    auto tests = [
+        VMTestCase!int(`let earlyExit = fn() { return 99; 100; };earlyExit();`, 99),
+        VMTestCase!int(`let earlyExit = fn() { return 99; return 100; };earlyExit();`, 99),
+    ];
+
+    runVMTests!int(tests);
+}
+
+///
+void testFunctionsWithoutReturnValue() {
+    Objekt[] constants = [];        
+    Objekt[] globals = new Objekt[GLOBALS_SIZE];
+    auto symTable = SymbolTable();
+    auto skope = CompilationScope();
+
+    auto tests = [
+        VMTestCase!Null(`let noReturn = fn() { };noReturn();`, NULL),
+        VMTestCase!Null(`let noReturn = fn() { };let noReturnTwo = fn() { noReturn(); };noReturn();noReturnTwo();`, NULL),
+    ];
+
+    foreach(tt; tests) {
+        auto program = parse(tt.input);
+        auto compiler = Compiler(symTable, constants, skope);
+        auto err = compiler.compile(program);
+        if(err !is null) {
+            stderr.writefln("compiler error: %s", err.msg);
+            assert(err is null);
+        }
+        
         auto code = compiler.bytecode();
         auto vm = VM(code, globals);
         err = vm.run();
