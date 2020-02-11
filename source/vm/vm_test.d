@@ -29,6 +29,7 @@ unittest {
     testCallingFunctionWithoutArguments();
     testCallingFunctionWithArguments();
     testFunctionsWithoutReturnValue();
+    testFirstClassFunctions();
 }
 
 ///
@@ -514,4 +515,13 @@ void testFunctionsWithoutReturnValue() {
         auto stackElem = vm.lastPoppedStackElem();
         testNullObject(stackElem);
     }
+}
+
+///
+void testFirstClassFunctions() {
+    auto tests = [
+        VMTestCase!int(`let returnsOne = fn() { 1; };let returnsOneReturner = fn() { returnsOne; };returnsOneReturner()();`, 1)
+    ];
+
+    runVMTests!int(tests);
 }

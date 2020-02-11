@@ -10,6 +10,7 @@ import code.code;
 unittest {
     testMake();
     testInstructionString();
+    testReadOperands();
 }
 
 /+++/
@@ -21,6 +22,7 @@ void testMake() {
     auto tests = [
         Instr(OPCODE.OpConstant, [65_534], [cast(ubyte) OPCODE.OpConstant, 255, 254]),
         Instr(OPCODE.OpAdd, [], [cast(byte) OPCODE.OpAdd]),
+        Instr(OPCODE.OpGetLocal, [255], [cast(byte) OPCODE.OpGetLocal, 255]),
     ];
 
     foreach(tt; tests) {
@@ -45,13 +47,15 @@ void testMake() {
 void testInstructionString() {
     auto instructions = [
         make(OPCODE.OpAdd),
+        make(OPCODE.OpGetLocal, 1),
         make(OPCODE.OpConstant, 2),
         make(OPCODE.OpConstant, 65_535),
     ];
 
     auto expected = `0000 OpAdd
-0001 OpConstant 2
-0004 OpConstant 65535
+0001 OpGetLocal 1
+0003 OpConstant 2
+0006 OpConstant 65535
 `;
 
     Instructions concatted = [];
@@ -73,6 +77,7 @@ void testReadOperands() {
 
     auto tests = [
         ReadOp(OPCODE.OpConstant, [65_535], 2),
+        ReadOp(OPCODE.OpGetLocal, [255], 1),
     ];
 
     foreach(tt; tests) {
