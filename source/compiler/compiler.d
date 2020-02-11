@@ -160,7 +160,7 @@ struct Compiler {
                 if(err !is null)
                     return err; 
 
-                if(this.lastInstructionIsPop())
+                if(this.lastInstructionIs(OPCODE.OpPop))
                     this.removeLastPop();
 
                 auto jumpPos = this.emit(OPCODE.OpJump, 9999);
@@ -175,7 +175,7 @@ struct Compiler {
                     if(err !is null)
                         return err;
                     
-                    if(this.lastInstructionIsPop())
+                    if(this.lastInstructionIs(OPCODE.OpPop))
                         this.removeLastPop();
                 }
 
@@ -271,7 +271,14 @@ struct Compiler {
                 if(err !is null) 
                     return err;
                 
+                if(this.lastInstructionIs(OPCODE.OpPop))
+                    this.replaceLastPopWithReturn();
+
+                if(!this.lastInstructionIs(OPCODE.OpReturnValue))
+                    this.emit(OPCODE.OpReturn);
+
                 auto instructions = this.leaveScope();
+
                 auto compiledFn = new CompiledFunction(instructions);
                 this.emit(OPCODE.OpConstant, this.addConstant(compiledFn));
 
@@ -292,6 +299,13 @@ struct Compiler {
 
         return null;
     }
+    /+++/
+    void replaceLastPopWithReturn() {
+        auto lastPos = this.scopes[this.scopeIndex].lastInstruction.pos;
+        this.replaceInstruction(lastPos, make(OPCODE.OpReturnValue));
+        this.scopes[this.scopeIndex].lastInstruction.opcode = OPCODE.OpReturnValue;
+    }
+
     /+++/
     void enterScope() {
         auto scpe = CompilationScope();
@@ -357,8 +371,11 @@ struct Compiler {
     }
 
     ///
-    bool lastInstructionIsPop() {
-        return this.scopes[this.scopeIndex].lastInstruction.opcode == OPCODE.OpPop;
+    bool lastInstructionIs(OPCODE op) {
+        if(this.currentInstructions().length == 0)
+            return false;
+
+        return this.scopes[this.scopeIndex].lastInstruction.opcode == op;
     }
 
     ///
