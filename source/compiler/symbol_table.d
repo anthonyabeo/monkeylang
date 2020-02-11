@@ -6,6 +6,7 @@ import std.typecons;
 ///
 enum SymbolScope {
     GLOBAL,
+    LOCAL,
 }
 
 ///
@@ -16,12 +17,13 @@ struct Symbol {
 }
 
 ///
-struct SymbolTable {
+class SymbolTable {
+    SymbolTable outer;
     Symbol[string] store;   /// store
     size_t numDefinitions;  /// number of definitions
     
-    this(this) {
-        this.store = store.dup;
+    this(SymbolTable symTab) {
+        this.outer = symTab;
     }
 
     /++
@@ -34,7 +36,15 @@ struct SymbolTable {
      +      Symbol
      +/
     Symbol define(string name) {
-        auto symbol = Symbol(name, SymbolScope.GLOBAL, this.numDefinitions);
+        Symbol symbol;
+        symbol.name = name;
+        symbol.index = this.numDefinitions;
+
+        if(this.outer is null)
+            symbol.skope = SymbolScope.GLOBAL;
+        else    
+            symbol.skope = SymbolScope.LOCAL;
+
         this.store[name] = symbol;
         this.numDefinitions++;
 
@@ -43,7 +53,9 @@ struct SymbolTable {
 
     ///
     Nullable!Symbol resolve(string name) {
-        if(name !in this.store)
+        if((name !in this.store) && this.outer !is null)
+            return this.outer.resolve(name);
+        else if((name !in this.store) && this.outer is null)
             return Nullable!Symbol();
 
         return Nullable!Symbol(this.store[name]);
