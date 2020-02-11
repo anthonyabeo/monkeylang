@@ -201,7 +201,10 @@ struct Compiler {
                     return err; 
 
                 auto symbol = this.symTable.define(n.name.value);
-                this.emit(OPCODE.OpSetGlobal, symbol.index);
+                if(symbol.skope == SymbolScope.GLOBAL)
+                    this.emit(OPCODE.OpSetGlobal, symbol.index);
+                else
+                    this.emit(OPCODE.OpSetLocal, symbol.index);
 
                 break;
             case "ast.ast.Identifier":
@@ -210,7 +213,11 @@ struct Compiler {
                 if(symbol.isNull)
                     return new Error(format("undefined variable %s", n.value));
                 
-                this.emit(OPCODE.OpGetGlobal, symbol.index);
+                if(symbol.skope == SymbolScope.GLOBAL)
+                    this.emit(OPCODE.OpGetGlobal, symbol.index);
+                else
+                    this.emit(OPCODE.OpGetLocal, symbol.index);
+
                 break;
             
             case "ast.ast.StringLiteral":
@@ -322,6 +329,8 @@ struct Compiler {
         auto scpe = CompilationScope();
         this.scopes ~= scpe;
         this.scopeIndex++;
+
+        this.symTable = new SymbolTable(this.symTable);
     }
 
     /+++/
@@ -330,6 +339,8 @@ struct Compiler {
 
         this.scopes = this.scopes[0..$-1];
         this.scopeIndex--;
+
+        this.symTable = this.symTable.outer;
 
         return instructions;
     }

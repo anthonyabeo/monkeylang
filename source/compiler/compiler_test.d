@@ -26,6 +26,7 @@ unittest {
     testFunctions();
     testCompilerScopes();
     testFunctionCalls();
+    testLetStatementScopes();
 }
 
 /++
@@ -235,12 +236,12 @@ void testConditionals() {
 
 ///
 void runCompilerTests(T) (CompilerTestCase!(T)[] tests) {
-    Objekt[] constants = [];        
-    Objekt[] globals = new Objekt[GLOBALS_SIZE];
-    auto symTable = SymbolTable();
-    auto skope = CompilationScope();
-
     foreach (i, tt; tests) {
+        Objekt[] constants = [];        
+        Objekt[] globals = new Objekt[GLOBALS_SIZE];
+        auto symTable = new SymbolTable(null);
+        auto skope = CompilationScope();
+
         auto program = parse(tt.input);
         auto compiler = Compiler(symTable, constants, skope);
 
@@ -251,7 +252,7 @@ void runCompilerTests(T) (CompilerTestCase!(T)[] tests) {
         }
         
         auto bytecode = compiler.bytecode();
-        
+        // writeln("INST: ", asString(bytecode.instructions));
         err = testInstructions(tt.expectedInstructions, bytecode.instructions);
         if(err !is null) {
             stderr.writefln("testInstructions failed: %s", err.msg);
@@ -550,11 +551,6 @@ alias Foo = Tuple!(int, int, Instructions[]);
 
 ///
 void testFunctions() {
-    Objekt[] constants = [];        
-    Objekt[] globals = new Objekt[GLOBALS_SIZE];
-    auto symTable = SymbolTable();
-    auto skope = CompilationScope();
-
     auto tests = [
         CompilerTestCase!Foo(
             `fn() { return 5 + 10 }`,
@@ -630,6 +626,11 @@ void testFunctions() {
     ];
 
     foreach (i, tt; tests) {
+        Objekt[] constants = [];        
+        Objekt[] globals = new Objekt[GLOBALS_SIZE];
+        auto symTable = new SymbolTable(null);
+        auto skope = CompilationScope();
+
         auto program = parse(tt.input);
         auto compiler = Compiler(symTable, constants, skope);
 
@@ -677,7 +678,7 @@ Error testFunctionConstants(Instructions[] expected, Objekt[] actual) {
 void testCompilerScopes() {
     Objekt[] constants = [];        
     Objekt[] globals = new Objekt[GLOBALS_SIZE];
-    auto symTable = SymbolTable();
+    auto symTable = new SymbolTable(null);
     auto skope = CompilationScope();
 
     auto compiler = Compiler(symTable, constants, skope);
@@ -776,12 +777,106 @@ void testFunctionCalls() {
         ),
     ];
 
-    Objekt[] constants = [];        
-    Objekt[] globals = new Objekt[GLOBALS_SIZE];
-    auto symTable = SymbolTable();
-    auto skope = CompilationScope();
+    foreach (i, tt; tests) {
+        Objekt[] constants = [];        
+        Objekt[] globals = new Objekt[GLOBALS_SIZE];
+        auto symTable = new SymbolTable(null);
+        auto skope = CompilationScope();
+
+        auto program = parse(tt.input);
+        auto compiler = Compiler(symTable, constants, skope);
+
+        auto err = compiler.compile(program);
+        if(err !is null) {
+            stderr.writefln("compiler error: %s", err.msg);
+            assert(err is null);
+        }
+        
+        auto bytecode = compiler.bytecode();
+        
+        err = testInstructions(tt.expectedInstructions, bytecode.instructions);
+        if(err !is null) {
+            stderr.writefln("testInstructions failed: %s", err.msg);
+            assert(err is null);
+        }
+
+        err = testFunctionConstants(tt.expectedConstants[0][2], bytecode.constants);
+        if(err !is null) {
+            stderr.writefln("testConstants failed: %s", err.msg);
+            assert(err is null);
+        }
+    }
+}
+
+///
+void testLetStatementScopes() {
+    auto tests = [
+        CompilerTestCase!Foo(
+            `let num = 55;fn() { num }`,
+            [
+                tuple(
+                    0, 55,
+                    [
+                        make(OPCODE.OpGetGlobal, 0),
+                        make(OPCODE.OpReturnValue),
+                    ]
+                ),
+            ],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpSetGlobal, 0),
+                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!Foo(
+            `fn() {let num = 55;num}`,
+            [
+                tuple(
+                    0, 55,
+                    [
+                        make(OPCODE.OpConstant, 0),
+                        make(OPCODE.OpSetLocal, 0),
+                        make(OPCODE.OpGetLocal, 0),
+                        make(OPCODE.OpReturnValue),
+                    ]
+                ),
+            ],
+            [
+                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!Foo(
+            `fn() {let a = 55;let b = 77;a + b}`,
+            [
+                tuple(
+                    55, 77,
+                    [
+                        make(OPCODE.OpConstant, 0),
+                        make(OPCODE.OpSetLocal, 0),
+                        make(OPCODE.OpConstant, 1),
+                        make(OPCODE.OpSetLocal, 1),
+                        make(OPCODE.OpGetLocal, 0),
+                        make(OPCODE.OpGetLocal, 1),
+                        make(OPCODE.OpAdd),
+                        make(OPCODE.OpReturnValue),
+                    ]
+                )
+            ],
+            [
+                make(OPCODE.OpConstant, 2),
+                make(OPCODE.OpPop),
+            ]
+        ),
+    ];
 
     foreach (i, tt; tests) {
+        Objekt[] constants = [];        
+        Objekt[] globals = new Objekt[GLOBALS_SIZE];
+        auto symTable = new SymbolTable(null);
+        auto skope = CompilationScope();
+
         auto program = parse(tt.input);
         auto compiler = Compiler(symTable, constants, skope);
 
