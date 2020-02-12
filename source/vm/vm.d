@@ -243,6 +243,13 @@ struct VM {
 
                     break;
                 case OPCODE.OpReturn:
+                    this.popFrame();
+                    this.pop();
+
+                    auto err = this.push(NULL);
+                    if(err !is null)
+                        return err;
+
                     break;
                 case OPCODE.OpReturnValue:
                     auto returnValue = this.pop();

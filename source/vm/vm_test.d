@@ -27,6 +27,9 @@ unittest {
     testIntgerIndexExpressions();
     testNullIndexExpressions();
     TestCallingFunctionsWithoutArguments();
+    TestFunctionsWithReturnStatement();
+    testFunctionsWithoutReturnValue();
+    testFirstClassFunctions();
 }
 
 ///
@@ -458,7 +461,57 @@ void testNullIndexExpressions() {
 void TestCallingFunctionsWithoutArguments() {
     auto tests = [
         VMTestCase!int(`let fivePlusTen = fn() { 5 + 10; };fivePlusTen();`, 15),
+        VMTestCase!int(`let one = fn() { 1; };let two = fn() { 2; };one() + two()`, 3),
+        VMTestCase!int(`let a = fn() { 1 };let b = fn() { a() + 1 };let c = fn() { b() + 1 };c();`, 3),
+
     ];
 
     runVMTests!int(tests);
+}
+
+///
+void TestFunctionsWithReturnStatement() {
+    auto tests = [
+        VMTestCase!int(`let earlyExit = fn() { return 99; 100; };earlyExit();`, 99),
+        VMTestCase!int(`let earlyExit = fn() { return 99; return 100; };earlyExit();`, 99),
+    ];
+}
+
+///
+void testFunctionsWithoutReturnValue() {
+    auto tests = [
+        VMTestCase!Null(`let noReturn = fn() { };noReturn();`, NULL),
+        VMTestCase!Null(`let noReturn = fn() { };let noReturnTwo = fn() { noReturn(); };noReturn();noReturnTwo();`, NULL),
+    ];
+
+    Objekt[] constants = [];        
+    Objekt[] globals = new Objekt[GLOBALS_SIZE];
+    auto symTable = SymbolTable();
+
+    foreach(tt; tests) {
+        auto program = parse(tt.input);
+        auto compiler = Compiler(symTable, constants);
+        auto err = compiler.compile(program);
+        if(err !is null) {
+            stderr.writefln("compiler error: %s", err.msg);
+            assert(err is null);
+        }
+
+        auto code = compiler.bytecode();
+        auto vm = VM(code, globals);
+        err = vm.run();
+        if(err !is null) {
+            stderr.writefln("vm error: %s", err.msg);
+            assert(err is null);
+        }
+
+        auto stackElem = vm.lastPoppedStackElem();
+        testNullObject(stackElem);
+    }
+}
+
+void testFirstClassFunctions() {
+    auto test = [
+        VMTestCase!int(`let returnsOne = fn() { 1; };let returnsOneReturner = fn() { returnsOne; };returnsOneReturner()();`, 1),
+    ];
 }
