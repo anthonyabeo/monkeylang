@@ -5,24 +5,28 @@ import std.typecons;
 import std.conv;
 import std.stdio;
 
+import vm.frame;
 import code.code;
 import objekt.objekt;
 import compiler.compiler;
 import evaluator.builtins : TRUE, FALSE, NULL;
 
 
-const size_t STACK_SIZE = 2048;      /// stack size
+const size_t STACK_SIZE = 2048;       /// stack size
 const size_t GLOBALS_SIZE = 65_536;   /// globals size
+const size_t MAX_FRAMES = 1024;       /// frames size
 
 ///
 struct VM {
     Objekt[] constants;             /// constants pool
-    Instructions instructions;      /// instructions
 
     Objekt[] stack;      /// stack
     size_t  sp;         /// stack pointer
 
     Objekt[] globals;   /// globals
+
+    Frame[] frames;     /// frames
+    size_t framesIndex;   /// frame index
 
     ///
     this(this) {
@@ -37,13 +41,36 @@ struct VM {
      +     bytecode = 
      +++++++++++++++++++++++++++++/
     this(ref Bytecode bytecode, Objekt[] globals) {
-        this.instructions = bytecode.instructions;
+        auto mainFn = new CompiledFunction(bytecode.instructions);
+        auto mainFrame = new Frame(mainFn);
+
+        this.frames = new Frame[MAX_FRAMES];
+        this.frames[0] = mainFrame;
+        this.framesIndex = 1;
+
         this.constants = bytecode.constants;
 
         this.stack = new Objekt[STACK_SIZE];
         this.globals = globals;
 
         this.sp = 0;
+    }
+
+    ///
+    Frame currentFrame() {
+        return this.frames[this.framesIndex-1];
+    }
+
+    ///
+    void pushFrame(Frame f) {
+        this.frames[this.framesIndex] = f;
+        this.framesIndex++;
+    }
+
+    ///
+    Frame popFrame() {
+        this.framesIndex--;
+        return this.frames[this.framesIndex];
     }
 
     ///
@@ -61,12 +88,23 @@ struct VM {
 
     ///
     Error run() {
-        for(size_t ip = 0; ip < this.instructions.length; ++ip) {
-            auto op = cast(OPCODE) this.instructions[ip];
+        int ip;
+        Instructions ins;
+        OPCODE op;  
+
+        auto LEN = cast(int) this.currentFrame().instructions.length;
+        while(this.currentFrame().ip < LEN - 1)
+        {
+            this.currentFrame().ip += 1;
+
+            ip = this.currentFrame().ip;
+            ins = this.currentFrame().instructions();
+            op = cast(OPCODE) ins[ip];
+
             final switch(op) {
                 case OPCODE.OpConstant:
-                    auto constIndex = readUint16(this.instructions[ip+1 .. $]);
-                    ip += 2;
+                    auto constIndex = readUint16(ins[ip+1 .. $]);
+                    this.currentFrame().ip += 2;
 
                     auto err = this.push(this.constants[constIndex]);
                     if(err !is null)
@@ -121,18 +159,18 @@ struct VM {
                     break;
                 
                 case OPCODE.OpJumpNotTruthy:
-                    immutable pos = readUint16(this.instructions[ip+1 .. $]);
-                    ip += 2;
+                    immutable pos = readUint16(ins[ip+1 .. $]);
+                    this.currentFrame().ip += 2;
 
                     auto condition = this.pop();
                     if(!isTruthy(condition))
-                        ip = pos - 1;
+                        this.currentFrame().ip = pos - 1;
 
                     break;
 
                 case OPCODE.OpJump:
-                    immutable pos = readUint16(this.instructions[ip+1 .. $]);
-                    ip = pos - 1;
+                    immutable pos = readUint16(ins[ip+1 .. $]);
+                    this.currentFrame().ip = pos - 1;
                     break;
                 
                 case OPCODE.OpNull:
@@ -143,8 +181,8 @@ struct VM {
                     break;
 
                 case OPCODE.OpGetGlobal:
-                    auto globalIndex = readUint16(this.instructions[ip+1 .. $]);
-                    ip += 2;
+                    auto globalIndex = readUint16(ins[ip+1 .. $]);
+                    this.currentFrame().ip += 2;
 
                     auto err = this.push(this.globals[globalIndex]);
                     if(err !is null)
@@ -153,16 +191,16 @@ struct VM {
                     break;
 
                 case OPCODE.OpSetGlobal:
-                    auto globalIndex = readUint16(this.instructions[ip+1 .. $]);
-                    ip += 2;
+                    auto globalIndex = readUint16(ins[ip+1 .. $]);
+                    this.currentFrame().ip += 2;
 
                     this.globals[globalIndex] = this.pop();
 
                     break;
                 
                 case OPCODE.OpArray:
-                    auto numElements = readUint16(this.instructions[ip+1..$]);
-                    ip += 2;
+                    auto numElements = readUint16(ins[ip+1..$]);
+                    this.currentFrame().ip += 2;
 
                     auto array = this.buildArray(this.sp - numElements, this.sp);
                     this.sp -= numElements;
@@ -174,8 +212,8 @@ struct VM {
                     break;
                 
                 case OPCODE.OpHash:
-                    auto numElements = to!size_t(readUint16(this.instructions[ip+1..$]));
-                    ip += 2;
+                    auto numElements = to!size_t(readUint16(ins[ip+1..$]));
+                    this.currentFrame().ip += 2;
                 
                     auto hash = this.buildHash(this.sp-numElements, this.sp);
                     if(hash.isNull)
@@ -187,7 +225,6 @@ struct VM {
                     if(err !is null) 
                         return err;
                     
-
                     break;
                 case OPCODE.OpIndex:
                     auto index = this.pop();
@@ -209,6 +246,7 @@ struct VM {
         return null;
     }
 
+    ///
     Error executeIndexExpression(Objekt left, Objekt index) {
         if(left.type() == ObjectType.ARRAY && index.type() == ObjectType.INTEGER) 
             return this.executeArrayIndex(left, index);
