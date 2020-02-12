@@ -69,7 +69,7 @@ static this() {
         OPCODE.OpReturnValue : new Definition("OpReturnValue", []),
         OPCODE.OpReturn : new Definition("OpReturn", []),
         OPCODE.OpGetLocal : new Definition("OpGetLocal", [1]),
-        OPCODE.OpSetLocal : new Definition("OpGetLocal", [1]),
+        OPCODE.OpSetLocal : new Definition("OpSetLocal", [1]),
     ];
 }
 
