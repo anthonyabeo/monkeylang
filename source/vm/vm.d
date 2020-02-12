@@ -262,6 +262,10 @@ struct VM {
                         return err;
 
                     break;
+                case OPCODE.OpGetLocal:
+                    break;
+                case OPCODE.OpSetLocal:
+                    break;
             }
         }
 

@@ -35,6 +35,8 @@ enum OPCODE : Opcode {
     OpCall,
     OpReturnValue,
     OpReturn,
+    OpGetLocal,
+    OpSetLocal,
 }
 
 Definition[OPCODE] definitions; /// definitions
@@ -66,6 +68,8 @@ static this() {
         OPCODE.OpCall : new Definition("OpCall", []),
         OPCODE.OpReturnValue : new Definition("OpReturnValue", []),
         OPCODE.OpReturn : new Definition("OpReturn", []),
+        OPCODE.OpGetLocal : new Definition("OpGetLocal", [1]),
+        OPCODE.OpSetLocal : new Definition("OpGetLocal", [1]),
     ];
 }
 
@@ -125,6 +129,9 @@ ubyte[] make(Opcode op, size_t[] operands...) {
                 foreach(e; results) {
                     instruction[offset++] = e;
                 }
+                break;
+            case 1:
+                instruction[offset++] = cast(ubyte) o;
                 break;
             default:
                 break;
@@ -187,11 +194,15 @@ Tuple!(int[], int) readOperands(Definition def, Instructions ins) {
         switch(width) {
             case 2:
                 operands[i] = readUint16(ins[offset .. $]);
-                offset += width;
+                break;
+            case 1:
+                operands[i] = readUint8(ins[offset .. $]);
                 break;
             default:
                 break;
         }
+
+        offset += width;
     }
 
     return tuple(operands, offset);
@@ -211,4 +222,9 @@ auto readUint16(ubyte[] data)
 {
 	return data[0] << 8  | 
 	       data[1];
+}
+
+auto readUint8(ubyte[] data) 
+{
+	return cast(ubyte) data[0];
 }
