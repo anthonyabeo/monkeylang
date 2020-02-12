@@ -42,9 +42,8 @@ void start() {
 
     Objekt[] constants;        
     Objekt[] globals = new Objekt[GLOBALS_SIZE];
-    auto symTable = SymbolTable();
-    auto skope = CompilationScope();
-    auto compiler = Compiler(symTable, constants, skope);
+    auto symTable = new SymbolTable(null);
+    auto compiler = Compiler(symTable, constants);
 
     auto env = new Environment();
 

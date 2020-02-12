@@ -22,7 +22,7 @@ void testMake() {
     auto tests = [
         Instr(OPCODE.OpConstant, [65_534], [cast(ubyte) OPCODE.OpConstant, 255, 254]),
         Instr(OPCODE.OpAdd, [], [cast(byte) OPCODE.OpAdd]),
-        Instr(OPCODE.OpGetLocal, [255], [cast(byte) OPCODE.OpGetLocal, 255]),
+        Instr(OPCODE.OpGetLocal, [255], [cast(ubyte) OPCODE.OpGetLocal, 255]),
     ];
 
     foreach(tt; tests) {
@@ -35,7 +35,7 @@ void testMake() {
 
         foreach(i, b; tt.expected) {
             if(instruction[i] != tt.expected[i]) {
-                stderr.writeln("wrong byte at pos %d. want=%d, got=%d", 
+                stderr.writefln("wrong byte at pos %d. want=%d, got=%d", 
                                     i, b, instruction[i]);
                 assert(instruction[i] == tt.expected[i]);
             }

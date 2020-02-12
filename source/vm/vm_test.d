@@ -26,10 +26,12 @@ unittest {
     testHashLiterals();
     testIntgerIndexExpressions();
     testNullIndexExpressions();
-    testCallingFunctionWithoutArguments();
-    testCallingFunctionWithArguments();
+    TestCallingFunctionsWithoutArguments();
+    TestFunctionsWithReturnStatement();
     testFunctionsWithoutReturnValue();
     testFirstClassFunctions();
+    TestCallingFunctionsWithBindings();
+    TestFirstClassFunctions();
 }
 
 ///
@@ -52,8 +54,7 @@ void testIntegerConditional() {
 void testNullConditional() {
     Objekt[] constants = [];        
     Objekt[] globals = new Objekt[GLOBALS_SIZE];
-    auto symTable = SymbolTable();
-    auto skope = CompilationScope();
+    auto symTable = new SymbolTable(null);
 
     auto tests = [
         VMTestCase!Null("if (1 > 2) { 10 }", NULL),
@@ -166,8 +167,7 @@ struct VMTestCase(T) {
 void runVMTests(T) (VMTestCase!(T)[] tests) {
     Objekt[] constants = [];        
     Objekt[] globals = new Objekt[GLOBALS_SIZE];
-    auto symTable = SymbolTable();
-    auto skope = CompilationScope();
+    auto symTable = new SymbolTable(null);
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
@@ -294,8 +294,7 @@ void testArrayLiterals() {
 
     Objekt[] constants = [];        
     Objekt[] globals = new Objekt[GLOBALS_SIZE];
-    auto symTable = SymbolTable();
-    auto skope = CompilationScope();
+    auto symTable = new SymbolTable(null);
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
@@ -359,8 +358,7 @@ void testHashLiterals() {
 
     Objekt[] constants = [];        
     Objekt[] globals = new Objekt[GLOBALS_SIZE];
-    auto symTable = SymbolTable();
-    auto skope = CompilationScope();
+    auto symTable = new SymbolTable(null);
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
@@ -437,8 +435,7 @@ void testNullIndexExpressions() {
 
     Objekt[] constants = [];        
     Objekt[] globals = new Objekt[GLOBALS_SIZE];
-    auto symTable = SymbolTable();
-    auto skope = CompilationScope();
+    auto symTable = new SymbolTable(null);
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
@@ -463,9 +460,9 @@ void testNullIndexExpressions() {
 }
 
 ///
-void testCallingFunctionWithoutArguments() {
+void TestCallingFunctionsWithoutArguments() {
     auto tests = [
-        VMTestCase!int(`let fivePlusTen = fn() { 5 + 10; }; fivePlusTen();`, 15),
+        VMTestCase!int(`let fivePlusTen = fn() { 5 + 10; };fivePlusTen();`, 15),
         VMTestCase!int(`let one = fn() { 1; };let two = fn() { 2; };one() + two()`, 3),
         VMTestCase!int(`let a = fn() { 1 };let b = fn() { a() + 1 };let c = fn() { b() + 1 };c();`, 3),
     ];
@@ -474,7 +471,7 @@ void testCallingFunctionWithoutArguments() {
 }
 
 ///
-void testCallingFunctionWithArguments() {
+void TestFunctionsWithReturnStatement() {
     auto tests = [
         VMTestCase!int(`let earlyExit = fn() { return 99; 100; };earlyExit();`, 99),
         VMTestCase!int(`let earlyExit = fn() { return 99; return 100; };earlyExit();`, 99),
@@ -485,25 +482,25 @@ void testCallingFunctionWithArguments() {
 
 ///
 void testFunctionsWithoutReturnValue() {
-    Objekt[] constants = [];        
-    Objekt[] globals = new Objekt[GLOBALS_SIZE];
-    auto symTable = SymbolTable();
-    auto skope = CompilationScope();
-
     auto tests = [
         VMTestCase!Null(`let noReturn = fn() { };noReturn();`, NULL),
         VMTestCase!Null(`let noReturn = fn() { };let noReturnTwo = fn() { noReturn(); };noReturn();noReturnTwo();`, NULL),
     ];
 
+    Objekt[] constants = [];        
+    Objekt[] globals = new Objekt[GLOBALS_SIZE];
+    auto symTable = new SymbolTable(null);
+
     foreach(tt; tests) {
         auto program = parse(tt.input);
-        auto compiler = Compiler(symTable, constants, skope);
+        auto compiler = Compiler(symTable, constants);
+
         auto err = compiler.compile(program);
         if(err !is null) {
             stderr.writefln("compiler error: %s", err.msg);
             assert(err is null);
         }
-        
+
         auto code = compiler.bytecode();
         auto vm = VM(code, globals);
         err = vm.run();
@@ -517,10 +514,71 @@ void testFunctionsWithoutReturnValue() {
     }
 }
 
-///
 void testFirstClassFunctions() {
+    auto test = [
+        VMTestCase!int(`let returnsOne = fn() { 1; };let returnsOneReturner = fn() { returnsOne; };returnsOneReturner()();`, 1),
+    ];
+}
+
+void TestCallingFunctionsWithBindings() {
     auto tests = [
-        VMTestCase!int(`let returnsOne = fn() { 1; };let returnsOneReturner = fn() { returnsOne; };returnsOneReturner()();`, 1)
+        VMTestCase!int(
+            `let one = fn() { let one = 1; one };one();`, 
+            1
+        ),
+        VMTestCase!int(
+            `
+            let oneAndTwo = fn() { let one = 1; let two = 2; 
+            one + two; };oneAndTwo();`, 
+            3
+        ),
+        VMTestCase!int(
+            `
+            let oneAndTwo = fn() { let one = 1; let two = 2; one + two; };
+            let threeAndFour = fn() { let three = 3; let four = 4; three + four; };
+            oneAndTwo() + threeAndFour();
+            `, 
+            10
+        ),
+        VMTestCase!int(
+            `
+            let firstFoobar = fn() { let foobar = 50; foobar; };
+            let secondFoobar = fn() { let foobar = 100; foobar; };
+            firstFoobar() + secondFoobar();
+            `,
+            150
+        ),
+        VMTestCase!int(
+            `
+            let globalSeed = 50;
+            let minusOne = fn() {
+            let num = 1;
+            globalSeed - num;
+            }
+            let minusTwo = fn() {
+            let num = 2;
+            globalSeed - num;
+            }
+            minusOne() + minusTwo();`,
+            97
+        ),
+    ];
+
+    runVMTests!int(tests);
+}
+
+void TestFirstClassFunctions() {
+    auto tests = [
+        VMTestCase!int(
+            `
+            let returnsOneReturner = fn() {
+            let returnsOne = fn() { 1; };
+            returnsOne;
+            };
+            returnsOneReturner()();
+            `,
+            1
+        )
     ];
 
     runVMTests!int(tests);

@@ -44,10 +44,12 @@ interface Hashable {
 
 /+++/
 class CompiledFunction : Objekt {
-    Instructions instructions;      /// compiled instructions
+    Instructions instructions;      /// instructions
+    int numLocals;                  /// # of local vars
 
-    this(Instructions instructions) {
-        this.instructions = instructions;
+    /+++/
+    this(Instructions instrs) {
+        this.instructions = instrs;
     }
 
     /+++/

@@ -194,7 +194,9 @@ Tuple!(int[], int) readOperands(Definition def, Instructions ins) {
         switch(width) {
             case 2:
                 operands[i] = readUint16(ins[offset .. $]);
-                offset += width;
+                break;
+            case 1:
+                operands[i] = readUint8(ins[offset .. $]);
                 break;
             case 1:
                 operands[i] = readUint8(ins[offset .. $]);
@@ -203,6 +205,8 @@ Tuple!(int[], int) readOperands(Definition def, Instructions ins) {
             default:
                 break;
         }
+
+        offset += width;
     }
 
     return tuple(operands, offset);
@@ -224,7 +228,7 @@ auto readUint16(ubyte[] data)
 	       data[1];
 }
 
-ubyte readUint8(ubyte[] data) 
+auto readUint8(ubyte[] data) 
 {
 	return cast(ubyte) data[0];
 }

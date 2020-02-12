@@ -18,12 +18,13 @@ struct Symbol {
 
 ///
 class SymbolTable {
-    SymbolTable outer;
+    SymbolTable outer;      /// outer
     Symbol[string] store;   /// store
     size_t numDefinitions;  /// number of definitions
-    
-    this(SymbolTable symTab) {
-        this.outer = symTab;
+
+    ///
+    this(SymbolTable outer) {
+        this.outer = outer;
     }
 
     /++
@@ -42,9 +43,9 @@ class SymbolTable {
 
         if(this.outer is null)
             symbol.skope = SymbolScope.GLOBAL;
-        else    
+        else 
             symbol.skope = SymbolScope.LOCAL;
-
+        
         this.store[name] = symbol;
         this.numDefinitions++;
 

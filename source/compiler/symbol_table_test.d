@@ -10,6 +10,7 @@ unittest {
     testDefine();
     testResolveGlobal();
     testResolveLocal();
+    testResolveNestedLocal();
 }
 
 ///
@@ -133,6 +134,52 @@ void testResolveLocal() {
             if(result != sym) {
                 stderr.writefln("expected %s to resolve to %s, got=%s",
                                     sym.name, sym, result);
+                assert(result == sym);
+            }
+        }
+    }
+}
+
+///
+void testResolveNestedLocal() {
+    auto global = new SymbolTable(null);
+    global.define("a");
+    global.define("b");
+
+    auto firstLocal = new SymbolTable(global);
+    firstLocal.define("c");
+    firstLocal.define("d");
+
+    auto secondLocal = new SymbolTable(firstLocal);
+    secondLocal.define("e");
+    secondLocal.define("f");
+
+    alias SymS = Tuple!(SymbolTable, "table", Symbol[], "expectedSymbols");
+    auto tests = [
+        SymS(firstLocal, [
+            Symbol("a", SymbolScope.GLOBAL, 0),
+            Symbol("b", SymbolScope.GLOBAL, 1),
+            Symbol("c", SymbolScope.LOCAL, 0),
+            Symbol("d", SymbolScope.LOCAL, 1),
+        ]),
+        SymS(secondLocal, [
+            Symbol("a", SymbolScope.GLOBAL, 0),
+            Symbol("b", SymbolScope.GLOBAL, 1),
+            Symbol("e", SymbolScope.LOCAL, 0),
+            Symbol("f", SymbolScope.LOCAL, 1),
+        ])
+    ];
+
+    foreach(tt; tests) {
+        foreach(sym; tt.expectedSymbols) {
+            auto result = tt.table.resolve(sym.name);
+            if(result.isNull) {
+                stderr.writefln("name %s not resolvable", sym.name);
+                continue;
+            }
+
+            if(result != sym) {
+                stderr.writefln("expected %s to resolve to %s, got=%s", sym.name, sym, result);
                 assert(result == sym);
             }
         }

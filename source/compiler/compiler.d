@@ -16,8 +16,8 @@ import compiler.symbol_table;
 struct Compiler {
     Objekt[] constants;                      /// constants
     SymbolTable symTable;                    /// symbol table
-    CompilationScope[] scopes;               /// Compilation Scopes
-    size_t scopeIndex;                        /// Scope Index
+    CompilationScope[] scopes;               /// scopes
+    size_t scopeIndex;                       /// scope index
 
     /++++++++++++++++++++++++++++
      + Params:
@@ -26,7 +26,7 @@ struct Compiler {
     this(ref SymbolTable symTable, Objekt[] constants, ref CompilationScope skope) {
         this.symTable = symTable;
         this.constants = constants;
-        this.scopes ~= skope;
+        this.scopes ~= CompilationScope();
         this.scopeIndex = 0;
     }
 
@@ -186,6 +186,7 @@ struct Compiler {
 
             case "ast.ast.BlockStatement":
                 auto n = cast(BlockStatement) node;
+
                 foreach(s; n.statements) {
                     auto err = this.compile(s);
                     if(err !is null)
@@ -275,18 +276,21 @@ struct Compiler {
                 this.enterScope();
 
                 auto err = this.compile(n.fnBody);
-                if(err !is null) 
+                if(err !is null)
                     return err;
-                
+
                 if(this.lastInstructionIs(OPCODE.OpPop))
                     this.replaceLastPopWithReturn();
-
+                
                 if(!this.lastInstructionIs(OPCODE.OpReturnValue))
                     this.emit(OPCODE.OpReturn);
 
+                auto numLocals = this.symTable.numDefinitions;
                 auto instructions = this.leaveScope();
 
                 auto compiledFn = new CompiledFunction(instructions);
+                compiledFn.numLocals = cast(int) numLocals;
+
                 this.emit(OPCODE.OpConstant, this.addConstant(compiledFn));
 
                 break;
@@ -296,19 +300,19 @@ struct Compiler {
                 auto err = this.compile(n.returnValue);
                 if(err !is null)
                     return err;
-            
+
                 this.emit(OPCODE.OpReturnValue);
-
+                
                 break;
-
             case "ast.ast.CallExpression":
                 auto n = cast(CallExpression) node;
+
                 auto err = this.compile(n.fxn);
                 if(err !is null)
                     return err;
 
                 this.emit(OPCODE.OpCall);
-                
+
                 break;
 
             default:
@@ -346,13 +350,21 @@ struct Compiler {
     }
 
     /+++/
-    Bytecode bytecode() {
-        return Bytecode(this.currentInstructions(), this.constants);
+    void replaceLastPopWithReturn() {
+        auto lastPos = this.scopes[this.scopeIndex].lastInstruction.pos;
+        this.replaceInstruction(lastPos, make(OPCODE.OpReturnValue));
+
+        this.scopes[this.scopeIndex].lastInstruction.opcode = OPCODE.OpReturnValue;
     }
 
-    ///
+    /+++/
     Instructions currentInstructions() {
         return this.scopes[this.scopeIndex].instructions;
+    }
+
+    /+++/
+    Bytecode bytecode() {
+        return Bytecode(this.currentInstructions(), this.constants);
     }
 
     ///
@@ -376,9 +388,8 @@ struct Compiler {
     ///
     size_t addInstruction(ubyte[] ins) {
         auto posNewInstruction = this.currentInstructions().length;
-        auto updatedInstructions = (this.currentInstructions() ~ ins);
         
-        this.scopes[this.scopeIndex].instructions = updatedInstructions;
+        this.scopes[this.scopeIndex].instructions = this.currentInstructions() ~ ins;
 
         return posNewInstruction;
     }
@@ -388,7 +399,7 @@ struct Compiler {
         immutable prev = this.scopes[this.scopeIndex].lastInstruction;
         immutable last = EmittedInstruction(op, pos);
 
-        this.scopes[this.scopeIndex].previosInstruction = prev;
+        this.scopes[this.scopeIndex].previousInstruction = prev;
         this.scopes[this.scopeIndex].lastInstruction = last;
     }
 
@@ -402,18 +413,20 @@ struct Compiler {
 
     ///
     void removeLastPop() {
-        immutable last = this.scopes[this.scopeIndex].lastInstruction;
-        immutable previous = this.scopes[this.scopeIndex].previosInstruction;
+        auto last = this.scopes[this.scopeIndex].lastInstruction;
+        auto previous = this.scopes[this.scopeIndex].previousInstruction;
 
         auto old = this.currentInstructions();
+        auto knew = old[0..last.pos];
 
-        this.scopes[this.scopeIndex].instructions = old[0..last.pos];
+        this.scopes[this.scopeIndex].instructions = knew;
         this.scopes[this.scopeIndex].lastInstruction = previous;
     }
 
     ///
     void replaceInstruction(size_t pos, ubyte[] newInstruction) {
         auto ins = this.currentInstructions();
+
         for(size_t i = 0; i < newInstruction.length; ++i) {
             ins[pos+i] = newInstruction[i];
         }
@@ -424,6 +437,25 @@ struct Compiler {
         auto op = cast(OPCODE) this.currentInstructions()[opPos];
         auto newInstruction = make(op, operand);
         this.replaceInstruction(opPos, newInstruction);
+    }
+
+    ///
+    void enterScope() {
+        this.scopes ~= CompilationScope();
+        this.scopeIndex++;
+
+        this.symTable = new SymbolTable(this.symTable);
+    }
+
+    ///
+    Instructions leaveScope() {
+        auto instructions = this.currentInstructions();
+        this.scopes = this.scopes[0..$-1];
+        this.scopeIndex--;
+
+        this.symTable = this.symTable.outer;
+
+        return instructions;
     }
 }
 
@@ -452,6 +484,10 @@ struct Compiler {
  +++++++++++++++++++++++++++++/
  struct CompilationScope {
     Instructions instructions;              /// instructions
-    EmittedInstruction lastInstruction;     /// last instruction
-    EmittedInstruction previosInstruction;  /// previous instruction
+    EmittedInstruction lastInstruction;     /// last Instruction
+    EmittedInstruction previousInstruction; /// prevoius instruction
+
+    this(this) {
+        this.instructions = instructions.dup;
+    }
  }

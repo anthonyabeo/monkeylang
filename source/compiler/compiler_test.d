@@ -14,6 +14,7 @@ import parser.parser;
 import compiler.compiler;
 import compiler.symbol_table;
 
+
 unittest {
     testIntegerArithmetic();
     testBooleanExpressions();
@@ -237,13 +238,11 @@ void testConditionals() {
 ///
 void runCompilerTests(T) (CompilerTestCase!(T)[] tests) {
     foreach (i, tt; tests) {
-        Objekt[] constants = [];        
-        Objekt[] globals = new Objekt[GLOBALS_SIZE];
+        Objekt[] constants;
         auto symTable = new SymbolTable(null);
-        auto skope = CompilationScope();
 
         auto program = parse(tt.input);
-        auto compiler = Compiler(symTable, constants, skope);
+        auto compiler = Compiler(symTable, constants);
 
         auto err = compiler.compile(program);
         if(err !is null) {
@@ -252,7 +251,7 @@ void runCompilerTests(T) (CompilerTestCase!(T)[] tests) {
         }
         
         auto bytecode = compiler.bytecode();
-        // writeln("INST: ", asString(bytecode.instructions));
+
         err = testInstructions(tt.expectedInstructions, bytecode.instructions);
         if(err !is null) {
             stderr.writefln("testInstructions failed: %s", err.msg);
@@ -614,9 +613,7 @@ void testFunctions() {
                     [
                         make(OPCODE.OpReturn),
                     ]
-                    
-                )
-                
+                ),
             ],
             [
                 make(OPCODE.OpConstant, 0),
@@ -626,13 +623,11 @@ void testFunctions() {
     ];
 
     foreach (i, tt; tests) {
-        Objekt[] constants = [];        
-        Objekt[] globals = new Objekt[GLOBALS_SIZE];
+        Objekt[] constants;
         auto symTable = new SymbolTable(null);
-        auto skope = CompilationScope();
 
         auto program = parse(tt.input);
-        auto compiler = Compiler(symTable, constants, skope);
+        auto compiler = Compiler(symTable, constants);
 
         auto err = compiler.compile(program);
         if(err !is null) {
@@ -676,47 +671,64 @@ Error testFunctionConstants(Instructions[] expected, Objekt[] actual) {
 
 ///
 void testCompilerScopes() {
-    Objekt[] constants = [];        
-    Objekt[] globals = new Objekt[GLOBALS_SIZE];
+    Objekt[] constants;
     auto symTable = new SymbolTable(null);
-    auto skope = CompilationScope();
 
-    auto compiler = Compiler(symTable, constants, skope);
-    if(compiler.scopeIndex != 0) {
+    auto compiler = Compiler(symTable, constants);
+    if (compiler.scopeIndex != 0) {
         stderr.writefln("scopeIndex wrong. got=%d, want=%d", compiler.scopeIndex, 0);
         assert(compiler.scopeIndex == 0);
     }
+    auto globalSymbolTable = compiler.symTable;
 
     compiler.emit(OPCODE.OpMul);
 
     compiler.enterScope();
-    if(compiler.scopeIndex != 1){
+    if (compiler.scopeIndex != 1) {
         stderr.writefln("scopeIndex wrong. got=%d, want=%d", compiler.scopeIndex, 1);
         assert(compiler.scopeIndex == 1);
     }
 
     compiler.emit(OPCODE.OpSub);
-    if(compiler.scopes[compiler.scopeIndex].instructions.length != 1){
+
+    if(compiler.scopes[compiler.scopeIndex].instructions.length != 1) {
         stderr.writefln("instructions length wrong. got=%d",
-                        compiler.scopes[compiler.scopeIndex].instructions.length);
+                compiler.scopes[compiler.scopeIndex].instructions.length);
+
         assert(compiler.scopes[compiler.scopeIndex].instructions.length == 1);
     }
 
     auto last = compiler.scopes[compiler.scopeIndex].lastInstruction;
-    if(last.opcode != OPCODE.OpSub) {
+
+    if (last.opcode != OPCODE.OpSub) {
         stderr.writefln("lastInstruction.Opcode wrong. got=%d, want=%d", last.opcode, OPCODE.OpSub);
         assert(last.opcode == OPCODE.OpSub);
     }
 
+    if(compiler.symTable.outer !is globalSymbolTable) {
+        stderr.writefln("compiler did not enclose symbolTable");
+        assert(compiler.symTable.outer is globalSymbolTable);
+    }
+
     compiler.leaveScope();
-    if(compiler.scopeIndex != 0) {
+    if (compiler.scopeIndex != 0) {
         stderr.writefln("scopeIndex wrong. got=%d, want=%d", compiler.scopeIndex, 0);
         assert(compiler.scopeIndex == 0);
     }
 
+    if(compiler.symTable !is globalSymbolTable) {
+        stderr.writefln("compiler did not restore global symbol table");
+        assert(compiler.symTable is globalSymbolTable);
+    }
+
+    if(compiler.symTable.outer !is null) {
+        stderr.writefln("compiler modified global symbol table incorrectly");
+        assert(compiler.symTable.outer is null);
+    }
+
     compiler.emit(OPCODE.OpAdd);
 
-    if(compiler.scopes[compiler.scopeIndex].instructions.length != 2) {
+    if (compiler.scopes[compiler.scopeIndex].instructions.length != 2) {
         stderr.writefln("instructions length wrong. got=%d", compiler.scopes[compiler.scopeIndex].instructions.length);
         assert(compiler.scopes[compiler.scopeIndex].instructions.length == 2);
     }
@@ -724,13 +736,14 @@ void testCompilerScopes() {
     last = compiler.scopes[compiler.scopeIndex].lastInstruction;
     if(last.opcode != OPCODE.OpAdd) {
         stderr.writefln("lastInstruction.Opcode wrong. got=%d, want=%d", last.opcode, OPCODE.OpAdd);
-        assert(last.opcode == OPCODE.OpAdd);    
+        assert(last.opcode == OPCODE.OpAdd);
     }
 
-    auto previous = compiler.scopes[compiler.scopeIndex].previosInstruction;
-    if(previous.opcode != OPCODE.OpMul) {
+    auto previous = compiler.scopes[compiler.scopeIndex].previousInstruction;
+    if (previous.opcode != OPCODE.OpMul) {
         stderr.writefln("previousInstruction.Opcode wrong. got=%d, want=%d", previous.opcode, OPCODE.OpMul);
-        assert(previous.opcode != OPCODE.OpMul);
+        assert(previous.opcode == OPCODE.OpMul);
+
     }
 }
 
@@ -779,12 +792,10 @@ void testFunctionCalls() {
 
     foreach (i, tt; tests) {
         Objekt[] constants = [];        
-        Objekt[] globals = new Objekt[GLOBALS_SIZE];
         auto symTable = new SymbolTable(null);
-        auto skope = CompilationScope();
 
         auto program = parse(tt.input);
-        auto compiler = Compiler(symTable, constants, skope);
+        auto compiler = Compiler(symTable, constants);
 
         auto err = compiler.compile(program);
         if(err !is null) {
@@ -808,7 +819,6 @@ void testFunctionCalls() {
     }
 }
 
-///
 void testLetStatementScopes() {
     auto tests = [
         CompilerTestCase!Foo(
@@ -873,12 +883,10 @@ void testLetStatementScopes() {
 
     foreach (i, tt; tests) {
         Objekt[] constants = [];        
-        Objekt[] globals = new Objekt[GLOBALS_SIZE];
         auto symTable = new SymbolTable(null);
-        auto skope = CompilationScope();
 
         auto program = parse(tt.input);
-        auto compiler = Compiler(symTable, constants, skope);
+        auto compiler = Compiler(symTable, constants);
 
         auto err = compiler.compile(program);
         if(err !is null) {

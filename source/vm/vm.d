@@ -5,6 +5,7 @@ import std.typecons;
 import std.conv;
 import std.stdio;
 
+import vm.frame;
 import code.code;
 import vm.frame;
 import objekt.objekt;
@@ -12,9 +13,9 @@ import compiler.compiler;
 import evaluator.builtins : TRUE, FALSE, NULL;
 
 
-const size_t STACK_SIZE = 2048;      /// stack size
+const size_t STACK_SIZE = 2048;       /// stack size
 const size_t GLOBALS_SIZE = 65_536;   /// globals size
-const size_t MAX_FRAMES = 1024;       /// stack frames
+const size_t MAX_FRAMES = 1024;       /// frames size
 
 
 ///
@@ -26,8 +27,8 @@ struct VM {
 
     Objekt[] globals;   /// globals
 
-    Frame[] frames;     /// call frames
-    size_t frameIndex;  /// index  
+    Frame[] frames;     /// frames
+    size_t framesIndex;   /// frame index
 
     ///
     this(this) {
@@ -43,6 +44,13 @@ struct VM {
      +     bytecode = 
      +++++++++++++++++++++++++++++/
     this(ref Bytecode bytecode, Objekt[] globals) {
+        auto mainFn = new CompiledFunction(bytecode.instructions);
+        auto mainFrame = new Frame(mainFn, 0);
+
+        this.frames = new Frame[MAX_FRAMES];
+        this.frames[0] = mainFrame;
+        this.framesIndex = 1;
+
         this.constants = bytecode.constants;
 
         this.stack = new Objekt[STACK_SIZE];
@@ -77,6 +85,23 @@ struct VM {
     }
 
     ///
+    Frame currentFrame() {
+        return this.frames[this.framesIndex-1];
+    }
+
+    ///
+    void pushFrame(Frame f) {
+        this.frames[this.framesIndex] = f;
+        this.framesIndex++;
+    }
+
+    ///
+    Frame popFrame() {
+        this.framesIndex--;
+        return this.frames[this.framesIndex];
+    }
+
+    ///
     Objekt lastPoppedStackElem() {
         return this.stack[this.sp];
     }
@@ -91,24 +116,22 @@ struct VM {
 
     ///
     Error run() {
-        size_t ip;
+        int ip;
         Instructions ins;
-        OPCODE op;
+        OPCODE op;  
 
-        const LEN = cast(int) this.currentFrame.instructions.length;
-        while(this.currentFrame.ip < LEN - 1)
-        {
-            this.currentFrame.ip += 1;
-
-            ip = this.currentFrame.ip;
-            ins = this.currentFrame.instructions;
+        while(this.currentFrame().ip < (cast(int) this.currentFrame().instructions().length - 1))
+        {            
+            this.currentFrame().ip += 1;
+            
+            ip = this.currentFrame().ip;
+            ins = this.currentFrame().instructions(); 
             op = cast(OPCODE) ins[ip];
 
-            final switch(op) 
-            {
+            final switch(op) {
                 case OPCODE.OpConstant:
                     auto constIndex = readUint16(ins[ip+1 .. $]);
-                    this.currentFrame.ip += 2;
+                    this.currentFrame().ip += 2;
 
                     auto err = this.push(this.constants[constIndex]);
                     if(err !is null)
@@ -164,17 +187,18 @@ struct VM {
                 
                 case OPCODE.OpJumpNotTruthy:
                     immutable pos = readUint16(ins[ip+1 .. $]);
-                    this.currentFrame.ip += 2;
+                    this.currentFrame().ip += 2;
 
                     auto condition = this.pop();
                     if(!isTruthy(condition))
-                        this.currentFrame.ip = pos - 1;
+                        this.currentFrame().ip = pos - 1;
 
                     break;
 
                 case OPCODE.OpJump:
                     immutable pos = readUint16(ins[ip+1 .. $]);
-                    this.currentFrame.ip = pos - 1;
+                    this.currentFrame().ip = pos - 1;
+
                     break;
                 
                 case OPCODE.OpNull:
@@ -186,7 +210,7 @@ struct VM {
 
                 case OPCODE.OpGetGlobal:
                     auto globalIndex = readUint16(ins[ip+1 .. $]);
-                    this.currentFrame.ip += 2;
+                    this.currentFrame().ip += 2;
 
                     auto err = this.push(this.globals[globalIndex]);
                     if(err !is null)
@@ -196,7 +220,7 @@ struct VM {
 
                 case OPCODE.OpSetGlobal:
                     auto globalIndex = readUint16(ins[ip+1 .. $]);
-                    this.currentFrame.ip += 2;
+                    this.currentFrame().ip += 2;
 
                     this.globals[globalIndex] = this.pop();
 
@@ -204,7 +228,7 @@ struct VM {
                 
                 case OPCODE.OpArray:
                     auto numElements = readUint16(ins[ip+1..$]);
-                    this.currentFrame.ip += 2;
+                    this.currentFrame().ip += 2;
 
                     auto array = this.buildArray(this.sp - numElements, this.sp);
                     this.sp -= numElements;
@@ -217,7 +241,7 @@ struct VM {
                 
                 case OPCODE.OpHash:
                     auto numElements = to!size_t(readUint16(ins[ip+1..$]));
-                    this.currentFrame.ip += 2;
+                    this.currentFrame().ip += 2;
                 
                     auto hash = this.buildHash(this.sp-numElements, this.sp);
                     if(hash.isNull)
@@ -242,33 +266,53 @@ struct VM {
                 case OPCODE.OpCall:
                     auto fn = cast(CompiledFunction) this.stack[this.sp-1];
                     if(fn is null)
-                        return new Error("calling non-function");
+                        return new Error(format("calling non-function"));
 
-                    auto frame = new Frame(fn);
+                    auto frame = new Frame(fn, cast(int)this.sp);
                     this.pushFrame(frame);
+                    this.sp = frame.basePtr + fn.numLocals;
 
                     break;
-
-                case OPCODE.OpReturnValue:
-                    auto retValue = this.pop();
-
-                    this.popFrame();
-                    this.pop();
-
-                    auto err = this.push(retValue);
-                    if(err !is null)
-                        return err;
-
-                    break;
-                
                 case OPCODE.OpReturn:
-                    this.popFrame();
-                    this.pop();
+                    auto frame = this.popFrame();
+                    this.sp = frame.basePtr - 1;
 
                     auto err = this.push(NULL);
                     if(err !is null)
                         return err;
-                        
+
+                    break;
+                case OPCODE.OpReturnValue:
+                    auto returnValue = this.pop();
+
+                    auto frame = this.popFrame();
+                    this.sp = frame.basePtr - 1;
+
+                    auto err = this.push(returnValue);
+                    if(err !is null)
+                        return err;
+
+                    break;
+
+                case OPCODE.OpGetLocal:
+                    auto localIndex = readUint8(ins[ip+1..$]);
+                    this.currentFrame().ip += 1;
+
+                    auto frame = this.currentFrame();
+
+                    auto err = this.push(this.stack[frame.basePtr + localIndex]);
+                    if (err !is null)                    
+                        return err;
+
+                    break;
+                case OPCODE.OpSetLocal:
+                    auto localIndex = readUint8(ins[ip+1..$]);
+                    this.currentFrame().ip += 1;
+
+                    auto frame = this.currentFrame();
+
+                    this.stack[frame.basePtr + localIndex] = this.pop();
+
                     break;
             }
         }
