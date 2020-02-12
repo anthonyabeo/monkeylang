@@ -819,6 +819,7 @@ void testFunctionCalls() {
     }
 }
 
+///
 void testLetStatementScopes() {
     auto tests = [
         CompilerTestCase!Foo(

@@ -26,12 +26,12 @@ unittest {
     testHashLiterals();
     testIntgerIndexExpressions();
     testNullIndexExpressions();
-    TestCallingFunctionsWithoutArguments();
-    TestFunctionsWithReturnStatement();
+    testCallingFunctionsWithoutArguments();
+    testFunctionsWithReturnStatement();
     testFunctionsWithoutReturnValue();
     testFirstClassFunctions();
-    TestCallingFunctionsWithBindings();
-    TestFirstClassFunctions();
+    testCallingFunctionsWithBindings();
+    testFirstClassFunctions();
 }
 
 ///
@@ -460,7 +460,7 @@ void testNullIndexExpressions() {
 }
 
 ///
-void TestCallingFunctionsWithoutArguments() {
+void testCallingFunctionsWithoutArguments() {
     auto tests = [
         VMTestCase!int(`let fivePlusTen = fn() { 5 + 10; };fivePlusTen();`, 15),
         VMTestCase!int(`let one = fn() { 1; };let two = fn() { 2; };one() + two()`, 3),
@@ -471,7 +471,7 @@ void TestCallingFunctionsWithoutArguments() {
 }
 
 ///
-void TestFunctionsWithReturnStatement() {
+void testFunctionsWithReturnStatement() {
     auto tests = [
         VMTestCase!int(`let earlyExit = fn() { return 99; 100; };earlyExit();`, 99),
         VMTestCase!int(`let earlyExit = fn() { return 99; return 100; };earlyExit();`, 99),
@@ -514,13 +514,8 @@ void testFunctionsWithoutReturnValue() {
     }
 }
 
-void testFirstClassFunctions() {
-    auto test = [
-        VMTestCase!int(`let returnsOne = fn() { 1; };let returnsOneReturner = fn() { returnsOne; };returnsOneReturner()();`, 1),
-    ];
-}
-
-void TestCallingFunctionsWithBindings() {
+///
+void testCallingFunctionsWithBindings() {
     auto tests = [
         VMTestCase!int(
             `let one = fn() { let one = 1; one };one();`, 
@@ -566,8 +561,8 @@ void TestCallingFunctionsWithBindings() {
 
     runVMTests!int(tests);
 }
-
-void TestFirstClassFunctions() {
+///
+void testFirstClassFunctions() {
     auto tests = [
         VMTestCase!int(
             `
