@@ -31,6 +31,7 @@ unittest {
     testFunctionsWithoutReturnValue();
     testFirstClassFunctions();
     TestCallingFunctionsWithBindings();
+    TestFirstClassFunctions();
 }
 
 ///
@@ -559,6 +560,23 @@ void TestCallingFunctionsWithBindings() {
             minusOne() + minusTwo();`,
             97
         ),
+    ];
+
+    runVMTests!int(tests);
+}
+
+void TestFirstClassFunctions() {
+    auto tests = [
+        VMTestCase!int(
+            `
+            let returnsOneReturner = fn() {
+            let returnsOne = fn() { 1; };
+            returnsOne;
+            };
+            returnsOneReturner()();
+            `,
+            1
+        )
     ];
 
     runVMTests!int(tests);
