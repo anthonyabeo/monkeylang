@@ -197,7 +197,6 @@ Tuple!(int[], int) readOperands(Definition def, Instructions ins) {
                 break;
             case 1:
                 operands[i] = readUint8(ins[offset .. $]);
-                offset += width;
                 break;
             default:
                 break;
