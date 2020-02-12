@@ -15,14 +15,14 @@ import compiler.symbol_table;
 
 
 unittest {
-    // testIntegerArithmetic();
-    // testBooleanExpressions();
-    // testConditionals();
-    // testGlobalLetStatements();
-    // testStringExpressions();
-    // testArrayLiterals();
-    // testHashLiterals();
-    // testIndexExpressions();
+    testIntegerArithmetic();
+    testBooleanExpressions();
+    testConditionals();
+    testGlobalLetStatements();
+    testStringExpressions();
+    testArrayLiterals();
+    testHashLiterals();
+    testIndexExpressions();
     testFunctions();
     testCompilerScopes();
 }
@@ -235,8 +235,11 @@ void testConditionals() {
 ///
 void runCompilerTests(T) (CompilerTestCase!(T)[] tests) {
     foreach (i, tt; tests) {
+        Objekt[] constants;
+        auto symTable = SymbolTable();
+
         auto program = parse(tt.input);
-        auto compiler = Compiler();
+        auto compiler = Compiler(symTable, constants);
 
         auto err = compiler.compile(program);
         if(err !is null) {
