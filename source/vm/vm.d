@@ -57,31 +57,6 @@ struct VM {
         this.globals = globals;
 
         this.sp = 0;
-
-        auto mainFn = new CompiledFunction(bytecode.instructions);
-
-        this.frames = new Frame[MAX_FRAMES];
-        this.frames[0] = new Frame(mainFn);
-
-        this.frameIndex = 1;
-    }
-
-    ///
-    @property
-    Frame currentFrame() {
-        return this.frames[this.frameIndex-1];
-    }
-
-    ///
-    void pushFrame(ref Frame frame) {
-        this.frames[this.frameIndex] = frame;
-        this.frameIndex++;
-    }
-
-    ///
-    Frame popFrame() {
-        this.frameIndex--;
-        return this.frames[this.frameIndex];
     }
 
     ///

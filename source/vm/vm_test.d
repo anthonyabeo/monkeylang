@@ -63,7 +63,7 @@ void testNullConditional() {
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
-        auto compiler = Compiler(symTable, constants, skope);
+        auto compiler = Compiler(symTable, constants);
         auto err = compiler.compile(program);
         if(err !is null) {
             stderr.writefln("compiler error: %s", err.msg);
@@ -171,7 +171,7 @@ void runVMTests(T) (VMTestCase!(T)[] tests) {
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
-        auto compiler = Compiler(symTable, constants, skope);
+        auto compiler = Compiler(symTable, constants);
         auto err = compiler.compile(program);
         if(err !is null) {
             stderr.writefln("compiler error: %s", err.msg);
@@ -298,7 +298,7 @@ void testArrayLiterals() {
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
-        auto compiler = Compiler(symTable, constants, skope);
+        auto compiler = Compiler(symTable, constants);
         auto err = compiler.compile(program);
         if(err !is null) {
             stderr.writefln("compiler error: %s", err.msg);
@@ -362,7 +362,7 @@ void testHashLiterals() {
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
-        auto compiler = Compiler(symTable, constants, skope);
+        auto compiler = Compiler(symTable, constants);
         auto err = compiler.compile(program);
         if(err !is null) {
             stderr.writefln("compiler error: %s", err.msg);
@@ -439,7 +439,7 @@ void testNullIndexExpressions() {
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
-        auto compiler = Compiler(symTable, constants, skope);
+        auto compiler = Compiler(symTable, constants);
         auto err = compiler.compile(program);
         if(err !is null) {
             stderr.writefln("compiler error: %s", err.msg);

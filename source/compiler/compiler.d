@@ -23,7 +23,7 @@ struct Compiler {
      + Params:
      +    node =
      ++++++++++++++++++++++++++++/
-    this(ref SymbolTable symTable, Objekt[] constants, ref CompilationScope skope) {
+    this(ref SymbolTable symTable, Objekt[] constants) {
         this.symTable = symTable;
         this.constants = constants;
         this.scopes ~= CompilationScope();
@@ -320,33 +320,6 @@ struct Compiler {
         }
 
         return null;
-    }
-    /+++/
-    void replaceLastPopWithReturn() {
-        auto lastPos = this.scopes[this.scopeIndex].lastInstruction.pos;
-        this.replaceInstruction(lastPos, make(OPCODE.OpReturnValue));
-        this.scopes[this.scopeIndex].lastInstruction.opcode = OPCODE.OpReturnValue;
-    }
-
-    /+++/
-    void enterScope() {
-        auto scpe = CompilationScope();
-        this.scopes ~= scpe;
-        this.scopeIndex++;
-
-        this.symTable = new SymbolTable(this.symTable);
-    }
-
-    /+++/
-    Instructions leaveScope() {
-        auto instructions = this.currentInstructions();
-
-        this.scopes = this.scopes[0..$-1];
-        this.scopeIndex--;
-
-        this.symTable = this.symTable.outer;
-
-        return instructions;
     }
 
     /+++/
