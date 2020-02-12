@@ -562,59 +562,57 @@ void testFunctions() {
                 make(OPCODE.OpPop),
             ]
         ),
-        // CompilerTestCase!Foo(
-        //     `fn() { 5 + 10 }`,
-        //     [
-        //         tuple(
-        //             5, 10,
-        //             [
-        //                 make(OPCODE.OpConstant, 0),
-        //                 make(OPCODE.OpConstant, 1),
-        //                 make(OPCODE.OpAdd),
-        //                 make(OPCODE.OpReturnValue),
-        //             ]
-        //         ),
-        //     ],
-        //     [
-        //         make(OPCODE.OpConstant, 2),
-        //         make(OPCODE.OpPop),
-        //     ]
-        // ),
-        // CompilerTestCase!Foo(
-        //     `fn() { 1; 2 }`,
-        //     [
-        //         tuple(
-        //             1, 2,
-        //             [
-        //                 make(OPCODE.OpConstant, 0),
-        //                 make(OPCODE.OpPop),
-        //                 make(OPCODE.OpConstant, 1),
-        //                 make(OPCODE.OpReturnValue),
-        //             ]
-        //         ),
-        //     ],
-        //     [
-        //         make(OPCODE.OpConstant, 2),
-        //         make(OPCODE.OpPop),
-        //     ]
-        // ),
-        // CompilerTestCase!Foo(
-        //     `fn() { }`,
-        //     [
-        //         tuple(
-        //             0, 0,
-        //             [
-        //                 make(OPCODE.OpReturn),
-        //             ]
-                    
-        //         )
-                
-        //     ],
-        //     [
-        //         make(OPCODE.OpConstant, 0),
-        //         make(OPCODE.OpPop),
-        //     ]
-        // ),
+        CompilerTestCase!Foo(
+            `fn() { 5 + 10 }`,
+            [
+                tuple(
+                    5, 10,
+                    [
+                        make(OPCODE.OpConstant, 0),
+                        make(OPCODE.OpConstant, 1),
+                        make(OPCODE.OpAdd),
+                        make(OPCODE.OpReturnValue),
+                    ]
+                ),
+            ],
+            [
+                make(OPCODE.OpConstant, 2),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!Foo(
+            `fn() { 1; 2 }`,
+            [
+                tuple(
+                    1, 2,
+                    [
+                        make(OPCODE.OpConstant, 0),
+                        make(OPCODE.OpPop),
+                        make(OPCODE.OpConstant, 1),
+                        make(OPCODE.OpReturnValue),
+                    ]
+                ),
+            ],
+            [
+                make(OPCODE.OpConstant, 2),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!Foo(
+            `fn() { }`,
+            [
+                tuple(
+                    0, 0,
+                    [
+                        make(OPCODE.OpReturn),
+                    ]
+                ),
+            ],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpPop),
+            ]
+        ),
     ];
 
     foreach (i, tt; tests) {
