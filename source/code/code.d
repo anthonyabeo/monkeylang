@@ -32,6 +32,9 @@ enum OPCODE : Opcode {
     OpArray,
     OpHash,
     OpIndex,
+    OpCall,
+    OpReturnValue,
+    OpReturn,
 }
 
 Definition[OPCODE] definitions; /// definitions
@@ -60,6 +63,9 @@ static this() {
         OPCODE.OpArray : new Definition("OpArray", [2]),
         OPCODE.OpHash : new Definition("OpHash", [2]),
         OPCODE.OpIndex : new Definition("OpIndex", []),
+        OPCODE.OpCall : new Definition("OpCall", []),
+        OPCODE.OpReturnValue : new Definition("OpReturnValue", []),
+        OPCODE.OpReturn : new Definition("OpReturn", []),
     ];
 }
 
