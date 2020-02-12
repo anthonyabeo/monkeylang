@@ -47,6 +47,11 @@ class CompiledFunction : Objekt {
     Instructions instructions;      /// instructions
 
     /+++/
+    this(Instructions instrs) {
+        this.instructions = instrs;
+    }
+
+    /+++/
     ObjectType type() {
         return ObjectType.COMPILED_FUNCTION;
     }
