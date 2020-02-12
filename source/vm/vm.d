@@ -42,7 +42,7 @@ struct VM {
      +++++++++++++++++++++++++++++/
     this(ref Bytecode bytecode, Objekt[] globals) {
         auto mainFn = new CompiledFunction(bytecode.instructions);
-        auto mainFrame = new Frame(mainFn);
+        auto mainFrame = new Frame(mainFn, 0);
 
         this.frames = new Frame[MAX_FRAMES];
         this.frames[0] = mainFrame;
@@ -238,13 +238,14 @@ struct VM {
                     if(fn is null)
                         return new Error(format("calling non-function"));
 
-                    auto frame = new Frame(fn);
+                    auto frame = new Frame(fn, cast(int)this.sp);
                     this.pushFrame(frame);
+                    this.sp = frame.basePtr + fn.numLocals;
 
                     break;
                 case OPCODE.OpReturn:
-                    this.popFrame();
-                    this.pop();
+                    auto frame = this.popFrame();
+                    this.sp = frame.basePtr - 1;
 
                     auto err = this.push(NULL);
                     if(err !is null)
@@ -254,8 +255,8 @@ struct VM {
                 case OPCODE.OpReturnValue:
                     auto returnValue = this.pop();
 
-                    this.popFrame();
-                    this.pop();
+                    auto frame = this.popFrame();
+                    this.sp = frame.basePtr - 1;
 
                     auto err = this.push(returnValue);
                     if(err !is null)
@@ -263,8 +264,24 @@ struct VM {
 
                     break;
                 case OPCODE.OpGetLocal:
+                    auto localIndex = readUint8(ins[ip+1..$]);
+                    this.currentFrame().ip += 1;
+
+                    auto frame = this.currentFrame();
+
+                    auto err = this.push(this.stack[frame.basePtr + localIndex]);
+                    if (err !is null)                    
+                        return err;
+
                     break;
                 case OPCODE.OpSetLocal:
+                    auto localIndex = readUint8(ins[ip+1..$]);
+                    this.currentFrame().ip += 1;
+
+                    auto frame = this.currentFrame();
+
+                    this.stack[frame.basePtr + localIndex] = this.pop();
+
                     break;
             }
         }

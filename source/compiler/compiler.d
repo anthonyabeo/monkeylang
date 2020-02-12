@@ -218,7 +218,7 @@ struct Compiler {
                     this.emit(OPCODE.OpGetGlobal, symbol.index);
                 else
                     this.emit(OPCODE.OpGetLocal, symbol.index);
-                    
+
                 break;
             
             case "ast.ast.StringLiteral":
@@ -284,10 +284,12 @@ struct Compiler {
                 
                 if(!this.lastInstructionIs(OPCODE.OpReturnValue))
                     this.emit(OPCODE.OpReturn);
-                
+
+                auto numLocals = this.symTable.numDefinitions;
                 auto instructions = this.leaveScope();
 
                 auto compiledFn = new CompiledFunction(instructions);
+                compiledFn.numLocals = cast(int) numLocals;
                 this.emit(OPCODE.OpConstant, this.addConstant(compiledFn));
 
                 break;

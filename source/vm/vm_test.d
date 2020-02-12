@@ -30,6 +30,7 @@ unittest {
     TestFunctionsWithReturnStatement();
     testFunctionsWithoutReturnValue();
     testFirstClassFunctions();
+    TestCallingFunctionsWithBindings();
 }
 
 ///
@@ -52,7 +53,7 @@ void testIntegerConditional() {
 void testNullConditional() {
     Objekt[] constants = [];        
     Objekt[] globals = new Objekt[GLOBALS_SIZE];
-    auto symTable = SymbolTable();
+    auto symTable = new SymbolTable(null);
 
     auto tests = [
         VMTestCase!Null("if (1 > 2) { 10 }", NULL),
@@ -165,7 +166,7 @@ struct VMTestCase(T) {
 void runVMTests(T) (VMTestCase!(T)[] tests) {
     Objekt[] constants = [];        
     Objekt[] globals = new Objekt[GLOBALS_SIZE];
-    auto symTable = SymbolTable();
+    auto symTable = new SymbolTable(null);
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
@@ -292,7 +293,7 @@ void testArrayLiterals() {
 
     Objekt[] constants = [];        
     Objekt[] globals = new Objekt[GLOBALS_SIZE];
-    auto symTable = SymbolTable();
+    auto symTable = new SymbolTable(null);
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
@@ -356,7 +357,7 @@ void testHashLiterals() {
 
     Objekt[] constants = [];        
     Objekt[] globals = new Objekt[GLOBALS_SIZE];
-    auto symTable = SymbolTable();
+    auto symTable = new SymbolTable(null);
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
@@ -433,7 +434,7 @@ void testNullIndexExpressions() {
 
     Objekt[] constants = [];        
     Objekt[] globals = new Objekt[GLOBALS_SIZE];
-    auto symTable = SymbolTable();
+    auto symTable = new SymbolTable(null);
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
@@ -486,7 +487,7 @@ void testFunctionsWithoutReturnValue() {
 
     Objekt[] constants = [];        
     Objekt[] globals = new Objekt[GLOBALS_SIZE];
-    auto symTable = SymbolTable();
+    auto symTable = new SymbolTable(null);
 
     foreach(tt; tests) {
         auto program = parse(tt.input);
@@ -514,4 +515,51 @@ void testFirstClassFunctions() {
     auto test = [
         VMTestCase!int(`let returnsOne = fn() { 1; };let returnsOneReturner = fn() { returnsOne; };returnsOneReturner()();`, 1),
     ];
+}
+
+void TestCallingFunctionsWithBindings() {
+    auto tests = [
+        VMTestCase!int(
+            `let one = fn() { let one = 1; one };one();`, 
+            1
+        ),
+        VMTestCase!int(
+            `
+            let oneAndTwo = fn() { let one = 1; let two = 2; 
+            one + two; };oneAndTwo();`, 
+            3
+        ),
+        VMTestCase!int(
+            `
+            let oneAndTwo = fn() { let one = 1; let two = 2; one + two; };
+            let threeAndFour = fn() { let three = 3; let four = 4; three + four; };
+            oneAndTwo() + threeAndFour();
+            `, 
+            10
+        ),
+        VMTestCase!int(
+            `
+            let firstFoobar = fn() { let foobar = 50; foobar; };
+            let secondFoobar = fn() { let foobar = 100; foobar; };
+            firstFoobar() + secondFoobar();
+            `,
+            150
+        ),
+        VMTestCase!int(
+            `
+            let globalSeed = 50;
+            let minusOne = fn() {
+            let num = 1;
+            globalSeed - num;
+            }
+            let minusTwo = fn() {
+            let num = 2;
+            globalSeed - num;
+            }
+            minusOne() + minusTwo();`,
+            97
+        ),
+    ];
+
+    runVMTests!int(tests);
 }
