@@ -11,17 +11,20 @@ import lexer.lexer;
 import objekt.objekt;
 import parser.parser;
 import compiler.compiler;
+import compiler.symbol_table;
 
 
 unittest {
-    testIntegerArithmetic();
-    testBooleanExpressions();
-    testConditionals();
-    testGlobalLetStatements();
-    testStringExpressions();
-    testArrayLiterals();
-    testHashLiterals();
-    testIndexExpressions();
+    // testIntegerArithmetic();
+    // testBooleanExpressions();
+    // testConditionals();
+    // testGlobalLetStatements();
+    // testStringExpressions();
+    // testArrayLiterals();
+    // testHashLiterals();
+    // testIndexExpressions();
+    testFunctions();
+    testCompilerScopes();
 }
 
 /++
@@ -275,7 +278,7 @@ Error testInstructions(Instructions[] expected, Instructions actual) {
     foreach(i, ins; concatted) {
         if(actual[i] != ins)
             return new Error(format("wrong instruction at %d.\nwant=%s\ngot =%s", 
-                                        i, concatted, actual));
+                                        i, asString(concatted), asString(actual)));
     }
 
     return null;
@@ -535,4 +538,186 @@ void testIndexExpressions() {
     ];
 
     runCompilerTests!int(tests);
+}
+
+alias Foo = Tuple!(int, int, Instructions[]);
+///
+void testFunctions() {
+    auto tests = [
+        CompilerTestCase!Foo(
+            `fn() { return 5 + 10 }`,
+            [
+                tuple(
+                    5, 10,
+                    [
+                        make(OPCODE.OpConstant, 0),
+                        make(OPCODE.OpConstant, 1),
+                        make(OPCODE.OpAdd),
+                        make(OPCODE.OpReturnValue),
+                    ]
+                ),
+            ],
+            [
+                make(OPCODE.OpConstant, 2),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        // CompilerTestCase!Foo(
+        //     `fn() { 5 + 10 }`,
+        //     [
+        //         tuple(
+        //             5, 10,
+        //             [
+        //                 make(OPCODE.OpConstant, 0),
+        //                 make(OPCODE.OpConstant, 1),
+        //                 make(OPCODE.OpAdd),
+        //                 make(OPCODE.OpReturnValue),
+        //             ]
+        //         ),
+        //     ],
+        //     [
+        //         make(OPCODE.OpConstant, 2),
+        //         make(OPCODE.OpPop),
+        //     ]
+        // ),
+        // CompilerTestCase!Foo(
+        //     `fn() { 1; 2 }`,
+        //     [
+        //         tuple(
+        //             1, 2,
+        //             [
+        //                 make(OPCODE.OpConstant, 0),
+        //                 make(OPCODE.OpPop),
+        //                 make(OPCODE.OpConstant, 1),
+        //                 make(OPCODE.OpReturnValue),
+        //             ]
+        //         ),
+        //     ],
+        //     [
+        //         make(OPCODE.OpConstant, 2),
+        //         make(OPCODE.OpPop),
+        //     ]
+        // ),
+        // CompilerTestCase!Foo(
+        //     `fn() { }`,
+        //     [
+        //         tuple(
+        //             0, 0,
+        //             [
+        //                 make(OPCODE.OpReturn),
+        //             ]
+                    
+        //         )
+                
+        //     ],
+        //     [
+        //         make(OPCODE.OpConstant, 0),
+        //         make(OPCODE.OpPop),
+        //     ]
+        // ),
+    ];
+
+    foreach (i, tt; tests) {
+        Objekt[] constants;
+        auto symTable = SymbolTable();
+
+        auto program = parse(tt.input);
+        auto compiler = Compiler(symTable, constants);
+
+        auto err = compiler.compile(program);
+        if(err !is null) {
+            stderr.writefln("compiler error: %s", err.msg);
+            assert(err is null);
+        }
+        
+        auto bytecode = compiler.bytecode();
+        
+        err = testInstructions(tt.expectedInstructions, bytecode.instructions);
+        if(err !is null) {
+            stderr.writefln("testInstructions failed: %s", err.msg);
+            assert(err is null);
+        }
+
+        err = testFunctionConstants(tt.expectedConstants[0][2], bytecode.constants);
+        if(err !is null) {
+            stderr.writefln("testConstants failed: %s", err.msg);
+            assert(err is null);
+        }
+    }
+}
+
+///
+Error testFunctionConstants(Instructions[] expected, Objekt[] actual) {
+    foreach(constant; actual) {
+        auto nde = to!string(typeid((cast(Object) constant)));
+        if(nde == "objekt.objekt.CompiledFunction") {
+            auto fn = cast(CompiledFunction) constant;
+            if(fn is null) 
+                return new Error(format("constant - not a function: %s", constant));
+
+            auto err = testInstructions(expected, fn.instructions);
+            if(err !is null)
+                return new Error(format("constant - testInstructions failed: %s", err));
+        }
+    }
+    
+    return null;
+}
+
+///
+void testCompilerScopes() {
+    Objekt[] constants;
+    auto symTable = SymbolTable();
+
+    auto compiler = Compiler(symTable, constants);
+    if (compiler.scopeIndex != 0) {
+        stderr.writefln("scopeIndex wrong. got=%d, want=%d", compiler.scopeIndex, 0);
+        assert(compiler.scopeIndex == 0);
+    }
+
+    compiler.emit(OPCODE.OpMul);
+
+    compiler.enterScope();
+    if (compiler.scopeIndex != 1) {
+        stderr.writefln("scopeIndex wrong. got=%d, want=%d", compiler.scopeIndex, 1);
+        assert(compiler.scopeIndex == 1);
+    }
+
+    compiler.emit(OPCODE.OpSub);
+
+    if(compiler.scopes[compiler.scopeIndex].instructions.length != 1) {
+        stderr.writefln("instructions length wrong. got=%d",
+                compiler.scopes[compiler.scopeIndex].instructions.length);
+        assert(compiler.scopes[compiler.scopeIndex].instructions.length == 1);
+    }
+
+    auto last = compiler.scopes[compiler.scopeIndex].lastInstruction;
+    if (last.opcode != OPCODE.OpSub) {
+        stderr.writefln("lastInstruction.Opcode wrong. got=%d, want=%d", last.opcode, OPCODE.OpSub);
+        assert(last.opcode == OPCODE.OpSub);
+    }
+
+    compiler.leaveScope();
+    if (compiler.scopeIndex != 0) {
+        stderr.writefln("scopeIndex wrong. got=%d, want=%d", compiler.scopeIndex, 0);
+        assert(compiler.scopeIndex == 0);
+    }
+
+    compiler.emit(OPCODE.OpAdd);
+    if (compiler.scopes[compiler.scopeIndex].instructions.length != 2) {
+        stderr.writefln("instructions length wrong. got=%d", compiler.scopes[compiler.scopeIndex].instructions.length);
+        assert(compiler.scopes[compiler.scopeIndex].instructions.length == 2);
+    }
+
+    last = compiler.scopes[compiler.scopeIndex].lastInstruction;
+    if(last.opcode != OPCODE.OpAdd) {
+        stderr.writefln("lastInstruction.Opcode wrong. got=%d, want=%d", last.opcode, OPCODE.OpAdd);
+        assert(last.opcode == OPCODE.OpAdd);
+    }
+
+    auto previous = compiler.scopes[compiler.scopeIndex].previousInstruction;
+    if (previous.opcode != OPCODE.OpMul) {
+        stderr.writefln("previousInstruction.Opcode wrong. got=%d, want=%d", previous.opcode, OPCODE.OpMul);
+        assert(previous.opcode == OPCODE.OpMul);
+    }
 }
