@@ -197,6 +197,12 @@ struct VM {
                     if(err !is null)
                         return err;
                     break;
+                case OPCODE.OpCall:
+                    break;
+                case OPCODE.OpReturn:
+                    break;
+                case OPCODE.OpReturnValue:
+                    break;
             }
         }
 
