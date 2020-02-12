@@ -293,7 +293,16 @@ struct Compiler {
                 this.emit(OPCODE.OpReturnValue);
                 
                 break;
+            case "ast.ast.CallExpression":
+                auto n = cast(CallExpression) node;
 
+                auto err = this.compile(n.fxn);
+                if(err !is null)
+                    return err;
+
+                this.emit(OPCODE.OpCall);
+
+                break;
             default:
                 break;
         }
