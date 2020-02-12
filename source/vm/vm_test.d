@@ -26,6 +26,7 @@ unittest {
     testHashLiterals();
     testIntgerIndexExpressions();
     testNullIndexExpressions();
+    TestCallingFunctionsWithoutArguments();
 }
 
 ///
@@ -451,4 +452,13 @@ void testNullIndexExpressions() {
         auto stackElem = vm.lastPoppedStackElem();
         testNullObject(stackElem);
     }
+}
+
+///
+void TestCallingFunctionsWithoutArguments() {
+    auto tests = [
+        VMTestCase!int(`let fivePlusTen = fn() { 5 + 10; };fivePlusTen();`, 15),
+    ];
+
+    runVMTests!int(tests);
 }

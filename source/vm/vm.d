@@ -92,13 +92,12 @@ struct VM {
         Instructions ins;
         OPCODE op;  
 
-        auto LEN = cast(int) this.currentFrame().instructions.length;
-        while(this.currentFrame().ip < LEN - 1)
-        {
+        while(this.currentFrame().ip < (cast(int) this.currentFrame().instructions().length - 1))
+        {            
             this.currentFrame().ip += 1;
-
+            
             ip = this.currentFrame().ip;
-            ins = this.currentFrame().instructions();
+            ins = this.currentFrame().instructions(); 
             op = cast(OPCODE) ins[ip];
 
             final switch(op) {
@@ -235,10 +234,26 @@ struct VM {
                         return err;
                     break;
                 case OPCODE.OpCall:
+                    auto fn = cast(CompiledFunction) this.stack[this.sp-1];
+                    if(fn is null)
+                        return new Error(format("calling non-function"));
+
+                    auto frame = new Frame(fn);
+                    this.pushFrame(frame);
+
                     break;
                 case OPCODE.OpReturn:
                     break;
                 case OPCODE.OpReturnValue:
+                    auto returnValue = this.pop();
+
+                    this.popFrame();
+                    this.pop();
+
+                    auto err = this.push(returnValue);
+                    if(err !is null)
+                        return err;
+
                     break;
             }
         }
