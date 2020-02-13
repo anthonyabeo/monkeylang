@@ -11,6 +11,7 @@ unittest {
     testResolveGlobal();
     testResolveLocal();
     testResolveNestedLocal();
+    testDefineResolveBuiltins();
 }
 
 ///
@@ -173,6 +174,39 @@ void testResolveNestedLocal() {
     foreach(tt; tests) {
         foreach(sym; tt.expectedSymbols) {
             auto result = tt.table.resolve(sym.name);
+            if(result.isNull) {
+                stderr.writefln("name %s not resolvable", sym.name);
+                continue;
+            }
+
+            if(result != sym) {
+                stderr.writefln("expected %s to resolve to %s, got=%s", sym.name, sym, result);
+                assert(result == sym);
+            }
+        }
+    }
+}
+
+///
+void testDefineResolveBuiltins() {
+    auto global = new SymbolTable(null);
+    auto firstLocal = new SymbolTable(global);
+    auto secondLocal = new SymbolTable(firstLocal);
+
+    auto expected = [
+        Symbol("a", SymbolScope.BUILTIN, 0),
+        Symbol("c", SymbolScope.BUILTIN, 1),
+        Symbol("e", SymbolScope.BUILTIN, 2),
+        Symbol("f", SymbolScope.BUILTIN, 3),
+    ];
+
+    foreach(i, v; expected) {
+        global.defineBuiltin(i, v.name);
+    }
+
+    foreach (table; [global, firstLocal, secondLocal]) {
+        foreach (sym; expected) {
+            const result = table.resolve(sym.name);
             if(result.isNull) {
                 stderr.writefln("name %s not resolvable", sym.name);
                 continue;

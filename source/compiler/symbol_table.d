@@ -7,6 +7,7 @@ import std.typecons;
 enum SymbolScope {
     GLOBAL,
     LOCAL,
+    BUILTIN,
 }
 
 ///
@@ -60,5 +61,13 @@ class SymbolTable {
             return Nullable!Symbol();
 
         return Nullable!Symbol(this.store[name]);
+    }
+
+    ///
+    Symbol defineBuiltin(size_t index, string name) {
+        auto symbol = Symbol(name, SymbolScope.BUILTIN, index);
+        this.store[name] = symbol;
+
+        return symbol;
     }
 }
