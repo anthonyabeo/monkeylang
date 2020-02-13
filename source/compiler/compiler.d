@@ -291,15 +291,19 @@ struct Compiler {
                 if(!this.lastInstructionIs(OPCODE.OpReturnValue))
                     this.emit(OPCODE.OpReturn);
 
+                auto freeSymbols = this.symTable.freeSymbols;
                 auto numLocals = this.symTable.numDefinitions;
                 auto instructions = this.leaveScope();
+
+                foreach(s; freeSymbols)
+                    this.loadSymbol(s);
 
                 auto compiledFn = new CompiledFunction(instructions);
                 compiledFn.numLocals = cast(int) numLocals;
                 compiledFn.numParams = cast(int) n.parameters.length;
 
                 auto fnIndex = this.addConstant(compiledFn);
-                this.emit(OPCODE.OpClosure, fnIndex, 0);
+                this.emit(OPCODE.OpClosure, fnIndex, freeSymbols.length);
 
                 break;
             case "ast.ast.ReturnStatement":
@@ -347,6 +351,9 @@ struct Compiler {
                 break;
             case SymbolScope.BUILTIN:
                 this.emit(OPCODE.OpGetBuiltin, s.index);
+                break;
+            case SymbolScope.FREE:
+                this.emit(OPCODE.OpGetFree, s.index);
                 break;
         }
     }

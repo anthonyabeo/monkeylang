@@ -39,6 +39,7 @@ enum OPCODE : Opcode {
     OpSetLocal,
     OpGetBuiltin,
     OpClosure,
+    OpGetFree,
 }
 
 Definition[OPCODE] definitions; /// definitions
@@ -74,6 +75,7 @@ static this() {
         OPCODE.OpSetLocal : new Definition("OpSetLocal", [1]),
         OPCODE.OpGetBuiltin : new Definition("OpGetBuiltin", [1]),
         OPCODE.OpClosure : new Definition("OpClosure", [2, 1]),
+        OPCODE.OpGetFree : new Definition("OpGetFree", [1]),
     ];
 }
 

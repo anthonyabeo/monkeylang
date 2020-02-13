@@ -310,6 +310,8 @@ struct VM {
                         return err;
 
                     break;
+                case OPCODE.OpGetFree:
+                    break;
             }
         }
 

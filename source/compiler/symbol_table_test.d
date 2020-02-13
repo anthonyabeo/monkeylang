@@ -12,6 +12,8 @@ unittest {
     testResolveLocal();
     testResolveNestedLocal();
     testDefineResolveBuiltins();
+    testResolveUnresolvableFree();
+    testResolveFree();
 }
 
 ///
@@ -216,6 +218,126 @@ void testDefineResolveBuiltins() {
                 stderr.writefln("expected %s to resolve to %s, got=%s", sym.name, sym, result);
                 assert(result == sym);
             }
+        }
+    }
+}
+
+///
+void testResolveFree() {
+    auto global = new SymbolTable(null);
+    global.define("a");
+    global.define("b");
+
+    auto firstLocal = new SymbolTable(global);
+    firstLocal.define("c");
+    firstLocal.define("d");
+
+    auto secondLocal = new SymbolTable(firstLocal);
+    secondLocal.define("e");
+    secondLocal.define("f");
+
+    alias NewS = Tuple!(SymbolTable, "table", 
+                        Symbol[], "expectedSymbols",
+                        Symbol[], "expectedFreeSymbols");
+
+    // Symbol[] s = [];
+    auto tests = [
+        NewS(
+            firstLocal, 
+            [
+                Symbol("a", SymbolScope.GLOBAL, 0),
+                Symbol("b", SymbolScope.GLOBAL, 1),
+                Symbol("c", SymbolScope.LOCAL, 0),
+                Symbol("d", SymbolScope.LOCAL, 1),
+            ],
+            [],
+        ),
+        NewS(
+            secondLocal, 
+            [
+                Symbol("a", SymbolScope.GLOBAL, 0),
+                Symbol("b", SymbolScope.GLOBAL, 1),
+                Symbol("c", SymbolScope.FREE, 0),
+                Symbol("d", SymbolScope.FREE, 1),
+                Symbol("e", SymbolScope.LOCAL, 0),
+                Symbol("f", SymbolScope.LOCAL, 1),
+            ],
+            [
+                Symbol("c", SymbolScope.LOCAL, 0),
+                Symbol("d", SymbolScope.LOCAL, 1),
+            ]
+        ),
+    ];
+
+    foreach (tt; tests) {
+        foreach(sym; tt.expectedSymbols) {
+            immutable result = tt.table.resolve(sym.name);
+            if(result.isNull) {
+                stderr.writefln("name %s not resolvable", sym.name);
+                continue;
+            }
+
+            if (result != sym) {
+                stderr.writefln("expected %s to resolve to %s, got=%s", sym.name, sym, result);
+                assert(result == sym);
+            }
+        }
+
+        if(tt.table.freeSymbols.length != tt.expectedFreeSymbols.length) {
+            stderr.writefln("wrong number of free symbols. got=%d, want=%d",
+                        tt.table.freeSymbols.length, tt.expectedFreeSymbols.length);
+            continue;
+        }
+
+        foreach(i, sym; tt.expectedFreeSymbols) {
+            const result = tt.table.freeSymbols[i];
+            if (result != sym) {
+                stderr.writefln("wrong free symbol. got=%s, want=%s", result, sym);
+                assert(result == sym);
+            }
+        }
+    }
+}
+
+///
+void testResolveUnresolvableFree() {
+    auto global = new SymbolTable(null);
+    global.define("a");
+
+    auto firstLocal = new SymbolTable(global);
+    firstLocal.define("c");
+
+    auto secondLocal = new SymbolTable(firstLocal);
+    secondLocal.define("e");
+    secondLocal.define("f");
+
+    auto expected = [
+        Symbol("a", SymbolScope.GLOBAL, 0),
+        Symbol("c", SymbolScope.FREE, 0),
+        Symbol("e", SymbolScope.LOCAL, 0),
+        Symbol("f", SymbolScope.LOCAL, 1),
+    ];
+
+    foreach(sym; expected) {
+        const result = secondLocal.resolve(sym.name);
+        if (result.isNull) {
+            stderr.writefln("name %s not resolvable", sym.name);
+            continue;
+        }
+
+        if (result != sym) {
+            stderr.writefln("expected %s to resolve to %+v, got=%+v", sym.name, sym, result);
+            assert(result !is sym);
+        }
+    }
+
+    const expectedUnresolvable = ["b", "d"];
+
+    foreach(name; expectedUnresolvable) {
+        const _ = secondLocal.resolve(name);
+        if (!_.isNull) {
+            stderr.writefln("name %s resolved, but was expected not to", name);
+            assert(!_.isNull);
         }
     }
 }

@@ -30,6 +30,7 @@ unittest {
     testLetStatementScopes();
     testIntBuiltins();
     testBuiltins();
+    testClosures();
 }
 
 /++
@@ -1028,4 +1029,143 @@ void testBuiltins() {
             assert(err is null);
         }
     }
+}
+
+///
+void testClosures() {
+    auto tests = [
+        CompilerTestCase!(Instructions[])(
+            `fn(a) {fn(b) {a + b}}`,
+            [
+                [
+                    make(OPCODE.OpGetFree, 0),
+                    make(OPCODE.OpGetLocal, 0),
+                    make(OPCODE.OpAdd),
+                    make(OPCODE.OpReturnValue),
+                ],
+                [
+                    make(OPCODE.OpGetLocal, 0),
+                    make(OPCODE.OpClosure, 0, 1),
+                    make(OPCODE.OpReturnValue),
+                ]
+            ],
+            [
+                make(OPCODE.OpClosure, 1, 0),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!(Instructions[])(
+            `fn(a) {fn(b) {fn(c) {a + b + c}}};`,
+            [
+                [
+                    make(OPCODE.OpGetFree, 0),
+                    make(OPCODE.OpGetFree, 1),
+                    make(OPCODE.OpAdd),
+                    make(OPCODE.OpGetLocal, 0),
+                    make(OPCODE.OpAdd),
+                    make(OPCODE.OpReturnValue),
+                ],
+                [
+                    make(OPCODE.OpGetFree, 0),
+                    make(OPCODE.OpGetLocal, 0),
+                    make(OPCODE.OpClosure, 0, 2),
+                    make(OPCODE.OpReturnValue),
+                ],
+                [
+                    make(OPCODE.OpGetLocal, 0),
+                    make(OPCODE.OpClosure, 1, 1),
+                    make(OPCODE.OpReturnValue),
+                ]
+            ],
+            [
+                make(OPCODE.OpClosure, 2, 0),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        // CompilerTestCase!(Instructions[])(
+        //     `let global = 55;fn() {let a = 66;fn() {let b = 77;fn() {let c = 88;global + a + b + c;}}}`,
+        //     [
+        //         [
+        //             make(OPCODE.OpConstant, 3),
+        //             make(OPCODE.OpSetLocal, 0),
+        //             make(OPCODE.OpGetGlobal, 0),
+        //             make(OPCODE.OpGetFree, 0),
+        //             make(OPCODE.OpAdd),
+        //             make(OPCODE.OpGetFree, 1),
+        //             make(OPCODE.OpAdd),
+        //             make(OPCODE.OpGetLocal, 0),
+        //             make(OPCODE.OpAdd),
+        //             make(OPCODE.OpReturnValue),
+        //         ],
+        //         [
+        //             make(OPCODE.OpConstant, 2),
+        //             make(OPCODE.OpSetLocal, 0),
+        //             make(OPCODE.OpGetFree, 0),
+        //             make(OPCODE.OpGetLocal, 0),
+        //             make(OPCODE.OpClosure, 4, 2),
+        //             make(OPCODE.OpReturnValue),
+        //         ],
+        //         [
+        //             make(OPCODE.OpConstant, 1),
+        //             make(OPCODE.OpSetLocal, 0),
+        //             make(OPCODE.OpGetLocal, 0),
+        //             make(OPCODE.OpClosure, 5, 1),
+        //             make(OPCODE.OpReturnValue),
+        //         ]
+        //     ],
+        //     [
+        //         make(OPCODE.OpConstant, 0),
+        //         make(OPCODE.OpSetGlobal, 0),
+        //         make(OPCODE.OpClosure, 6, 0),
+        //         make(OPCODE.OpPop),
+        //     ]
+        // ),
+    ];
+
+    foreach (i, tt; tests) {
+        Objekt[] constants = [];        
+        auto symTable = new SymbolTable(null);
+
+        auto program = parse(tt.input);
+        auto compiler = Compiler(symTable, constants);
+
+        auto err = compiler.compile(program);
+        if(err !is null) {
+            stderr.writefln("compiler error: %s", err.msg);
+            assert(err is null);
+        }
+        
+        auto bytecode = compiler.bytecode();
+        
+        err = testInstructions(tt.expectedInstructions, bytecode.instructions);
+        if(err !is null) {
+            stderr.writefln("testInstructions failed: %s", err.msg);
+            assert(err is null);
+        }
+        
+        err = testInstrConstants(tt.expectedConstants, bytecode.constants);
+        if(err !is null) {
+            stderr.writefln("testConstants failed: %s", err.msg);
+            assert(err is null);
+        }
+    }
+   
+}
+
+///
+Error testInstrConstants(Instructions[][] expected, Objekt[] actual) {
+    foreach(i, constant; actual) {
+        auto nde = to!string(typeid((cast(Object) constant)));
+        if(nde == "objekt.objekt.CompiledFunction") {
+            auto fn = cast(CompiledFunction) constant;
+            if(fn is null) 
+                return new Error(format("constant - not a function: %s", constant));
+
+            auto err = testInstructions(expected[i], fn.instructions);
+            if(err !is null)
+                return new Error(format("constant - testInstructions failed: %s", err));
+        }
+    }
+
+    return null;
 }
