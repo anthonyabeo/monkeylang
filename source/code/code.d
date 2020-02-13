@@ -38,6 +38,7 @@ enum OPCODE : Opcode {
     OpGetLocal,
     OpSetLocal,
     OpGetBuiltin,
+    OpClosure,
 }
 
 Definition[OPCODE] definitions; /// definitions
@@ -72,6 +73,7 @@ static this() {
         OPCODE.OpGetLocal : new Definition("OpGetLocal", [1]),
         OPCODE.OpSetLocal : new Definition("OpSetLocal", [1]),
         OPCODE.OpGetBuiltin : new Definition("OpGetBuiltin", [1]),
+        OPCODE.OpClosure : new Definition("OpClosure", [2, 1]),
     ];
 }
 
@@ -182,6 +184,8 @@ string fmtInstruction(Instructions ins, Definition def, int[] operands) {
             return def.name;
         case 1:
             return format("%s %d", def.name, operands[0]);
+        case 2:
+            return format("%s %d %d", def.name, operands[0], operands[1]);
         default:
             return format("ERROR: unhandled operandCount for %s\n", def.name);
     }

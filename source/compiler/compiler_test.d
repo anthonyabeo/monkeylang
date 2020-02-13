@@ -567,7 +567,7 @@ void testFunctions() {
                 ),
             ],
             [
-                make(OPCODE.OpConstant, 2),
+                make(OPCODE.OpClosure, 2, 0),
                 make(OPCODE.OpPop),
             ]
         ),
@@ -585,7 +585,7 @@ void testFunctions() {
                 ),
             ],
             [
-                make(OPCODE.OpConstant, 2),
+                make(OPCODE.OpClosure, 2, 0),
                 make(OPCODE.OpPop),
             ]
         ),
@@ -603,7 +603,7 @@ void testFunctions() {
                 ),
             ],
             [
-                make(OPCODE.OpConstant, 2),
+                make(OPCODE.OpClosure, 2, 0),
                 make(OPCODE.OpPop),
             ]
         ),
@@ -618,7 +618,7 @@ void testFunctions() {
                 ),
             ],
             [
-                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpClosure, 0, 0),
                 make(OPCODE.OpPop),
             ]
         ),
@@ -764,7 +764,7 @@ void testFunctionCalls() {
                 ),
             ],
             [
-                make(OPCODE.OpConstant, 1), // The compiled function
+                make(OPCODE.OpClosure, 1, 0), // The compiled function
                 make(OPCODE.OpCall, 0),
                 make(OPCODE.OpPop),
             ]
@@ -782,7 +782,7 @@ void testFunctionCalls() {
                  ),
              ],
              [
-                make(OPCODE.OpConstant, 1), // The compiled function
+                make(OPCODE.OpClosure, 1, 0), // The compiled function
                 make(OPCODE.OpSetGlobal, 0),
                 make(OPCODE.OpGetGlobal, 0),
                 make(OPCODE.OpCall, 0),
@@ -801,7 +801,7 @@ void testFunctionCalls() {
                 ),
             ],
             [
-                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpClosure, 0, 0),
                 make(OPCODE.OpSetGlobal, 0),
                 make(OPCODE.OpGetGlobal, 0),
                 make(OPCODE.OpConstant, 1),
@@ -825,7 +825,7 @@ void testFunctionCalls() {
                 ),
             ],
             [
-                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpClosure, 0, 0),
                 make(OPCODE.OpSetGlobal, 0),
                 make(OPCODE.OpGetGlobal, 0),
                 make(OPCODE.OpConstant, 1),
@@ -883,7 +883,7 @@ void testLetStatementScopes() {
             [
                 make(OPCODE.OpConstant, 0),
                 make(OPCODE.OpSetGlobal, 0),
-                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpClosure, 1, 0),
                 make(OPCODE.OpPop),
             ]
         ),
@@ -901,7 +901,7 @@ void testLetStatementScopes() {
                 ),
             ],
             [
-                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpClosure, 1, 0),
                 make(OPCODE.OpPop),
             ]
         ),
@@ -923,7 +923,7 @@ void testLetStatementScopes() {
                 )
             ],
             [
-                make(OPCODE.OpConstant, 2),
+                make(OPCODE.OpClosure, 2, 0),
                 make(OPCODE.OpPop),
             ]
         ),
@@ -995,7 +995,7 @@ void testBuiltins() {
                 ]
             ],
             [
-                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpClosure, 0, 0),
                 make(OPCODE.OpPop),
             ]
         ),

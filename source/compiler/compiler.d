@@ -298,7 +298,8 @@ struct Compiler {
                 compiledFn.numLocals = cast(int) numLocals;
                 compiledFn.numParams = cast(int) n.parameters.length;
 
-                this.emit(OPCODE.OpConstant, this.addConstant(compiledFn));
+                auto fnIndex = this.addConstant(compiledFn);
+                this.emit(OPCODE.OpClosure, fnIndex, 0);
 
                 break;
             case "ast.ast.ReturnStatement":

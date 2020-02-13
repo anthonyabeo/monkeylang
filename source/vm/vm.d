@@ -46,7 +46,8 @@ struct VM {
      +++++++++++++++++++++++++++++/
     this(ref Bytecode bytecode, Objekt[] globals) {
         auto mainFn = new CompiledFunction(bytecode.instructions);
-        auto mainFrame = new Frame(mainFn, 0);
+        auto mainClosure = new Closure(mainFn);
+        auto mainFrame = new Frame(mainClosure, 0);
 
         this.frames = new Frame[MAX_FRAMES];
         this.frames[0] = mainFrame;
@@ -299,6 +300,16 @@ struct VM {
                         return err;
 
                     break;
+                case OPCODE.OpClosure:
+                    auto constIndex = readUint16(ins[ip+1..$]);
+                    const _ = readUint8(ins[ip+3..$]);
+                    this.currentFrame().ip += 3;
+                    
+                    auto err = this.pushClosure(constIndex);
+                    if(err !is null)
+                        return err;
+
+                    break;
             }
         }
 
@@ -306,11 +317,24 @@ struct VM {
     }
 
     ///
+    Error pushClosure(int constIndex) {
+        auto constant = this.constants[constIndex];
+
+        auto func = cast(CompiledFunction) constant;
+        if(func is null)
+            return new Error(format("not a function: %s", constant));
+
+        auto closure = new Closure(func);
+
+        return this.push(closure);
+    }
+
+    ///
     Error executeCall(int numArgs) {
         auto callee =  this.stack[this.sp - 1 - numArgs];
         switch(callee.type()) {
-            case ObjectType.COMPILED_FUNCTION:
-                return this.callFunction(cast(CompiledFunction)callee, numArgs);
+            case ObjectType.CLOSURE:
+                return this.callClosure(cast(Closure)callee, numArgs);
             case ObjectType.BUILTIN:
                 return this.callBuiltin(cast(BuiltIn)callee, numArgs);
             default:
@@ -334,15 +358,15 @@ struct VM {
     }
 
     ///
-    Error callFunction(CompiledFunction fn, int numArgs) {
-        if(numArgs != fn.numParams)
+    Error callClosure(Closure cl, int numArgs) {
+        if(numArgs != cl.fn.numParams)
             return new Error(format("wrong number of arguments: want=%d, got=%d",
-                        fn.numParams, numArgs));
+                        cl.fn.numParams, numArgs));
 
-        auto frame = new Frame(fn, cast(int) this.sp - numArgs);
+        auto frame = new Frame(cl, cast(int) this.sp - numArgs);
         this.pushFrame(frame);
 
-        this.sp = frame.basePtr + fn.numLocals;
+        this.sp = frame.basePtr + cl.fn.numLocals;
 
         return null;
     }

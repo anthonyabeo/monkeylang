@@ -23,6 +23,7 @@ enum ObjectType {
     ARRAY,
     HASH,
     COMPILED_FUNCTION,
+    CLOSURE,
 }
 
 alias BuiltInFunction = Objekt function(Objekt[] args...);
@@ -41,6 +42,28 @@ interface Hashable {
     /+++/
     HashKey hashKey();
 }
+
+/+++/
+class Closure : Objekt {
+    CompiledFunction fn;     /// fn
+    Objekt[] free;          /// free
+
+    /+++/
+    this(CompiledFunction fn) {
+        this.fn = fn;
+    }
+
+    /+++/
+    ObjectType type() {
+        return ObjectType.CLOSURE;
+    }
+
+    /+++/
+    string inspect() {
+        return format("Closure[%s]", this);
+    }
+}
+
 
 /+++/
 class CompiledFunction : Objekt {

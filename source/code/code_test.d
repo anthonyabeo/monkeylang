@@ -23,6 +23,7 @@ void testMake() {
         Instr(OPCODE.OpConstant, [65_534], [cast(ubyte) OPCODE.OpConstant, 255, 254]),
         Instr(OPCODE.OpAdd, [], [cast(byte) OPCODE.OpAdd]),
         Instr(OPCODE.OpGetLocal, [255], [cast(ubyte) OPCODE.OpGetLocal, 255]),
+        Instr(OPCODE.OpClosure, [65_534, 255], [cast(ubyte) OPCODE.OpClosure, 255, 254, 255]),
     ];
 
     foreach(tt; tests) {
@@ -50,12 +51,14 @@ void testInstructionString() {
         make(OPCODE.OpGetLocal, 1),
         make(OPCODE.OpConstant, 2),
         make(OPCODE.OpConstant, 65_535),
+        make(OPCODE.OpClosure, 65_535, 255),
     ];
 
     auto expected = `0000 OpAdd
 0001 OpGetLocal 1
 0003 OpConstant 2
 0006 OpConstant 65535
+0009 OpClosure 65535 255
 `;
 
     Instructions concatted = [];
@@ -78,6 +81,7 @@ void testReadOperands() {
     auto tests = [
         ReadOp(OPCODE.OpConstant, [65_535], 2),
         ReadOp(OPCODE.OpGetLocal, [255], 1),
+        ReadOp(OPCODE.OpClosure, [65_534, 255], 3),
     ];
 
     foreach(tt; tests) {
