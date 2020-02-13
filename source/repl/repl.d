@@ -45,8 +45,6 @@ void start() {
     auto symTable = new SymbolTable(null);
     auto compiler = Compiler(symTable, constants);
 
-    auto env = new Environment();
-
     string line;
 
     while(true) {

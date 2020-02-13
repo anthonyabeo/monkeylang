@@ -30,8 +30,8 @@ auto builtins = [
             }
         )
     ),
-    BINS("
-        puts", 
+    BINS(
+        "puts", 
         new BuiltIn(
             function Objekt(Objekt[] args...) { 
                 foreach(arg; args) {

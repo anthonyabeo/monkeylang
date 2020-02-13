@@ -34,6 +34,9 @@ unittest {
     testFirstClassFunctions();
     testCallingFunctionsWithArgumentsAndBindings();
     testCallingFunctionsWithWrongArguments();
+    testNullBuiltinFunctions();
+    testErrBuiltinFunctions();
+    testIntBuiltinFunctions();
 }
 
 ///
@@ -657,5 +660,105 @@ void testCallingFunctionsWithWrongArguments() {
             stderr.writefln("wrong VM error: want=%q, got=%q", tt.expected, err);
             assert(err.msg == tt.expected);
         }
+    }
+}
+
+///
+void testNullBuiltinFunctions() {
+    auto tests = [
+        VMTestCase!Null(`puts("hello", "world!")`, NULL),
+        VMTestCase!Null(`first([])`, NULL),
+        VMTestCase!Null(`last([])`, NULL),
+    ];
+
+    Objekt[] constants = [];        
+    Objekt[] globals = new Objekt[GLOBALS_SIZE];
+    auto symTable = new SymbolTable(null);
+
+    foreach(tt; tests) {
+        auto program = parse(tt.input);
+        auto compiler = Compiler(symTable, constants);
+        auto err = compiler.compile(program);
+        if(err !is null) {
+            stderr.writefln("compiler error: %s", err.msg);
+            assert(err is null);
+        }
+
+        auto code = compiler.bytecode();
+        auto vm = VM(code, globals);
+        err = vm.run();
+        if(err !is null) {
+            stderr.writefln("vm error: %s", err.msg);
+            assert(err is null);
+        }
+
+        auto stackElem = vm.lastPoppedStackElem();
+        testNullObject(stackElem);
+    }
+}
+
+///
+void testIntBuiltinFunctions() {
+    auto tests = [
+        VMTestCase!int(`len("")`, 0),
+        VMTestCase!int(`len("four")`, 4),
+        VMTestCase!int(`len("hello world")`, 11),
+        VMTestCase!int(`len([1, 2, 3])`, 3),
+        VMTestCase!int(`len([])`, 0),
+        VMTestCase!int(`first([1, 2, 3])`, 1),
+        VMTestCase!int(`last([1, 2, 3])`, 3),
+    ];
+
+    runVMTests!int(tests);
+}
+
+///
+void testErrBuiltinFunctions() {
+    auto tests = [
+        VMTestCase!Err(`len(1)`, new Err("argument to `len` not supported, got INTEGER")),
+        VMTestCase!Err(`len("one", "two")`, new Err("wrong number of arguments. got=2, want=1")),
+        VMTestCase!Err(`first(1)`, new Err("argument to `first` must be ARRAY, got INTEGER")),
+        VMTestCase!Err(`last(1)`, new Err("argument to `last` must be ARRAY, got INTEGER")),
+        VMTestCase!Err(`push(1, 1)`, new Err("argument to `push` must be ARRAY, got INTEGER")),
+    ];
+
+    Objekt[] constants = [];        
+    Objekt[] globals = new Objekt[GLOBALS_SIZE];
+    auto symTable = new SymbolTable(null);
+
+    foreach(tt; tests) {
+        auto program = parse(tt.input);
+        auto compiler = Compiler(symTable, constants);
+        auto err = compiler.compile(program);
+        if(err !is null) {
+            stderr.writefln("compiler error: %s", err.msg);
+            assert(err is null);
+        }
+
+        auto code = compiler.bytecode();
+        auto vm = VM(code, globals);
+        err = vm.run();
+        if(err !is null) {
+            stderr.writefln("vm error: %s", err.msg);
+            assert(err is null);
+        }
+
+        auto stackElem = vm.lastPoppedStackElem();
+        testErr(tt.expected, stackElem);
+    }
+}
+
+///
+void testErr(Err expected, Objekt actual) {
+    auto errObj = cast(Err) actual;
+    if(errObj is null) {
+        stderr.writefln("object is not Error: %T (%s)", actual, actual);
+        assert(errObj !is null);
+    }
+
+    if(errObj.message != expected.message) {
+        stderr.writefln("wrong error message. expected=%s, got=%s", 
+                        expected.message, errObj.message);
+        assert(errObj.message == expected.message);
     }
 }

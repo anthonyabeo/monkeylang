@@ -9,6 +9,7 @@ import vm.frame;
 import code.code;
 import vm.frame;
 import objekt.objekt;
+import objekt.builtins;
 import compiler.compiler;
 import evaluator.builtins : TRUE, FALSE, NULL;
 
@@ -242,7 +243,7 @@ struct VM {
                     auto numArgs = readUint8(ins[ip+1..$]);
                     this.currentFrame().ip += 1;
 
-                    auto err = this.callFunction(numArgs);
+                    auto err = this.executeCall(numArgs);
                     if(err !is null)
                         return err;
 
@@ -288,6 +289,16 @@ struct VM {
                     this.stack[frame.basePtr + localIndex] = this.pop();
 
                     break;
+                case OPCODE.OpGetBuiltin:
+                    auto builtinIndex = readUint8(ins[ip+1..$]);
+                    this.currentFrame().ip += 1;
+
+                    auto definition = builtins[builtinIndex];
+                    auto err = this.push(definition.builtin);
+                    if(err !is null)
+                        return err;
+
+                    break;
             }
         }
 
@@ -295,17 +306,42 @@ struct VM {
     }
 
     ///
-    Error callFunction(int numArgs) {
-        auto fn = cast(CompiledFunction) this.stack[this.sp - 1 - numArgs];
-        if(fn is null)
-            return new Error(format("calling non-function"));
-        
+    Error executeCall(int numArgs) {
+        auto callee =  this.stack[this.sp - 1 - numArgs];
+        switch(callee.type()) {
+            case ObjectType.COMPILED_FUNCTION:
+                return this.callFunction(cast(CompiledFunction)callee, numArgs);
+            case ObjectType.BUILTIN:
+                return this.callBuiltin(cast(BuiltIn)callee, numArgs);
+            default:
+                return new Error(format("calling non-function and non-built-in"));
+        }
+    }
+
+    ///
+    Error callBuiltin(BuiltIn builtin, int numArgs) {
+        auto args = this.stack[this.sp - numArgs .. this.sp];
+
+        auto result = builtin.fxn(args);
+        this.sp = this.sp - numArgs - 1;
+
+        if(result !is null)
+            this.push(result);
+        else
+            this.push(NULL);
+
+        return null;
+    }
+
+    ///
+    Error callFunction(CompiledFunction fn, int numArgs) {
         if(numArgs != fn.numParams)
             return new Error(format("wrong number of arguments: want=%d, got=%d",
                         fn.numParams, numArgs));
 
         auto frame = new Frame(fn, cast(int) this.sp - numArgs);
         this.pushFrame(frame);
+
         this.sp = frame.basePtr + fn.numLocals;
 
         return null;
