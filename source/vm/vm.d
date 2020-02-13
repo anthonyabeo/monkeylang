@@ -302,15 +302,23 @@ struct VM {
                     break;
                 case OPCODE.OpClosure:
                     auto constIndex = readUint16(ins[ip+1..$]);
-                    const _ = readUint8(ins[ip+3..$]);
+                    const numFree = readUint8(ins[ip+3..$]);
                     this.currentFrame().ip += 3;
                     
-                    auto err = this.pushClosure(constIndex);
+                    auto err = this.pushClosure(constIndex, numFree);
                     if(err !is null)
                         return err;
 
                     break;
                 case OPCODE.OpGetFree:
+                    auto freeIndex = readUint8(ins[ip+1..$]);
+                    this.currentFrame().ip += 1;
+
+                    auto currentClosure = this.currentFrame().cl;
+                    auto err = this.push(currentClosure.free[freeIndex]);
+                    if(err !is null)
+                        return err;
+
                     break;
             }
         }
@@ -319,14 +327,21 @@ struct VM {
     }
 
     ///
-    Error pushClosure(int constIndex) {
+    Error pushClosure(int constIndex, int numFree) {
         auto constant = this.constants[constIndex];
 
         auto func = cast(CompiledFunction) constant;
         if(func is null)
             return new Error(format("not a function: %s", constant));
+        
+        auto free = new Objekt[numFree];
+        for(size_t i = 0; i < numFree; i++) {
+            free[i] = this.stack[this.sp - numFree + i];
+        }
+        this.sp = this.sp - numFree;
 
         auto closure = new Closure(func);
+        closure.free = free;
 
         return this.push(closure);
     }
