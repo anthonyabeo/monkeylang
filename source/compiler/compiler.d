@@ -275,6 +275,10 @@ struct Compiler {
                 auto n = cast(FunctionLiteral) node;
                 this.enterScope();
 
+                foreach(p; n.parameters) {
+                    this.symTable.define(p.value);
+                }
+
                 auto err = this.compile(n.fnBody);
                 if(err !is null)
                     return err;
@@ -310,8 +314,14 @@ struct Compiler {
                 auto err = this.compile(n.fxn);
                 if(err !is null)
                     return err;
+                
+                foreach(a; n.args) {
+                    err = this.compile(a);
+                    if(err !is null)
+                        return err;
+                }
 
-                this.emit(OPCODE.OpCall);
+                this.emit(OPCODE.OpCall, n.args.length);
 
                 break;
 

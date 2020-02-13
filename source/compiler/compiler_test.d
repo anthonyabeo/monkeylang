@@ -763,11 +763,10 @@ void testFunctionCalls() {
             ],
             [
                 make(OPCODE.OpConstant, 1), // The compiled function
-                make(OPCODE.OpCall),
+                make(OPCODE.OpCall, 0),
                 make(OPCODE.OpPop),
             ]
         ),
-
         CompilerTestCase!Foo(
             `let noArg = fn() { 24 };
              noArg();`,
@@ -784,9 +783,55 @@ void testFunctionCalls() {
                 make(OPCODE.OpConstant, 1), // The compiled function
                 make(OPCODE.OpSetGlobal, 0),
                 make(OPCODE.OpGetGlobal, 0),
-                make(OPCODE.OpCall),
+                make(OPCODE.OpCall, 0),
                 make(OPCODE.OpPop),
              ]
+        ),
+        CompilerTestCase!Foo(
+            `let oneArg = fn(a) { a };oneArg(24);`,
+            [
+                tuple(
+                    0, 0,
+                    [
+                        make(OPCODE.OpGetLocal, 0),
+                        make(OPCODE.OpReturnValue),
+                    ]
+                ),
+            ],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpSetGlobal, 0),
+                make(OPCODE.OpGetGlobal, 0),
+                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpCall, 1),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!Foo(
+            `let manyArg = fn(a, b, c) { a; b; c };manyArg(24, 25, 26);`,
+            [
+                tuple(
+                    0, 0, 
+                    [
+                        make(OPCODE.OpGetLocal, 0),
+                        make(OPCODE.OpPop),
+                        make(OPCODE.OpGetLocal, 1),
+                        make(OPCODE.OpPop),
+                        make(OPCODE.OpGetLocal, 2),
+                        make(OPCODE.OpReturnValue),
+                    ]
+                ),
+            ],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpSetGlobal, 0),
+                make(OPCODE.OpGetGlobal, 0),
+                make(OPCODE.OpConstant, 1),
+                make(OPCODE.OpConstant, 2),
+                make(OPCODE.OpConstant, 3),
+                make(OPCODE.OpCall, 3),
+                make(OPCODE.OpPop),
+            ]
         ),
     ];
 
