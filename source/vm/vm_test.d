@@ -32,6 +32,8 @@ unittest {
     testFirstClassFunctions();
     testCallingFunctionsWithBindings();
     testFirstClassFunctions();
+    testCallingFunctionsWithArgumentsAndBindings();
+    testCallingFunctionsWithWrongArguments();
 }
 
 ///
@@ -577,4 +579,83 @@ void testFirstClassFunctions() {
     ];
 
     runVMTests!int(tests);
+}
+
+///
+void testCallingFunctionsWithArgumentsAndBindings() {
+    auto tests = [
+        VMTestCase!int(
+            `let identity = fn(a) { a; };identity(4);`,
+            4
+        ),
+        VMTestCase!int(
+            `let sum = fn(a, b) { a + b; };sum(1, 2);`,
+            3
+        ),
+        VMTestCase!int(
+            `let sum = fn(a, b) {let c = a + b;c;};sum(1, 2);`,
+            3
+        ),
+        VMTestCase!int(
+            `let sum = fn(a, b) {let c = a + b;c;};sum(1, 2) + sum(3, 4);`,
+            10
+        ),
+        VMTestCase!int(
+            `let sum = fn(a, b) {let c = a + b;c;};let outer = fn() {sum(1, 2) + sum(3, 4);};outer();`,
+            10
+        ),
+        VMTestCase!int(
+            `let globalNum = 10;let sum = fn(a, b) {let c = a + b;c + globalNum;};
+            let outer = fn() {sum(1, 2) + sum(3, 4) + globalNum;};outer() + globalNum;`,
+            50
+        ),
+    ];
+
+    runVMTests!int(tests);
+}
+
+///
+void testCallingFunctionsWithWrongArguments() {
+    auto tests = [
+        VMTestCase!string(
+            `fn() { 1; }(1);`,
+            `wrong number of arguments: want=0, got=1`,
+        ),
+        VMTestCase!string(
+            `fn(a) { a; }();`,
+            `wrong number of arguments: want=1, got=0`,
+        ),
+        VMTestCase!string(
+            `fn(a, b) { a + b; }(1);`,
+            `wrong number of arguments: want=2, got=1`,
+        ),
+    ];
+
+    Objekt[] constants = [];        
+    Objekt[] globals = new Objekt[GLOBALS_SIZE];
+    auto symTable = new SymbolTable(null);
+
+    foreach(tt; tests) {
+        auto program = parse(tt.input);
+        auto comp = Compiler(symTable, constants);
+
+        auto err = comp.compile(program);
+        if(err !is null) {
+            stderr.writefln("compiler error: %s", err.msg);
+            assert(err is null);
+        }
+
+        auto code = comp.bytecode();
+        auto vm = VM(code, globals);
+        err = vm.run();
+        if (err is null) {
+            stderr.writefln("expected VM error but resulted in none.");
+            assert(err !is null);
+        }
+
+        if (err.msg != tt.expected) {
+            stderr.writefln("wrong VM error: want=%q, got=%q", tt.expected, err);
+            assert(err.msg == tt.expected);
+        }
+    }
 }

@@ -239,13 +239,12 @@ struct VM {
                     break;
 
                 case OPCODE.OpCall:
-                    auto fn = cast(CompiledFunction) this.stack[this.sp-1];
-                    if(fn is null)
-                        return new Error(format("calling non-function"));
+                    auto numArgs = readUint8(ins[ip+1..$]);
+                    this.currentFrame().ip += 1;
 
-                    auto frame = new Frame(fn, cast(int)this.sp);
-                    this.pushFrame(frame);
-                    this.sp = frame.basePtr + fn.numLocals;
+                    auto err = this.callFunction(numArgs);
+                    if(err !is null)
+                        return err;
 
                     break;
                 case OPCODE.OpReturn:
@@ -291,6 +290,23 @@ struct VM {
                     break;
             }
         }
+
+        return null;
+    }
+
+    ///
+    Error callFunction(int numArgs) {
+        auto fn = cast(CompiledFunction) this.stack[this.sp - 1 - numArgs];
+        if(fn is null)
+            return new Error(format("calling non-function"));
+        
+        if(numArgs != fn.numParams)
+            return new Error(format("wrong number of arguments: want=%d, got=%d",
+                        fn.numParams, numArgs));
+
+        auto frame = new Frame(fn, cast(int) this.sp - numArgs);
+        this.pushFrame(frame);
+        this.sp = frame.basePtr + fn.numLocals;
 
         return null;
     }
