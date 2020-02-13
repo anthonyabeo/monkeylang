@@ -330,7 +330,12 @@ Objekt applyFunction(Objekt fxn, Objekt[] args) {
             return unwrapReturnValue(evaluated);
         case ObjectType.BUILTIN:
             auto fn = cast(BuiltIn) fxn;
-            return fn.fxn(args);
+            
+            auto result = fn.fxn(args);
+            if(result !is null)
+                return result;
+
+            return NULL;
         default:
             return newError("not a function: %s", fxn.type());
     }
