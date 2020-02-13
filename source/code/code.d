@@ -65,7 +65,7 @@ static this() {
         OPCODE.OpArray : new Definition("OpArray", [2]),
         OPCODE.OpHash : new Definition("OpHash", [2]),
         OPCODE.OpIndex : new Definition("OpIndex", []),
-        OPCODE.OpCall : new Definition("OpCall", []),
+        OPCODE.OpCall : new Definition("OpCall", [1]),
         OPCODE.OpReturnValue : new Definition("OpReturnValue", []),
         OPCODE.OpReturn : new Definition("OpReturn", []),
         OPCODE.OpGetLocal : new Definition("OpGetLocal", [1]),
@@ -224,6 +224,7 @@ auto readUint16(ubyte[] data)
 	       data[1];
 }
 
+/***/
 auto readUint8(ubyte[] data) 
 {
 	return cast(ubyte) data[0];
