@@ -28,6 +28,8 @@ unittest {
     testCompilerScopes();
     testFunctionCalls();
     testLetStatementScopes();
+    testIntBuiltins();
+    testBuiltins();
 }
 
 /++
@@ -949,6 +951,78 @@ void testLetStatementScopes() {
         }
 
         err = testFunctionConstants(tt.expectedConstants[0][2], bytecode.constants);
+        if(err !is null) {
+            stderr.writefln("testConstants failed: %s", err.msg);
+            assert(err is null);
+        }
+    }
+}
+
+///
+void testIntBuiltins() {
+    auto tests = [
+        CompilerTestCase!int(
+            `len([]);push([], 1);`,
+            [1],
+            [
+                make(OPCODE.OpGetBuiltin, 0),
+                make(OPCODE.OpArray, 0),
+                make(OPCODE.OpCall, 1),
+                make(OPCODE.OpPop),
+                make(OPCODE.OpGetBuiltin, 5),
+                make(OPCODE.OpArray, 0),
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpCall, 2),
+                make(OPCODE.OpPop),
+            ]
+        ),
+    ];
+
+    runCompilerTests!int(tests);
+}
+
+///
+void testBuiltins() {
+    auto tests = [
+        CompilerTestCase!(Instructions[])(
+            `fn() { len([]) }`,
+            [
+                [
+                    make(OPCODE.OpGetBuiltin, 0),
+                    make(OPCODE.OpArray, 0),
+                    make(OPCODE.OpCall, 1),
+                    make(OPCODE.OpReturnValue),
+                ]
+            ],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpPop),
+            ]
+        ),
+    ];
+
+    foreach (i, tt; tests) {
+        Objekt[] constants = [];        
+        auto symTable = new SymbolTable(null);
+
+        auto program = parse(tt.input);
+        auto compiler = Compiler(symTable, constants);
+
+        auto err = compiler.compile(program);
+        if(err !is null) {
+            stderr.writefln("compiler error: %s", err.msg);
+            assert(err is null);
+        }
+        
+        auto bytecode = compiler.bytecode();
+        
+        err = testInstructions(tt.expectedInstructions, bytecode.instructions);
+        if(err !is null) {
+            stderr.writefln("testInstructions failed: %s", err.msg);
+            assert(err is null);
+        }
+
+        err = testFunctionConstants(tt.expectedConstants[0], bytecode.constants);
         if(err !is null) {
             stderr.writefln("testConstants failed: %s", err.msg);
             assert(err is null);

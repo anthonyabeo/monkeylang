@@ -8,6 +8,7 @@ import std.algorithm.sorting;
 import ast.ast;
 import code.code;
 import objekt.objekt;
+import objekt.builtins;
 import compiler.symbol_table;
 
 /++
@@ -28,6 +29,10 @@ struct Compiler {
         this.constants = constants;
         this.scopes ~= CompilationScope();
         this.scopeIndex = 0;
+
+        foreach(i, v; builtins) {
+            this.symTable.defineBuiltin(i, v.name);
+        }
     }
 
     this(this) {
@@ -214,10 +219,7 @@ struct Compiler {
                 if(symbol.isNull)
                     return new Error(format("undefined variable %s", n.value));
                 
-                if(symbol.skope == SymbolScope.GLOBAL)
-                    this.emit(OPCODE.OpGetGlobal, symbol.index);
-                else
-                    this.emit(OPCODE.OpGetLocal, symbol.index);
+                this.loadSymbol(symbol);
 
                 break;
             
@@ -331,6 +333,21 @@ struct Compiler {
         }
 
         return null;
+    }
+    
+    /+++/
+    void loadSymbol(ref Symbol s) {
+        final switch(s.skope) {
+            case SymbolScope.GLOBAL:
+                this.emit(OPCODE.OpGetGlobal, s.index);
+                break;
+            case SymbolScope.LOCAL:
+                this.emit(OPCODE.OpGetLocal, s.index);
+                break;
+            case SymbolScope.BUILTIN:
+                this.emit(OPCODE.OpGetBuiltin, s.index);
+                break;
+        }
     }
 
     /+++/
