@@ -294,6 +294,7 @@ struct Compiler {
 
                 auto compiledFn = new CompiledFunction(instructions);
                 compiledFn.numLocals = cast(int) numLocals;
+                compiledFn.numParams = cast(int) n.parameters.length;
 
                 this.emit(OPCODE.OpConstant, this.addConstant(compiledFn));
 
