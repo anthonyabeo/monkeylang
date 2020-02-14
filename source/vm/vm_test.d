@@ -39,6 +39,7 @@ unittest {
     testIntBuiltinFunctions();
     testClosures();
     testRecursiveClosures();
+    testRecursiveFibonacci();
 }
 
 ///
@@ -816,6 +817,20 @@ void testRecursiveClosures() {
             wrapper();`,
             0
         ),
+    ];
+
+    runVMTests!int(tests);
+}
+
+///
+void testRecursiveFibonacci() {
+    auto tests = [
+        VMTestCase!int(`
+            let fibonacci = fn(x) {if (x == 0) {return 0;} else {if (x == 1) {
+            return 1;} else {fibonacci(x - 1) + fibonacci(x - 2);}}};
+            fibonacci(15);`, 
+            610
+        )
     ];
 
     runVMTests!int(tests);
