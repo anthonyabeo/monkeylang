@@ -31,6 +31,25 @@ Hello World!
 >>> 
 ```
 
+## PERFORMANCE BENCHMARKS
+The Fibonacci(35) is run on using the Compiler/VM combo VS the interpreter;   
+
+### Compiler/VM 
+```
+$ dub run --compiler=ldc2 --build=release-nobounds -- --engine=vm
+
+result=9227465, 
+duration=9 secs, 914 ms, and 704 μs
+```
+
+### Interpreter 
+```
+$ dub run --compiler=ldc2 --build=release-nobounds -- --engine=eval
+
+result=9227465, 
+duration=2 minutes, 49 secs, 647 ms, and 426 μs
+```
+
 ## MONKEYLANG IN ACTION
 ```rust
 // Integers & arithmetic expressions

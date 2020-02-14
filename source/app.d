@@ -32,6 +32,7 @@ static const input = `
 
 void main(string[] args)
 {
+	SysTime begin;
 	Duration duration;
     Objekt result;
 
@@ -54,7 +55,8 @@ void main(string[] args)
 		auto parser = Parser(lex);
 		auto program = parser.parseProgram();
 		
-		if(engine == "vm") {
+		if(engine == "vm") 
+		{
 			auto comp = Compiler(symTable, constants);
 			auto err = comp.compile(program);
 			if (err !is null) {
@@ -65,21 +67,22 @@ void main(string[] args)
 			auto code = comp.bytecode();
 			auto machine = VM(code, globals);
 
-			auto start = Clock.currTime();
+			begin = Clock.currTime();
 			err = machine.run();
 			if (err !is null) {
 				writefln("vm error: %s", err.msg);
 				return;
 			}
 
-			duration = Clock.currTime() - start;
+			duration = Clock.currTime() - begin;
 			result = machine.lastPoppedStackElem();
 		} 
-		else {
+		else 
+		{
 			auto env = new Environment();
-			auto start = Clock.currTime();
+			begin = Clock.currTime();
 			result = eval(program, env);
-			duration = Clock.currTime() - start;
+			duration = Clock.currTime() - begin;
     	}
 
 		writefln(
