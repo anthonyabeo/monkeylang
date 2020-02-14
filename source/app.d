@@ -35,15 +35,17 @@ void main(string[] args)
 	Duration duration;
     Objekt result;
 
-    string engine;
-    getopt(args, "engine", &engine);
-
-	if(args.length < 2) {
+	if(args.length < 2) 
+	{
 		writeln("Hello! This is the Monkey programming language!");
 		writeln("Feel free to type in commands");
 		start();
 	}
-	else {
+	else 
+	{
+		string engine;
+    	getopt(args, "engine", &engine);
+
 		Objekt[] constants = [];        
 		Objekt[] globals = new Objekt[GLOBALS_SIZE];
 		auto symTable = new SymbolTable(null);
