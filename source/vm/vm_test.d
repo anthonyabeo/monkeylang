@@ -38,6 +38,7 @@ unittest {
     testErrBuiltinFunctions();
     testIntBuiltinFunctions();
     testClosures();
+    testRecursiveClosures();
 }
 
 ///
@@ -791,6 +792,31 @@ void testClosures() {
             99
         )
     ];  
+
+    runVMTests!int(tests);
+}
+
+///
+void testRecursiveClosures() {
+    auto tests = [
+        VMTestCase!int(
+            `let countDown = fn(x) {if (x == 0) {return 0;} else {
+            countDown(x - 1);}};countDown(1);`,
+            0
+        ),
+        VMTestCase!int(
+            `let countDown = fn(x) {if (x == 0) {return 0;} else {
+            countDown(x - 1);}};let wrapper = fn() {countDown(1);};
+            wrapper();`,
+            0
+        ),
+        VMTestCase!int(
+            `let wrapper = fn() {let countDown = fn(x) {if (x == 0) {
+            return 0;} else {countDown(x - 1);}};countDown(1);};
+            wrapper();`,
+            0
+        ),
+    ];
 
     runVMTests!int(tests);
 }

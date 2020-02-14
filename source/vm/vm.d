@@ -320,6 +320,13 @@ struct VM {
                         return err;
 
                     break;
+                case OPCODE.OpCurrentClosure:
+                    auto currentClosure = this.currentFrame().cl;
+
+                    auto err = this.push(currentClosure);
+                    if(err !is null)
+                        return err;
+                    break;
             }
         }
 
