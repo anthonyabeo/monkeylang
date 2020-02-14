@@ -9,6 +9,7 @@ enum SymbolScope {
     LOCAL,
     BUILTIN,
     FREE,
+    FUNCTION,
 }
 
 ///
@@ -89,6 +90,14 @@ class SymbolTable {
 
         const symbol = Symbol(original.name, SymbolScope.FREE, this.freeSymbols.length - 1);
         this.store[original.name] = symbol;
+
+        return symbol;
+    }
+
+    ///
+    Symbol defineFunctionName(string name)  {
+        auto symbol = Symbol(name, SymbolScope.FUNCTION, 0);
+        this.store[name] = symbol;
 
         return symbol;
     }

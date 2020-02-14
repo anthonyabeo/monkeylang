@@ -14,6 +14,8 @@ unittest {
     testDefineResolveBuiltins();
     testResolveUnresolvableFree();
     testResolveFree();
+    testDefineAndResolveFunctionName();
+    testShadowingFunctionName();
 }
 
 ///
@@ -341,3 +343,42 @@ void testResolveUnresolvableFree() {
         }
     }
 }
+
+///
+void testDefineAndResolveFunctionName() {
+    auto global = new SymbolTable(null);
+    global.defineFunctionName("a");
+
+    auto expected = Symbol("a", SymbolScope.FUNCTION, 0);
+
+    auto result = global.resolve(expected.name);
+    if(result.isNull) {
+        stderr.writefln("function name %s not resolvable", expected.name);
+        assert(!result.isNull);
+    }
+
+    if(result != expected) {
+        stderr.writefln("expected %s to resolve to %s, got=%s", expected.name, expected, result);
+        assert(result == expected);
+    }
+}
+
+///
+void testShadowingFunctionName() {
+    auto global = new SymbolTable(null);
+    global.defineFunctionName("a");
+    global.define("a");
+
+    auto expected = Symbol("a", SymbolScope.GLOBAL, 0);
+
+    auto result = global.resolve(expected.name);
+    if(result.isNull) {
+        stderr.writefln("function name %s not resolvable", expected.name);
+        assert(!result.isNull);
+    }
+
+    if (result != expected) {
+        stderr.writefln("expected %s to resolve to %s, got=%s",expected.name, expected, result);
+        assert(result == expected);
+    }
+};
