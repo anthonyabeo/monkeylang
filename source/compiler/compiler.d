@@ -202,11 +202,13 @@ struct Compiler {
             
             case "ast.ast.LetStatement":
                 auto n = cast(LetStatement) node;
+
+                auto symbol = this.symTable.define(n.name.value);
+
                 auto err = this.compile(n.value);
                 if(err !is null)
                     return err; 
 
-                auto symbol = this.symTable.define(n.name.value);
                 if(symbol.skope == SymbolScope.GLOBAL)
                     this.emit(OPCODE.OpSetGlobal, symbol.index);
                 else
@@ -276,6 +278,9 @@ struct Compiler {
             case "ast.ast.FunctionLiteral":
                 auto n = cast(FunctionLiteral) node;
                 this.enterScope();
+
+                if (n.name != "")
+                    this.symTable.defineFunctionName(n.name);
 
                 foreach(p; n.parameters) {
                     this.symTable.define(p.value);
@@ -354,6 +359,9 @@ struct Compiler {
                 break;
             case SymbolScope.FREE:
                 this.emit(OPCODE.OpGetFree, s.index);
+                break;
+            case SymbolScope.FUNCTION:
+                this.emit(OPCODE.OpCurrentClosure);
                 break;
         }
     }

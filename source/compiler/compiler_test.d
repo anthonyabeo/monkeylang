@@ -31,6 +31,7 @@ unittest {
     testIntBuiltins();
     testBuiltins();
     testClosures();
+    testRecursiveFunctions();
 }
 
 /++
@@ -1082,44 +1083,48 @@ void testClosures() {
                 make(OPCODE.OpPop),
             ]
         ),
-        // CompilerTestCase!(Instructions[])(
-        //     `let global = 55;fn() {let a = 66;fn() {let b = 77;fn() {let c = 88;global + a + b + c;}}}`,
-        //     [
-        //         [
-        //             make(OPCODE.OpConstant, 3),
-        //             make(OPCODE.OpSetLocal, 0),
-        //             make(OPCODE.OpGetGlobal, 0),
-        //             make(OPCODE.OpGetFree, 0),
-        //             make(OPCODE.OpAdd),
-        //             make(OPCODE.OpGetFree, 1),
-        //             make(OPCODE.OpAdd),
-        //             make(OPCODE.OpGetLocal, 0),
-        //             make(OPCODE.OpAdd),
-        //             make(OPCODE.OpReturnValue),
-        //         ],
-        //         [
-        //             make(OPCODE.OpConstant, 2),
-        //             make(OPCODE.OpSetLocal, 0),
-        //             make(OPCODE.OpGetFree, 0),
-        //             make(OPCODE.OpGetLocal, 0),
-        //             make(OPCODE.OpClosure, 4, 2),
-        //             make(OPCODE.OpReturnValue),
-        //         ],
-        //         [
-        //             make(OPCODE.OpConstant, 1),
-        //             make(OPCODE.OpSetLocal, 0),
-        //             make(OPCODE.OpGetLocal, 0),
-        //             make(OPCODE.OpClosure, 5, 1),
-        //             make(OPCODE.OpReturnValue),
-        //         ]
-        //     ],
-        //     [
-        //         make(OPCODE.OpConstant, 0),
-        //         make(OPCODE.OpSetGlobal, 0),
-        //         make(OPCODE.OpClosure, 6, 0),
-        //         make(OPCODE.OpPop),
-        //     ]
-        // ),
+        CompilerTestCase!(Instructions[])(
+            `let global = 55;fn() {let a = 66;fn() {let b = 77;fn() {let c = 88;global + a + b + c;}}}`,
+            [
+                [ make(OPCODE.OpConstant, 0)],
+                [ make(OPCODE.OpConstant, 0)],
+                [ make(OPCODE.OpConstant, 0)],
+                [ make(OPCODE.OpConstant, 0)],
+                [
+                    make(OPCODE.OpConstant, 3),
+                    make(OPCODE.OpSetLocal, 0),
+                    make(OPCODE.OpGetGlobal, 0),
+                    make(OPCODE.OpGetFree, 0),
+                    make(OPCODE.OpAdd),
+                    make(OPCODE.OpGetFree, 1),
+                    make(OPCODE.OpAdd),
+                    make(OPCODE.OpGetLocal, 0),
+                    make(OPCODE.OpAdd),
+                    make(OPCODE.OpReturnValue),
+                ],
+                [
+                    make(OPCODE.OpConstant, 2),
+                    make(OPCODE.OpSetLocal, 0),
+                    make(OPCODE.OpGetFree, 0),
+                    make(OPCODE.OpGetLocal, 0),
+                    make(OPCODE.OpClosure, 4, 2),
+                    make(OPCODE.OpReturnValue),
+                ],
+                [
+                    make(OPCODE.OpConstant, 1),
+                    make(OPCODE.OpSetLocal, 0),
+                    make(OPCODE.OpGetLocal, 0),
+                    make(OPCODE.OpClosure, 5, 1),
+                    make(OPCODE.OpReturnValue),
+                ]
+            ],
+            [
+                make(OPCODE.OpConstant, 0),
+                make(OPCODE.OpSetGlobal, 0),
+                make(OPCODE.OpClosure, 6, 0),
+                make(OPCODE.OpPop),
+            ]
+        ),
     ];
 
     foreach (i, tt; tests) {
@@ -1168,4 +1173,100 @@ Error testInstrConstants(Instructions[][] expected, Objekt[] actual) {
     }
 
     return null;
+}
+
+///
+void testRecursiveFunctions() {
+    auto tests = [
+        CompilerTestCase!(Instructions[]) (
+            `let countDown = fn(x) { countDown(x - 1); };countDown(1);`,
+            [
+                [
+                    make(OPCODE.OpConstant, 0)
+                ],
+                [
+                    make(OPCODE.OpCurrentClosure),
+                    make(OPCODE.OpGetLocal, 0),
+                    make(OPCODE.OpConstant, 0),
+                    make(OPCODE.OpSub),
+                    make(OPCODE.OpCall, 1),
+                    make(OPCODE.OpReturnValue),
+                ],
+                [
+                    make(OPCODE.OpConstant, 0)
+                ],
+            ],
+            [
+                make(OPCODE.OpClosure, 1, 0),
+                make(OPCODE.OpSetGlobal, 0),
+                make(OPCODE.OpGetGlobal, 0),
+                make(OPCODE.OpConstant, 2),
+                make(OPCODE.OpCall, 1),
+                make(OPCODE.OpPop),
+            ]
+        ),
+        CompilerTestCase!(Instructions[]) (
+            `let wrapper = fn() {let countDown = fn(x) { countDown(x - 1); };
+            countDown(1);};wrapper();`,
+            [
+                [
+                    make(OPCODE.OpConstant, 0)
+                ],
+                [
+                    make(OPCODE.OpCurrentClosure),
+                    make(OPCODE.OpGetLocal, 0),
+                    make(OPCODE.OpConstant, 0),
+                    make(OPCODE.OpSub),
+                    make(OPCODE.OpCall, 1),
+                    make(OPCODE.OpReturnValue),
+                ],
+                [
+                    make(OPCODE.OpConstant, 0)
+                ],
+                [
+                    make(OPCODE.OpClosure, 1, 0),
+                    make(OPCODE.OpSetLocal, 0),
+                    make(OPCODE.OpGetLocal, 0),
+                    make(OPCODE.OpConstant, 2),
+                    make(OPCODE.OpCall, 1),
+                    make(OPCODE.OpReturnValue),
+                ],
+            ],
+            [
+                make(OPCODE.OpClosure, 3, 0),
+                make(OPCODE.OpSetGlobal, 0),
+                make(OPCODE.OpGetGlobal, 0),
+                make(OPCODE.OpCall, 0),
+                make(OPCODE.OpPop),
+            ]
+        )
+    ];
+
+    foreach (i, tt; tests) {
+        Objekt[] constants = [];        
+        auto symTable = new SymbolTable(null);
+
+        auto program = parse(tt.input);
+        auto compiler = Compiler(symTable, constants);
+
+        auto err = compiler.compile(program);
+        if(err !is null) {
+            stderr.writefln("compiler error: %s", err.msg);
+            assert(err is null);
+        }
+        
+        auto bytecode = compiler.bytecode();
+        
+        err = testInstructions(tt.expectedInstructions, bytecode.instructions);
+        if(err !is null) {
+            stderr.writefln("testInstructions failed: %s", err.msg);
+            assert(err is null);
+        }
+        
+        err = testInstrConstants(tt.expectedConstants, bytecode.constants);
+        if(err !is null) {
+            stderr.writefln("testConstants failed: %s", err.msg);
+            assert(err is null);
+        }
+    }
 }
