@@ -294,6 +294,7 @@ class FunctionLiteral : Expression {
     Token token;                /// token   
     Identifier[] parameters;    /// parameters
     BlockStatement fnBody;      /// body
+    string name;                /// func name
 
     /***********************************
      * Constructor
@@ -320,11 +321,11 @@ class FunctionLiteral : Expression {
             params ~= p.asString();
         }
 
-        string s = this.tokenLiteral() ~ 
-                                   "(" ~ 
-                    join(params, ", ") ~ 
-                                  ") " ~ 
-                   this.fnBody.asString();
+        string s = this.tokenLiteral();
+        if(this.name != "") 
+            s ~= format("<%s>", this.name);
+        
+        s ~= "(" ~ join(params, ", ") ~ ") " ~ this.fnBody.asString();
         
         return s;
     }
