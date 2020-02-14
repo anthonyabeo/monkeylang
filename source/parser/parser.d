@@ -457,6 +457,10 @@ struct Parser {
         
         stmt.value = this.parseExpression(OpPreced.LOWEST);
 
+        auto fl = cast(FunctionLiteral) stmt.value;
+        if(fl !is null)
+            fl.name = stmt.name.value;
+
         if(this.peekTokenIs(TokenType.SEMICOLON))
             this.nextToken();
 

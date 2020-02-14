@@ -27,6 +27,7 @@ unittest {
     testParsingHashLiteralsStringKeys();
     testParsingEmptyHashLiteral();
     testParsingHashLiteralsWithExpressions();
+    testFunctionLiteralWithName();
 }
 
 /+++/
@@ -678,5 +679,38 @@ void testIdentifiersInLetStatements() {
     foreach(offset, tt; tests) {
         auto stmt = program.statements[offset];
         assert(testLetStatement(stmt, tt[0]));
+    }
+}
+
+///
+void testFunctionLiteralWithName() {
+    auto input = `let myFunction = fn() { };`;
+
+    auto lex = Lexer(input);
+    auto parser = Parser(lex);
+    auto program = parser.parseProgram();
+    checkParserErrors(parser);
+
+    if(program.statements.length != 1) {
+        stderr.writefln("program.Body does not contain %d statements. got=%d\n",
+                1, program.statements.length);
+        assert(program.statements.length == 1);
+    }
+
+    auto stmt = cast(LetStatement) program.statements[0];
+    if(stmt is null) {
+        stderr.writefln("program.Statements[0] is not ast.LetStatement. got=%s", program.statements[0]);
+        assert(stmt !is null);
+    }
+
+    auto func = cast(FunctionLiteral) stmt.value;
+    if(func is null) {
+        stderr.writefln("stmt.Value is not ast.FunctionLiteral. got=%T",stmt.value);
+        assert(func !is null);
+    }
+
+    if (func.name != "myFunction") {
+        stderr.writefln("function literal name wrong. want 'myFunction', got=%q\n", func.name);
+        assert(func.name == "myFunction");
     }
 }
