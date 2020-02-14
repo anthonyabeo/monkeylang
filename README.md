@@ -3,12 +3,12 @@
 This project is my implementation of the monkey programming language (monkeylang) in D. monkeylang is interpreted programming language from the books ["Writing an Interpreter in Go"](https://interpreterbook.com/) and ["Writing a compiler in Go"](https://compilerbook.com/) by [Thorsten Ball](https://twitter.com/thorstenball).
 
 ## SETUP
-The tool needed to test and run this project are:  
+The tools needed to test and run this project are:  
 - A D compiler (https://dlang.org/download.html)
 - The `dub` package manager using (https://github.com/dlang/dub/releases) or the package registry of your operating system.
 
 ## TESTING AND RUNNING
-With `dub` installed you can run `dub test` fromt the root directory like so:
+With `dub` installed run the unit tests using `dub test` from the root directory. You should get an output similar to the one below.
 
 ```
 $ dub test
